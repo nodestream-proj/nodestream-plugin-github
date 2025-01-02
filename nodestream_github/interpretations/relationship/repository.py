@@ -8,6 +8,22 @@ from nodestream.pipeline.value_providers import (
 )
 
 
+def simplify_repo(repo):
+    """Simplify repo data.
+
+    Allows us to only keep a consistent minimum for relationship data."""
+    data = {
+        "id": repo["id"],
+        "node_id": repo["node_id"],
+        "name": repo["name"],
+        "full_name": repo["full_name"],
+        "url": repo["url"],
+    }
+    if "permissions" in repo:
+        data["permissions"] = repo["permissions"]
+    return data
+
+
 class RepositoryRelationshipInterpretation(
     RelationshipInterpretation, alias="github-repo-relationship"
 ):

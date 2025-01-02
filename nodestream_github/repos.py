@@ -3,8 +3,8 @@ import logging
 from httpx import HTTPStatusError
 from nodestream.pipeline import Extractor
 
+from nodestream_github.interpretations.relationship.user import simplify_user
 from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.simplify import simplify_user
 
 logger = logging.getLogger(__name__)
 

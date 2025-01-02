@@ -22,7 +22,7 @@ from tenacity import (
 )
 
 # per hour / 60 / 60
-DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60 )
+DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60)
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class GithubRestApiClient:
         if "page_size" in kwargs:
             self.page_size = kwargs["page_size"]
         else:
-            self.page_size=100
+            self.page_size = 100
         logger.debug("Page Size: %s", self.page_size)
         self.limit_storage = MemoryStorage()
         if "user_agent" in kwargs:
@@ -77,7 +77,7 @@ class GithubRestApiClient:
     @retry(
         wait=wait_random_exponential(),
         stop=stop_after_attempt(30),
-        retry=retry_if_exception_type((RateLimitedException,TransportError)),
+        retry=retry_if_exception_type((RateLimitedException, TransportError)),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         after=after_log(logger, logging.ERROR),
     )

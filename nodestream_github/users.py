@@ -3,8 +3,8 @@ import logging
 from httpx import HTTPStatusError
 from nodestream.pipeline import Extractor
 
+from nodestream_github.interpretations.relationship.repository import simplify_repo
 from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.simplify import simplify_repo
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,9 @@ class GithubUserExtractor(Extractor):
             login = user["login"]
             try:
                 user["repos"] = []
-                async for response in self.client.get(f"users/{login}/collaborators", {"type":"owner"}):
+                async for response in self.client.get(
+                    f"users/{login}/collaborators", {"type": "owner"}
+                ):
                     user["repos"].append(simplify_repo(response))
 
             except HTTPStatusError as e:

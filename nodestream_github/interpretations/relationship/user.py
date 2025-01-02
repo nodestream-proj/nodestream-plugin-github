@@ -8,6 +8,22 @@ from nodestream.pipeline.value_providers import (
 )
 
 
+def simplify_user(user):
+    """Simplify user data.
+
+    Allows us to only keep a consistent minimum for relationship data."""
+    data = {
+        "id": user["id"],
+        "login": user["login"],
+        "node_id": user["node_id"],
+    }
+    if "role" in user:
+        data["role"] = user["role"]
+    if "permissions" in user:
+        data["permissions"] = user["permissions"]
+    return data
+
+
 class UserRelationshipInterpretation(
     RelationshipInterpretation, alias="github-user-relationship"
 ):

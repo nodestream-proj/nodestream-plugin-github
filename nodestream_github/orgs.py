@@ -4,8 +4,9 @@ from typing import Any, AsyncGenerator
 from httpx import HTTPError, HTTPStatusError
 from nodestream.pipeline import Extractor
 
+from nodestream_github.interpretations.relationship.repository import simplify_repo
+from nodestream_github.interpretations.relationship.user import simplify_user
 from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.simplify import simplify_repo, simplify_user
 
 logger = logging.getLogger(__name__)
 
