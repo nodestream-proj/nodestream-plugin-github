@@ -1,0 +1,37 @@
+[tool.poetry]
+name = "nodestream-plugin-github"
+version = "0.13.0"
+description = ""
+authors = ["Jon Bristow <jonathan_bristow@intuit.com>"]
+packages = [
+    { include = "nodestream_github" }
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+nodestream = "^0.13.0"
+limits = "^3.14.1"
+tenacity = "^9.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.1"
+black = "^24.10.0"
+isort = "^5.13.2"
+pytest = "^8.3.4"
+responses = "^0.25.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry.plugins."nodestream.plugins"]
+projects = "nodestream_github.plugin"
+interpretations = "nodestream_github.interpretations"
