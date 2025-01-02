@@ -2,8 +2,10 @@ import pytest
 from nodestream.model import DesiredIngestion
 from nodestream.pipeline.value_providers import ProviderContext
 
-from nodestream_github.interpretations.relationship.user import simplify_user, \
-    UserRelationshipInterpretation
+from nodestream_github.interpretations.relationship.user import (
+    UserRelationshipInterpretation,
+    simplify_user,
+)
 
 _TEST_EXPECTATION = {
     "login": "test-login",
@@ -11,10 +13,11 @@ _TEST_EXPECTATION = {
     "node_id": "test-node-id",
 }
 
+
 @pytest.fixture
 def context():
-    return ProviderContext(_TEST_EXPECTATION,
-                           DesiredIngestion())
+    return ProviderContext(_TEST_EXPECTATION, DesiredIngestion())
+
 
 def test_simplify_user():
     additional_keys = _TEST_EXPECTATION | {

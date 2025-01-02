@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 class GithubUserExtractor(Extractor):
     def __init__(self, **github_client_kwargs):
-        print(github_client_kwargs)
         self.client = GithubRestApiClient(**github_client_kwargs)
 
     async def extract_records(self):
@@ -20,7 +19,7 @@ class GithubUserExtractor(Extractor):
             try:
                 user["repos"] = []
                 async for response in self.client.get(
-                    f"users/{login}/collaborators", {"type": "owner"}
+                    f"users/{login}/repos", {"type": "all"}
                 ):
                     user["repos"].append(simplify_repo(response))
 

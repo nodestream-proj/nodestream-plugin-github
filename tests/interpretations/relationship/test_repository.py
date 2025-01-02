@@ -2,8 +2,10 @@ import pytest
 from nodestream.model import DesiredIngestion
 from nodestream.pipeline.value_providers import ProviderContext
 
-from nodestream_github.interpretations.relationship.repository import simplify_repo, \
-    RepositoryRelationshipInterpretation
+from nodestream_github.interpretations.relationship.repository import (
+    RepositoryRelationshipInterpretation,
+    simplify_repo,
+)
 
 _TEST_EXPECTATION = {
     "full_name": "test/fullName",
@@ -13,10 +15,11 @@ _TEST_EXPECTATION = {
     "url": "test-url",
 }
 
+
 @pytest.fixture
 def context():
-    return ProviderContext(_TEST_EXPECTATION,
-                           DesiredIngestion())
+    return ProviderContext(_TEST_EXPECTATION, DesiredIngestion())
+
 
 def test_simplify_repo():
     additional_keys = _TEST_EXPECTATION | {

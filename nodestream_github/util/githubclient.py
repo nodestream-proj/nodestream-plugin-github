@@ -5,7 +5,6 @@ An async client for accessing GitHub.
 
 import datetime
 import logging
-import os
 from enum import Enum
 
 from httpx import AsyncClient, HTTPStatusError, Request, TransportError
@@ -13,9 +12,9 @@ from limits import RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter
 from tenacity import (
+    Retrying,
     after_log,
     before_sleep_log,
-    retry,
     retry_if_exception_type,
     stop_after_attempt,
     wait_random_exponential,
@@ -23,6 +22,8 @@ from tenacity import (
 
 # per hour / 60 / 60
 DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60)
+DEFAULT_MAX_RETRIES = 5
+DEFAULT_PAGE_SIZE = 100
 
 logger = logging.getLogger(__name__)
 
@@ -37,24 +38,17 @@ class RateLimitedException(Exception):
 
 
 class GithubRestApiClient:
-    def __init__(self, auth_token, github_endpoint, **kwargs):
+    def __init__(self, auth_token, github_endpoint, user_agent, **kwargs):
         self.auth_token = auth_token
         self.github_endpoint = github_endpoint
         if "page_size" in kwargs:
             self.page_size = kwargs["page_size"]
         else:
-            self.page_size = 100
+            self.page_size = DEFAULT_PAGE_SIZE
         logger.debug("Page Size: %s", self.page_size)
         self.limit_storage = MemoryStorage()
-        if "user_agent" in kwargs:
-            user_agent = kwargs["user_agent"]
-        else:
-            user_agent = " ".join(
-                [
-                    os.environ.get("APP_NAME", "etwcrons_app_unknown"),
-                    os.environ.get("SELECTED_PIPELINE", "pipeline_unknown"),
-                ]
-            )
+        if not user_agent:
+            raise ValueError("user_agent")
         logger.debug("User Agent: %s", user_agent)
         self.headers = {
             "Accept": "application/vnd.github+json",
@@ -62,6 +56,10 @@ class GithubRestApiClient:
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": user_agent,
         }
+        self.max_retries = kwargs.get("max_retries")
+        if not self.max_retries:
+            self.max_retries = DEFAULT_MAX_RETRIES
+
         rate_limit = kwargs.get("request_rate_limit")
         if not rate_limit:
             rate_limit = DEFAULT_REQUEST_RATE_LIMIT
@@ -74,14 +72,17 @@ class GithubRestApiClient:
         waiting = await self.rate_limiter.get_window_stats(self.limit_per_second)
         logger.info(f"{method=}, {waiting=}")
 
-    @retry(
-        wait=wait_random_exponential(),
-        stop=stop_after_attempt(30),
-        retry=retry_if_exception_type((RateLimitedException, TransportError)),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
-        after=after_log(logger, logging.ERROR),
-    )
     async def _get(self, url):
+        retryer = Retrying(
+            wait=wait_random_exponential(),
+            stop=stop_after_attempt(self.max_retries),
+            retry=retry_if_exception_type((RateLimitedException, TransportError)),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            after=after_log(logger, logging.ERROR),
+        )
+        return await retryer(self._get_inside_retry, url)
+
+    async def _get_inside_retry(self, url):
         can_try_hit: bool = await self.rate_limiter.test(self.limit_per_second)
         if not can_try_hit:
             raise RateLimitedException(url)

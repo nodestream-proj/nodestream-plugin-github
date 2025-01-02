@@ -19,7 +19,8 @@ ruff = "^0.8.1"
 black = "^24.10.0"
 isort = "^5.13.2"
 pytest = "^8.3.4"
-responses = "^0.25.3"
+pytest-asyncio = "^0.25.1"
+pytest-httpx = "0.34.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -35,3 +36,8 @@ profile = "black"
 [tool.poetry.plugins."nodestream.plugins"]
 projects = "nodestream_github.plugin"
 interpretations = "nodestream_github.interpretations"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+asyncio_default_fixture_loop_scope = "function"
