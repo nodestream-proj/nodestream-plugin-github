@@ -162,19 +162,8 @@ async def test_github_user_extractor(user_client, httpx_mock: HTTPXMock):
     actual = await to_list(user_client.extract_records())
 
     assert actual == [
-        {
-            "avatar_url": "https://github.com/images/error/octocat_happy.gif",
-            "events_url": "https://HOSTNAME/users/octocat/events{/privacy}",
-            "followers_url": "https://HOSTNAME/users/octocat/followers",
-            "following_url": "https://HOSTNAME/users/octocat/following{/other_user}",
-            "gists_url": "https://HOSTNAME/users/octocat/gists{/gist_id}",
-            "gravatar_id": "",
-            "html_url": "https://github.com/octocat",
-            "id": 1,
-            "login": "octocat",
-            "node_id": "MDQ6VXNlcjE=",
-            "organizations_url": "https://HOSTNAME/users/octocat/orgs",
-            "received_events_url": "https://HOSTNAME/users/octocat/received_events",
+        OCTOCAT_USER
+        | {
             "repos": [
                 {
                     "full_name": "octocat/Hello-World",
@@ -184,12 +173,6 @@ async def test_github_user_extractor(user_client, httpx_mock: HTTPXMock):
                     "permissions": {"admin": False, "pull": True, "push": False},
                     "url": "https://HOSTNAME/repos/octocat/Hello-World",
                 }
-            ],
-            "repos_url": "https://HOSTNAME/users/octocat/repos",
-            "site_admin": False,
-            "starred_url": "https://HOSTNAME/users/octocat/starred{/owner}{/repo}",
-            "subscriptions_url": "https://HOSTNAME/users/octocat/subscriptions",
-            "type": "User",
-            "url": "https://HOSTNAME/users/octocat",
+            ]
         }
     ]
