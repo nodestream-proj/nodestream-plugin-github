@@ -21,6 +21,7 @@ isort = "^5.13.2"
 pytest = "^8.3.4"
 pytest-asyncio = "^0.25.1"
 pytest-httpx = "0.34.0"
+pytest-cov = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -29,6 +30,8 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 88
 target-version = ['py310']
+preview = true
+enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "parens_for_long_if_clauses_in_case_block", "remove_redundant_guard_parens", "wrap_long_dict_values_in_parens"]
 
 [tool.isort]
 profile = "black"
@@ -41,3 +44,5 @@ interpretations = "nodestream_github.interpretations"
 log_cli = true
 log_cli_level = "DEBUG"
 asyncio_default_fixture_loop_scope = "function"
+addopts = "--cov-report=term --cov-report=json --cov-report=html --cov-report=xml --cov=nodestream_github"
+

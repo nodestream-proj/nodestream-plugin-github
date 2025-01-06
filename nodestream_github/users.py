@@ -17,11 +17,12 @@ class GithubUserExtractor(Extractor):
         async for user in self.client.get_users():
             login = user["login"]
             try:
-                user["repos"] = []
-                async for response in self.client.get(
-                    f"users/{login}/repos", {"type": "all"}
-                ):
-                    user["repos"].append(simplify_repo(response))
+                user["repos"] = [
+                    simplify_repo(response)
+                    async for response in self.client.get(
+                        f"users/{login}/repos", {"type": "all"}
+                    )
+                ]
 
             except HTTPStatusError as e:
                 logger.warning("Problem getting repos for user %s", login, exc_info=e)

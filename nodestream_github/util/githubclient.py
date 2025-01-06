@@ -5,6 +5,7 @@ An async client for accessing GitHub.
 
 import datetime
 import logging
+import types
 from enum import Enum
 
 from httpx import AsyncClient, HTTPStatusError, Request, TransportError
@@ -94,12 +95,12 @@ class GithubRestApiClient:
             url,
             headers=self.headers,
         )
-        if response.status_code == 404:
-            return None
         response.raise_for_status()
         return response
 
-    async def _generate_and_paginate(self, url, params=None):
+    async def _generate_and_paginate(
+        self, url, params=None
+    ) -> types.AsyncGeneratorType[any]:
         page_params = {"per_page": self.page_size}
         if params:
             page_params.update(params)
@@ -149,7 +150,7 @@ class GithubRestApiClient:
         async for page in self._generate_and_paginate(url):
             yield page
 
-    async def get(self, path, params=None):
+    async def get(self, path: str, params=None):
         url = f"{self.github_endpoint}/{path}"
         logger.debug("GET (paginated): %s", url)
         async for page in self._generate_and_paginate(url, params=params):
@@ -159,7 +160,11 @@ class GithubRestApiClient:
         url = f"{self.github_endpoint}/{path}"
         logger.debug("GET: %s", url)
         response = await self._get(url)
-        return response.json()
+
+        if response:
+            return response.json()
+        else:
+            return {}
 
     async def get_repos(self):
         url = f"{self.github_endpoint}/user/repos"
