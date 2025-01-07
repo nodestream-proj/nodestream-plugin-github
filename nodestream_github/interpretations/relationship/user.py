@@ -7,8 +7,10 @@ from nodestream.pipeline.value_providers import (
     ValueProvider,
 )
 
+from nodestream_github.util.types import GithubUser, SimplifiedUser
 
-def simplify_user(user):
+
+def simplify_user(user: GithubUser) -> SimplifiedUser:
     """Simplify user data.
 
     Allows us to only keep a consistent minimum for relationship data."""

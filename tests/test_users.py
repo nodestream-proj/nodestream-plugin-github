@@ -44,7 +44,7 @@ async def test_github_user_extractor(user_client, httpx_mock: HTTPXMock):
     assert actual == [
         OCTOCAT_USER
         | {
-            "repos": [{
+            "repositories": [{
                 "full_name": "octocat/Hello-World",
                 "id": 1296269,
                 "name": "Hello-World",
@@ -68,6 +68,6 @@ async def test_github_user_extractor_repo_fail(user_client, httpx_mock: HTTPXMoc
         status_code=503,
         url="https://test-example.githhub.intuit.com/users/octocat/repos?per_page=100&type=all",
     )
-    actual = await to_list(user_client.extract_records())
+    actual = [user async for user in user_client.extract_records()]
 
-    assert actual == [OCTOCAT_USER]
+    assert actual == [OCTOCAT_USER | {"repositories": []}]

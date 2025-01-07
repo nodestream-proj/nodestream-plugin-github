@@ -43,7 +43,7 @@
           two_factor_authentication: !jmespath 'two_factor_authentication'
           plan: !jmespath 'plan.name'
       - type: github-repo-relationship
-        iterate_on: !jmespath 'repos[*]'
+        iterate_on: !jmespath 'repositories[*]'
         relationship_type: IS_COLLABORATOR
         outbound: true
         relationship_properties:

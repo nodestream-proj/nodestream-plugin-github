@@ -5,8 +5,10 @@ An async client for accessing GitHub.
 
 import datetime
 import logging
+import os
 import types
 from enum import Enum
+from typing import AsyncIterator
 
 from httpx import AsyncClient, HTTPStatusError, Request, TransportError
 from limits import RateLimitItemPerMinute
@@ -21,10 +23,17 @@ from tenacity import (
     wait_random_exponential,
 )
 
+from nodestream_github.util.types import JSONType
+
 # per hour / 60 / 60
 DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 5
 DEFAULT_PAGE_SIZE = 100
+
+logging.basicConfig(
+    level=logging.getLevelName(os.environ.get("NODESTREAM_LOG_LEVEL", "INFO").upper()),
+    force=True,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -107,18 +116,14 @@ class GithubRestApiClient:
         req = Request("GET", url, params=page_params)
         url = req.url
         while url is not None:
+            logger.debug(f"{url=}")
             response = await self._get(url)
             if response is None:
                 return
             for tag in response.json():
                 yield tag
-            url = response.links.get("next")
-            if url is not None:
-                url = url["url"]
 
-    def get_repos_from_page(self, for_page=1):
-        url = f"{self.github_endpoint}/user/repos?per_page={self.page_size}&page={for_page}"
-        return self._get(url)
+            url = response.links.get("next", {}).get("url")
 
     async def get_audit_logs(
         self,
@@ -150,7 +155,7 @@ class GithubRestApiClient:
         async for page in self._generate_and_paginate(url):
             yield page
 
-    async def get(self, path: str, params=None):
+    async def get(self, path: str, params=None) -> AsyncIterator[JSONType]:
         url = f"{self.github_endpoint}/{path}"
         logger.debug("GET (paginated): %s", url)
         async for page in self._generate_and_paginate(url, params=params):
@@ -165,42 +170,6 @@ class GithubRestApiClient:
             return response.json()
         else:
             return {}
-
-    async def get_repos(self):
-        url = f"{self.github_endpoint}/user/repos"
-        async for page in self._generate_and_paginate(url):
-            yield page
-
-    async def get_repo_branches(self, repo_with_owner):
-        url = f"{self.github_endpoint}/repos/{repo_with_owner}/branches"
-        async for page in self._generate_and_paginate(url):
-            yield page
-
-    async def get_repo_collaborators(self, repo_with_owner):
-        url = f"{self.github_endpoint}/repos/{repo_with_owner}/collaborators"
-        async for page in self._generate_and_paginate(url):
-            yield page
-
-    async def get_repo_releases(self, repo_with_owner):
-        url = f"{self.github_endpoint}/repos/{repo_with_owner}/releases"
-        async for page in self._generate_and_paginate(url):
-            yield page
-
-    async def get_repo_tags(self, repo_with_owner):
-        url = f"{self.github_endpoint}/repos/{repo_with_owner}/tags"
-        async for page in self._generate_and_paginate(url):
-            yield page
-
-    async def get_user(self, username):
-        url = f"{self.github_endpoint}/users/{username}"
-        response = await self._get(url)
-        return response.json()
-
-    async def get_users(self):
-        url = f"{self.github_endpoint}/users"
-        async for page in self._generate_and_paginate(url):
-            yield page
-        await self.log_metrics("get_users")
 
     # API Call to get branch protection settings for a given org+repo+branch
     async def get_repo_branch_protection(self, repo_with_owner, branch):

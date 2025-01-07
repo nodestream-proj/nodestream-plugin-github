@@ -39,7 +39,6 @@ BASE_EXPECTED_GITHUB_ORG = {
     "issues_url": "https://HOSTNAME/orgs/github/issues",
     "location": "San Francisco",
     "login": "github",
-    "members": [],
     "members_allowed_repository_creation_type": "all",
     "members_can_create_internal_repositories": False,
     "members_can_create_pages": True,
@@ -116,11 +115,20 @@ async def test_orgs_continue_through_org_member_status_fail(
     gh_rest_mock.get_org("github", status_code=200, json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org("github", json=[], role="admin", status_code=404)
+    gh_rest_mock.get_members_for_org(
+        "github", json=[TURBO_USER], role="member", status_code=200
+    )
     gh_rest_mock.get_repos_for_org("github", json=[HELLO_WORLD_REPO])
 
     assert [record async for record in org_client.extract_records()] == [
         BASE_EXPECTED_GITHUB_ORG
         | {
+            "members": [{
+                "id": 2,
+                "login": "turbo",
+                "node_id": "MDQ6VXNlcjI=",
+                "role": "member",
+            }],
             "repositories": [{
                 "full_name": "octocat/Hello-World",
                 "id": 1296269,
@@ -128,7 +136,7 @@ async def test_orgs_continue_through_org_member_status_fail(
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
                 "permissions": {"admin": False, "pull": True, "push": False},
                 "url": "https://HOSTNAME/repos/octocat/Hello-World",
-            }]
+            }],
         }
     ]
 

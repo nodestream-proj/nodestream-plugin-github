@@ -7,8 +7,10 @@ from nodestream.pipeline.value_providers import (
     ValueProvider,
 )
 
+from nodestream_github.util.types import SimplifiedRepo
 
-def simplify_repo(repo):
+
+def simplify_repo(repo) -> SimplifiedRepo:
     """Simplify repo data.
 
     Allows us to only keep a consistent minimum for relationship data."""
