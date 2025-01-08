@@ -61,7 +61,9 @@ class CollectWhichRepos:
 
 class GithubReposExtractor(Extractor):
     def __init__(
-        self, collecting: CollectWhichRepos | dict[str, any] | None = None, **kwargs
+        self,
+        collecting: CollectWhichRepos | dict[str, any] | None = None,
+        **kwargs,
     ):
         if isinstance(collecting, CollectWhichRepos):
             self.collecting = collecting
@@ -72,6 +74,7 @@ class GithubReposExtractor(Extractor):
         self.client = GithubRestApiClient(**kwargs)
 
     async def extract_records(self) -> AsyncIterator[RepositoryRecord]:
+        logger.info("collecting: %s", self.collecting)
         if self.collecting.all_public:
             async for repo in self._fetch_public_repos():
                 yield await self._extract_repo(repo)
@@ -239,7 +242,9 @@ class GithubReposExtractor(Extractor):
         repository permissions (read)
         """
         try:
-            async for repo in self.client.get(f"orgs/{login}/repos", {type: repo_type}):
+            async for repo in self.client.get(
+                f"orgs/{login}/repos", {"type": repo_type}
+            ):
                 yield repo
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
@@ -251,14 +256,15 @@ class GithubReposExtractor(Extractor):
                     exc_info=True,
                 )
             else:
-                logger.warning("Problem getting org repos for '%s': %s", login, e)
+                logger.warning(
+                    "Problem getting org repos for '%s': %s", login, exc_info=True
+                )
 
-        except httpx.HTTPError as e:
+        except httpx.HTTPError:
             logger.warning(
-                "Major problem getting org repo info for '%s' (%s): %s",
+                "Major problem getting org repo info for '%s'",
                 login,
-                e.request.url,
-                e,
+                exc_info=True,
             )
 
     async def _fetch_repos_by_user(self) -> AsyncIterator[GithubRepo]:
@@ -283,7 +289,7 @@ class GithubReposExtractor(Extractor):
         """Fetches repositories for a user"""
         try:
             async for repo in self.client.get(
-                f"users/{login}/repos", {type: repo_type}
+                f"users/{login}/repos", {"type": repo_type}
             ):
                 yield repo
         except httpx.HTTPStatusError as e:

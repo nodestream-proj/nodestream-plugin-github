@@ -1,3 +1,10 @@
+"""
+Nodestream Extractor that creates GitHub team nodes from the GitHub REST API.
+
+Developed using Enterprise Server 3.12
+https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
+"""
+
 from typing import AsyncIterator
 
 import httpx

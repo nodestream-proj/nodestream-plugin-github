@@ -31,29 +31,29 @@ class _CustomLogger(logging.Filterer):
             'Fine-grained access tokens must include the "%s" %s permissions (%s)',
             endpoint_title,
             current_item,
-            permission_name,
-            permission_category,
+            permission_name.title(),
+            permission_category.title(),
             role,
             kwargs,
         )
 
     def debug(self, msg, *args, **kwargs):
-        self.logger.debug(msg, *args, **kwargs)
+        self.logger.debug(msg, stacklevel=2, *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
-        self.logger.warning(msg, *args, **kwargs)
+        self.logger.warning(msg, stacklevel=2, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
-        self.logger.info(msg, *args, **kwargs)
+        self.logger.info(msg, stacklevel=2, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        self.logger.error(msg, *args, **kwargs)
+        self.logger.error(msg, stacklevel=2, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
-        self.logger.critical(msg, *args, **kwargs)
+        self.logger.critical(msg, stacklevel=2, *args, **kwargs)
 
     def log(self, level, msg, *args, **kwargs):
-        self.logger.log(level, msg, *args, **kwargs)
+        self.logger.log(level, msg, stacklevel=2, *args, **kwargs)
 
 
 def init_logger(name: str) -> _CustomLogger:

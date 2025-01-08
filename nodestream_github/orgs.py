@@ -77,16 +77,14 @@ class GithubOrganizationsExtractor(Extractor):
                 yield enhanced_org
 
     async def _extract_organization(self, login) -> OrgRecord | None:
-        full_org_info = await self._fetch_full_org(login)
-        if full_org_info:
-            full_org_info["members"] = [
-                member async for member in self._fetch_all_members(login)
-            ]
+        full_org = await self._fetch_full_org(login)
+        if not full_org:
+            return None
 
-            full_org_info["repositories"] = [
-                repo async for repo in self._fetch_repos(login)
-            ]
-        return full_org_info
+        full_org["members"] = [user async for user in self._fetch_all_members(login)]
+
+        full_org["repositories"] = [repo async for repo in self._fetch_repos(login)]
+        return full_org
 
     async def _fetch_full_org(self, login: str) -> GithubOrg:
         """Fetches the complete org record.

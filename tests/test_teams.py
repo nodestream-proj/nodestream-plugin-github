@@ -23,7 +23,7 @@ def team_client():
 async def test_extract_records(
     team_client: GithubTeamsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY])
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
     gh_rest_mock.list_teams_for_org("github", json=[JUSTICE_LEAGUE_TEAM_SUMMARY])
     gh_rest_mock.get_team(
         org_login="github",

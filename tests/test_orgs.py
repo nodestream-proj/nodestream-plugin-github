@@ -96,7 +96,7 @@ def org_client():
 async def test_orgs_continue_through_org_detail_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
     gh_rest_mock.get_org("github", status_code=404)
     gh_rest_mock.get_org("example", json=EXAMPLE_ORG)
 
@@ -111,7 +111,7 @@ async def test_orgs_continue_through_org_detail_status_fail(
 async def test_orgs_continue_through_org_member_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY])
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
     gh_rest_mock.get_org("github", status_code=200, json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org("github", json=[], role="admin", status_code=404)
@@ -145,8 +145,8 @@ async def test_orgs_continue_through_org_member_status_fail(
 async def test_orgs_continue_through_org_member_status_fail_second(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", status_code=200, json=GITHUB_ORG)
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
+    gh_rest_mock.get_org("github", json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
     gh_rest_mock.get_members_for_org("github", json=[], role="member", status_code=404)
@@ -169,7 +169,7 @@ async def test_orgs_continue_through_org_member_status_fail_second(
 async def test_orgs_continue_through_org_repo_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY])
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
     gh_rest_mock.get_org("github", status_code=200, json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
@@ -193,7 +193,7 @@ async def test_orgs_continue_through_org_repo_status_fail(
 async def test_orgs_continue_through_org_detail_connection_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
     gh_rest_mock.add_exception(
         exception=httpx.ReadTimeout("Mock Timeout Exception"),
         url=f"{DEFAULT_ENDPOINT}/orgs/github",
@@ -211,7 +211,7 @@ async def test_orgs_continue_through_org_detail_connection_fail(
 async def test_get_orgs(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
-    gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY])
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
     gh_rest_mock.get_org("github", json=GITHUB_ORG)
     gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
     gh_rest_mock.get_members_for_org("github", json=[TURBO_USER], role="member")
