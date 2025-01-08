@@ -5,7 +5,6 @@ An async client for accessing GitHub.
 
 import datetime
 import logging
-import os
 import types
 from enum import Enum
 from typing import AsyncIterator
@@ -15,7 +14,7 @@ from limits import RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter
 from tenacity import (
-    Retrying,
+    AsyncRetrying,
     after_log,
     before_sleep_log,
     retry_if_exception_type,
@@ -23,19 +22,16 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from nodestream_github.util.types import JSONType
+from nodestream_github.types import JSONType
+from nodestream_github.util.logutil import init_logger
 
 # per hour / 60 / 60
 DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60)
-DEFAULT_MAX_RETRIES = 5
+DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
 
-logging.basicConfig(
-    level=logging.getLevelName(os.environ.get("NODESTREAM_LOG_LEVEL", "INFO").upper()),
-    force=True,
-)
 
-logger = logging.getLogger(__name__)
+logger = init_logger(__name__)
 
 
 class AllowedAuditActionsPhrases(Enum):
@@ -49,6 +45,7 @@ class RateLimitedException(Exception):
 
 class GithubRestApiClient:
     def __init__(self, auth_token, github_endpoint, user_agent, **kwargs):
+        logger.debug("client kwargs: %s", kwargs)
         self.auth_token = auth_token
         self.github_endpoint = github_endpoint
         if "page_size" in kwargs:
@@ -66,14 +63,15 @@ class GithubRestApiClient:
             "X-GitHub-Api-Version": "2022-11-28",
             "User-Agent": user_agent,
         }
-        self.max_retries = kwargs.get("max_retries")
-        if not self.max_retries:
+        self.max_retries = kwargs.get("max_retries", -1)
+        if self.max_retries < 0:
             self.max_retries = DEFAULT_MAX_RETRIES
+        logger.debug("Max retries: %s", self.max_retries)
 
-        rate_limit = kwargs.get("request_rate_limit")
-        if not rate_limit:
+        rate_limit = kwargs.get("request_rate_limit", -1)
+        if rate_limit < 0:
             rate_limit = DEFAULT_REQUEST_RATE_LIMIT
-        logger.warning("RateLimit per minute: %s", rate_limit)
+        logger.debug("RateLimit per minute: %s", rate_limit)
         self.limit_per_second = RateLimitItemPerMinute(rate_limit, 1)
         self.rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self.session = AsyncClient()
@@ -82,15 +80,19 @@ class GithubRestApiClient:
         waiting = await self.rate_limiter.get_window_stats(self.limit_per_second)
         logger.info(f"{method=}, {waiting=}")
 
-    async def _get(self, url):
-        retryer = Retrying(
+    @property
+    def retryer(self):
+        return AsyncRetrying(
             wait=wait_random_exponential(),
             stop=stop_after_attempt(self.max_retries),
             retry=retry_if_exception_type((RateLimitedException, TransportError)),
             before_sleep=before_sleep_log(logger, logging.WARNING),
-            after=after_log(logger, logging.ERROR),
+            after=after_log(logger, logging.WARNING),
+            reraise=True,
         )
-        return await retryer(self._get_inside_retry, url)
+
+    async def _get(self, url):
+        return await self.retryer(self._get_inside_retry, url)
 
     async def _get_inside_retry(self, url):
         can_try_hit: bool = await self.rate_limiter.test(self.limit_per_second)

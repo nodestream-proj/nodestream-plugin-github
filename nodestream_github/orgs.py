@@ -1,4 +1,3 @@
-import logging
 from typing import AsyncIterator
 
 from httpx import HTTPError, HTTPStatusError
@@ -12,10 +11,11 @@ from nodestream_github.interpretations.relationship.user import (
     SimplifiedUser,
     simplify_user,
 )
+from nodestream_github.types import GithubOrg, GithubOrgSummary, OrgRecord
 from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.types import GithubOrg, GithubOrgSummary, OrgRecord
+from nodestream_github.util.logutil import init_logger
 
-logger = logging.getLogger(__name__)
+logger = init_logger(__name__)
 
 
 class GithubOrganizationsExtractor(Extractor):

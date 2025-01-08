@@ -107,19 +107,15 @@ class GithubHttpxMock:
             json=json,
         )
 
-    def get_members_for_team(
-        self, org_login: str, team_slug: str, role: str, json: list[dict[str, any]]
-    ):
+    def get_members_for_team(self, team_id: int, role: str, json: list[dict[str, any]]):
         self.add_response(
-            url=f"{self.endpoint}/orgs/{org_login}/teams/{team_slug}/members?per_page={self.per_page}&role={role}",
+            url=f"{self.endpoint}/teams/{team_id}/members?per_page={self.per_page}&role={role}",
             json=json,
         )
 
-    def get_repos_for_team(
-        self, org_login: str, team_slug: str, json: list[dict[str, any]]
-    ):
+    def get_repos_for_team(self, team_id: int, json: list[dict[str, any]]):
         self.add_response(
-            url=f"{self.endpoint}/orgs/{org_login}/teams/{team_slug}/repos?per_page={self.per_page}",
+            url=f"{self.endpoint}/teams/{team_id}/repos?per_page={self.per_page}",
             json=json,
         )
 

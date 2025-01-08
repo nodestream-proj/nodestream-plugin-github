@@ -7,7 +7,7 @@ from nodestream.pipeline.value_providers import (
     ValueProvider,
 )
 
-from nodestream_github.util.types import GithubUser, SimplifiedUser
+from nodestream_github.types import GithubUser, SimplifiedUser
 
 
 def simplify_user(user: GithubUser) -> SimplifiedUser:

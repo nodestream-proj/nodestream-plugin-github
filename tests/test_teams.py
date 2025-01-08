@@ -31,20 +31,17 @@ async def test_extract_records(
         json=JUSTICE_LEAGUE_TEAM,
     )
     gh_rest_mock.get_members_for_team(
-        org_login="github",
-        team_slug="justice-league",
+        team_id=1,
         role="member",
         json=[OCTOCAT_USER],
     )
     gh_rest_mock.get_members_for_team(
-        org_login="github",
-        team_slug="justice-league",
+        team_id=1,
         role="maintainer",
         json=[TURBO_USER],
     )
     gh_rest_mock.get_repos_for_team(
-        org_login="github",
-        team_slug="justice-league",
+        team_id=1,
         json=[HELLO_WORLD_REPO],
     )
 

@@ -1,4 +1,3 @@
-import logging
 from typing import AsyncIterator
 
 from httpx import HTTPError, HTTPStatusError
@@ -6,16 +5,17 @@ from nodestream.pipeline import Extractor
 
 from nodestream_github.interpretations.relationship.repository import simplify_repo
 from nodestream_github.interpretations.relationship.user import simplify_user
-from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.types import (
+from nodestream_github.types import (
     GithubTeam,
     GithubTeamSummary,
     SimplifiedRepo,
     SimplifiedUser,
     TeamRecord,
 )
+from nodestream_github.util.githubclient import GithubRestApiClient
+from nodestream_github.util.logutil import init_logger
 
-logger = logging.getLogger(__name__)
+logger = init_logger(__name__)
 
 
 class GithubTeamsExtractor(Extractor):
@@ -29,26 +29,32 @@ class GithubTeamsExtractor(Extractor):
                 yield team
 
     async def _fetch_members_by_role(
-        self, login: str, slug: str, role: str
+        self, team: GithubTeam, role: str
     ) -> AsyncIterator[SimplifiedUser]:
         try:
             async for member in self.client.get(
-                f"orgs/{login}/teams/{slug}/members", {"role": role}
+                f"teams/{team["id"]}/members", {"role": role}
             ):
                 yield simplify_user(member) | {"role": role}
-        except HTTPStatusError as e:
+        except HTTPStatusError:
             logger.warning(
-                "Problem getting %s members for team '%s/%s': %s", role, login, slug, e
+                "Problem getting %s members for team '%s/%s'",
+                role,
+                team["organization"]["login"],
+                team["id"],
+                exc_info=True,
             )
 
-    async def _fetch_members(
-        self, login: str, slug: str
-    ) -> AsyncIterator[SimplifiedUser]:
-        logger.debug("Getting members for team %s/%s", login, slug)
+    async def _fetch_members(self, team: GithubTeam) -> AsyncIterator[SimplifiedUser]:
+        logger.debug(
+            "Getting members for team %s/%s",
+            team["organization"]["login"],
+            team["slug"],
+        )
 
-        async for member in self._fetch_members_by_role(login, slug, "member"):
+        async for member in self._fetch_members_by_role(team, "member"):
             yield member
-        async for member in self._fetch_members_by_role(login, slug, "maintainer"):
+        async for member in self._fetch_members_by_role(team, "maintainer"):
             yield member
 
     async def _fetch_teams(self, login):
@@ -63,21 +69,22 @@ class GithubTeamsExtractor(Extractor):
         except HTTPError as e:
             logger.warning("Major problem getting team info for org '%s': %s", login, e)
 
-    async def _fetch_repos(
-        self, login: str, slug: str
-    ) -> AsyncIterator[SimplifiedRepo]:
+    async def _fetch_repos(self, team: GithubTeam) -> AsyncIterator[SimplifiedRepo]:
         try:
-            async for repo in self.client.get(f"orgs/{login}/teams/{slug}/repos"):
+            async for repo in self.client.get(f"teams/{team["id"]}/repos"):
                 yield simplify_repo(repo)
-        except HTTPStatusError as e:
-            logger.warning("Problem getting repos for team '%s/%s': %s", login, slug, e)
+        except HTTPStatusError:
+            logger.warning(
+                "Problem getting repos for team '%s/%s': %s",
+                team["organization"]["login"],
+                team["slug"],
+                exc_info=True,
+            )
 
     async def _fetch_team(
         self, login: str, team_summary: GithubTeamSummary
     ) -> GithubTeam:
         team = await self.client.get_item(f"orgs/{login}/teams/{team_summary['slug']}")
-        team["members"] = [
-            member async for member in self._fetch_members(login, team["slug"])
-        ]
-        team["repos"] = [repo async for repo in self._fetch_repos(login, team["slug"])]
+        team["members"] = [member async for member in self._fetch_members(team)]
+        team["repos"] = [repo async for repo in self._fetch_repos(team)]
         return team

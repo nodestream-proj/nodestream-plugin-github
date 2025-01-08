@@ -1,14 +1,14 @@
-import logging
 from typing import AsyncIterator
 
 from httpx import HTTPStatusError
 from nodestream.pipeline import Extractor
 
 from nodestream_github.interpretations.relationship.repository import simplify_repo
+from nodestream_github.types import SimplifiedRepo, UserRecord
 from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.types import SimplifiedRepo, UserRecord
+from nodestream_github.util.logutil import init_logger
 
-logger = logging.getLogger(__name__)
+logger = init_logger(__name__)
 
 
 class GithubUserExtractor(Extractor):

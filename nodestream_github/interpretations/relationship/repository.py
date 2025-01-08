@@ -7,7 +7,7 @@ from nodestream.pipeline.value_providers import (
     ValueProvider,
 )
 
-from nodestream_github.util.types import SimplifiedRepo
+from nodestream_github.types import SimplifiedRepo
 
 
 def simplify_repo(repo) -> SimplifiedRepo:

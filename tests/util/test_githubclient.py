@@ -8,10 +8,6 @@ from nodestream_github.util.githubclient import (
 )
 from tests.mocks.githubrest import DEFAULT_ENDPOINT
 
-# @pytest.fixture
-# def github_client():
-#     return GithubRestApiClient(auth_token="test-auth-token", github_endpoint=DEFAULT_ENDPOINT, user_agent="test-user-agent", max_retries=2)
-
 
 @pytest.mark.parametrize("status_code", [400, 401, 420, 500, 502, 503])
 @pytest.mark.asyncio
@@ -20,11 +16,13 @@ async def test_do_not_retry_bad_status(httpx_mock: HTTPXMock, status_code):
         auth_token="test-auth-token",
         github_endpoint=DEFAULT_ENDPOINT,
         user_agent="test-user-agent",
-        max_retries=2,
+        max_retries=5,
     )
 
     httpx_mock.add_response(
-        url=f"{DEFAULT_ENDPOINT}/example?per_page=100", status_code=status_code
+        url=f"{DEFAULT_ENDPOINT}/example?per_page=100",
+        status_code=status_code,
+        is_reusable=False,
     )
 
     with pytest.raises(httpx.HTTPStatusError):

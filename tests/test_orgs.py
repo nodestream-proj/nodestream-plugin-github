@@ -196,6 +196,8 @@ async def test_orgs_continue_through_org_detail_connection_fail(
     gh_rest_mock.all_orgs([GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
     gh_rest_mock.add_exception(
         exception=httpx.ReadTimeout("Mock Timeout Exception"),
+        url=f"{DEFAULT_ENDPOINT}/orgs/github",
+        is_reusable=True,
     )
     gh_rest_mock.get_org("example", json=EXAMPLE_ORG)
     gh_rest_mock.get_members_for_org("example", json=[], role="admin")
