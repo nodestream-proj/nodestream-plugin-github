@@ -9,21 +9,14 @@ from nodestream.pipeline.value_providers import (
 
 from nodestream_github.types import GithubUser, SimplifiedUser
 
+_USER_KEYS_TO_PRESERVE = ["id", "login", "node_id", "role", "permissions"]
+
 
 def simplify_user(user: GithubUser) -> SimplifiedUser:
     """Simplify user data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    data = {
-        "id": user["id"],
-        "login": user["login"],
-        "node_id": user["node_id"],
-    }
-    if "role" in user:
-        data["role"] = user["role"]
-    if "permissions" in user:
-        data["permissions"] = user["permissions"]
-    return data
+    return {k: user[k] for k in _USER_KEYS_TO_PRESERVE if k in user}
 
 
 class UserRelationshipInterpretation(

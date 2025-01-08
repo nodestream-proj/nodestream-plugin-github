@@ -9,21 +9,14 @@ from nodestream.pipeline.value_providers import (
 
 from nodestream_github.types import SimplifiedRepo
 
+_REPO_KEYS_TO_PRESERVE = ["id", "node_id", "name", "full_name", "url", "permissions"]
+
 
 def simplify_repo(repo) -> SimplifiedRepo:
     """Simplify repo data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    data = {
-        "id": repo["id"],
-        "node_id": repo["node_id"],
-        "name": repo["name"],
-        "full_name": repo["full_name"],
-        "url": repo["url"],
-    }
-    if "permissions" in repo:
-        data["permissions"] = repo["permissions"]
-    return data
+    return {k: repo[k] for k in _REPO_KEYS_TO_PRESERVE if k in repo}
 
 
 class RepositoryRelationshipInterpretation(
