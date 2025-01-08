@@ -23,7 +23,8 @@ from tenacity import (
 )
 
 from nodestream_github.types import JSONType
-from nodestream_github.util.logutil import init_logger
+
+from .logutil import init_logger
 
 # per hour / 60 / 60
 DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60)

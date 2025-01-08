@@ -3,10 +3,9 @@ from typing import AsyncIterator
 from httpx import HTTPStatusError
 from nodestream.pipeline import Extractor
 
-from nodestream_github.interpretations.relationship.repository import simplify_repo
-from nodestream_github.types import SimplifiedRepo, UserRecord
-from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.logutil import init_logger
+from .interpretations.relationship.repository import simplify_repo
+from .types import SimplifiedRepo, UserRecord
+from .util import GithubRestApiClient, init_logger
 
 logger = init_logger(__name__)
 

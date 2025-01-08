@@ -3,16 +3,9 @@ from typing import AsyncIterator
 from httpx import HTTPStatusError
 from nodestream.pipeline import Extractor
 
-from nodestream_github.interpretations.relationship.user import simplify_user
-from nodestream_github.types import (
-    GithubRepo,
-    LanguageRecord,
-    RepositoryRecord,
-    SimplifiedUser,
-    Webhook,
-)
-from nodestream_github.util.githubclient import GithubRestApiClient
-from nodestream_github.util.logutil import init_logger
+from .interpretations.relationship.user import simplify_user
+from .types import GithubRepo, LanguageRecord, RepositoryRecord, SimplifiedUser, Webhook
+from .util import GithubRestApiClient, init_logger
 
 logger = init_logger(__name__)
 
