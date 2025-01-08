@@ -48,7 +48,7 @@ async def test_pull_org_repos(gh_rest_mock):
 
 
 @pytest.mark.asyncio
-async def test_pull_org_repos(gh_rest_mock):
+async def test_pull_user_repos(gh_rest_mock):
     extractor = GithubReposExtractor(
         auth_token="test-token",
         github_endpoint=DEFAULT_ENDPOINT,

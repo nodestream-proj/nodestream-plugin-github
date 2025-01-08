@@ -119,7 +119,7 @@ class GithubReposExtractor(Extractor):
             async for lang_resp in self.client.get(f"repos/{repo_full_name}/languages"):
                 yield {"name": lang_resp}
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == httpx.codes.FORBIDDEN:
                 logger.permission_warning(
                     "repo languages",
                     repo_full_name,
@@ -152,7 +152,7 @@ class GithubReposExtractor(Extractor):
                 yield simplify_user(collab_resp)
 
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == httpx.codes.FORBIDDEN:
                 logger.permission_warning(
                     "repo collaborators",
                     repo_full_name,
@@ -182,7 +182,7 @@ class GithubReposExtractor(Extractor):
             async for wh_resp in self.client.get(f"repos/{repo_full_name}/webhooks"):
                 yield wh_resp
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == httpx.codes.FORBIDDEN:
                 logger.permission_warning(
                     "repo webhook",
                     repo_full_name,
@@ -247,7 +247,7 @@ class GithubReposExtractor(Extractor):
             ):
                 yield repo
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == httpx.codes.FORBIDDEN:
                 logger.permission_warning(
                     "org repos",
                     login,
@@ -293,7 +293,7 @@ class GithubReposExtractor(Extractor):
             ):
                 yield repo
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == httpx.codes.FORBIDDEN:
                 logger.permission_warning(
                     "user repos",
                     login,

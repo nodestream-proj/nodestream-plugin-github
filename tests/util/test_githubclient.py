@@ -9,7 +9,19 @@ from nodestream_github.util.githubclient import (
 from tests.mocks.githubrest import DEFAULT_ENDPOINT
 
 
-@pytest.mark.parametrize("status_code", [400, 401, 420, 500, 502, 503])
+@pytest.mark.parametrize(
+    "status_code",
+    [
+        httpx.codes.BAD_REQUEST,
+        httpx.codes.UNAUTHORIZED,
+        420,
+        httpx.codes.INTERNAL_SERVER_ERROR,
+        httpx.codes.BAD_GATEWAY,
+        httpx.codes.SERVICE_UNAVAILABLE,
+        httpx.codes.GATEWAY_TIMEOUT,
+        httpx.codes.BAD_GATEWAY,
+    ],
+)
 @pytest.mark.asyncio
 async def test_do_not_retry_bad_status(httpx_mock: HTTPXMock, status_code):
     client = GithubRestApiClient(
@@ -40,7 +52,7 @@ async def test_retry_ratelimited(httpx_mock: HTTPXMock):
     )
 
     httpx_mock.add_response(
-        url=f"{DEFAULT_ENDPOINT}/example?per_page=100", status_code=200, json=["a", "b"]
+        url=f"{DEFAULT_ENDPOINT}/example?per_page=100", json=["a", "b"]
     )
 
     with pytest.raises(RateLimitedException):
@@ -60,7 +72,6 @@ async def test_pagination(httpx_mock: HTTPXMock):
 
     httpx_mock.add_response(
         url=f"{DEFAULT_ENDPOINT}/example?per_page=2",
-        status_code=200,
         json=["a", "b"],
         is_reusable=False,
         headers={
@@ -69,7 +80,6 @@ async def test_pagination(httpx_mock: HTTPXMock):
     )
     httpx_mock.add_response(
         url=f"{DEFAULT_ENDPOINT}/example?per_page=2&page=1",
-        status_code=200,
         json=["c", "d"],
         is_reusable=False,
     )

@@ -143,7 +143,7 @@ class GithubOrganizationsExtractor(Extractor):
             async for response in self.client.get(f"orgs/{login}/repos"):
                 yield simplify_repo(response)
         except HTTPStatusError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == httpx.codes.FORBIDDEN:
                 logger.permission_warning(
                     "org repos",
                     login,

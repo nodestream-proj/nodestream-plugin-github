@@ -97,7 +97,7 @@ async def test_orgs_continue_through_org_detail_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", status_code=404)
+    gh_rest_mock.get_org("github", status_code=httpx.codes.NOT_FOUND)
     gh_rest_mock.get_org("example", json=EXAMPLE_ORG)
 
     gh_rest_mock.get_members_for_org("example", json=[], role="admin")
@@ -112,11 +112,18 @@ async def test_orgs_continue_through_org_member_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", status_code=200, json=GITHUB_ORG)
+    gh_rest_mock.get_org("github", json=GITHUB_ORG)
 
-    gh_rest_mock.get_members_for_org("github", json=[], role="admin", status_code=404)
     gh_rest_mock.get_members_for_org(
-        "github", json=[TURBO_USER], role="member", status_code=200
+        "github",
+        json=[],
+        role="admin",
+        status_code=httpx.codes.NOT_FOUND,
+    )
+    gh_rest_mock.get_members_for_org(
+        "github",
+        role="member",
+        json=[TURBO_USER],
     )
     gh_rest_mock.get_repos_for_org("github", json=[HELLO_WORLD_REPO])
 
@@ -149,7 +156,12 @@ async def test_orgs_continue_through_org_member_status_fail_second(
     gh_rest_mock.get_org("github", json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
-    gh_rest_mock.get_members_for_org("github", json=[], role="member", status_code=404)
+    gh_rest_mock.get_members_for_org(
+        "github",
+        json=[],
+        role="member",
+        status_code=httpx.codes.NOT_FOUND,
+    )
     gh_rest_mock.get_repos_for_org("github", json=[])
 
     assert [record async for record in org_client.extract_records()] == [
@@ -170,11 +182,15 @@ async def test_orgs_continue_through_org_repo_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", status_code=200, json=GITHUB_ORG)
+    gh_rest_mock.get_org("github", json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
     gh_rest_mock.get_members_for_org("github", json=[], role="member")
-    gh_rest_mock.get_repos_for_org("github", json=[], status_code=404)
+    gh_rest_mock.get_repos_for_org(
+        "github",
+        json=[],
+        status_code=httpx.codes.NOT_FOUND,
+    )
 
     assert [record async for record in org_client.extract_records()] == [
         BASE_EXPECTED_GITHUB_ORG

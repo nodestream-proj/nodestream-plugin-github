@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 
+import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
@@ -29,17 +30,15 @@ async def to_list(async_generator: AsyncGenerator) -> list:
 async def test_github_user_extractor(user_client, httpx_mock: HTTPXMock):
 
     httpx_mock.add_response(
-        status_code=200,
         url="https://test-example.githhub.intuit.com/users?per_page=100",
         json=[OCTOCAT_USER],
     )
     httpx_mock.add_response(
-        status_code=200,
         url="https://test-example.githhub.intuit.com/users/octocat/repos?per_page=100&type=all",
         json=[HELLO_WORLD_REPO],
     )
 
-    actual = await to_list(user_client.extract_records())
+    actual = [record async for record in user_client.extract_records()]
 
     assert actual == [
         OCTOCAT_USER
@@ -60,12 +59,11 @@ async def test_github_user_extractor(user_client, httpx_mock: HTTPXMock):
 async def test_github_user_extractor_repo_fail(user_client, httpx_mock: HTTPXMock):
 
     httpx_mock.add_response(
-        status_code=200,
         url="https://test-example.githhub.intuit.com/users?per_page=100",
         json=[OCTOCAT_USER],
     )
     httpx_mock.add_response(
-        status_code=503,
+        status_code=httpx.codes.SERVICE_UNAVAILABLE,
         url="https://test-example.githhub.intuit.com/users/octocat/repos?per_page=100&type=all",
     )
     actual = [user async for user in user_client.extract_records()]
