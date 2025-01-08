@@ -16,6 +16,7 @@ def repo_client():
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,
+        collecting={"all_public": True, "all_org": False, "all_user": False},
     )
 
 
