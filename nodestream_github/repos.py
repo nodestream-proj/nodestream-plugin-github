@@ -14,26 +14,9 @@ from nodestream.pipeline import Extractor
 from .interpretations.relationship.user import simplify_user
 from .types import GithubRepo, LanguageRecord, RepositoryRecord, SimplifiedUser, Webhook
 from .util import GithubRestApiClient, init_logger
+from .util.permissions import PermissionCategory, PermissionName
 
 logger = init_logger(__name__)
-
-
-def _permission_warning_fine_grained(
-    endpoint_title: str,
-    repo_full_name: str,
-    permission_name: str,
-    role: str = "read",
-    **kwargs,
-):
-    logger.warning(
-        "Current token cannot access %s permissions for %s. "
-        'Fine-grained access tokens must include the "%s" repository permissions (%s)',
-        endpoint_title,
-        repo_full_name,
-        permission_name,
-        role,
-        kwargs,
-    )
 
 
 def _dict_val_to_bool(d: dict[str, any], key: str, default: bool = False) -> bool:
@@ -94,11 +77,11 @@ class GithubReposExtractor(Extractor):
                 yield await self._extract_repo(repo)
 
         if self.collecting.org_any:
-            async for repo in self._fetch_org_repos():
+            async for repo in self._fetch_repos_by_org():
                 yield await self._extract_repo(repo)
 
         if self.collecting.user_any:
-            async for repo in self._fetch_user_repos():
+            async for repo in self._fetch_repos_by_user():
                 yield await self._extract_repo(repo)
 
     async def _extract_repo(self, repo: GithubRepo) -> RepositoryRecord:
@@ -134,8 +117,12 @@ class GithubReposExtractor(Extractor):
                 yield {"name": lang_resp}
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                _permission_warning_fine_grained(
-                    "repo languages", repo_full_name, "Metadata", exc_info=True,
+                logger.permission_warning(
+                    "repo languages",
+                    repo_full_name,
+                    PermissionName.METADATA,
+                    PermissionCategory.REPO,
+                    exc_info=True,
                 )
             else:
                 logger.warning(
@@ -152,17 +139,23 @@ class GithubReposExtractor(Extractor):
         """Try to get collaborator data for this repo.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/collaborators/collaborators?apiVersion=2022-11-28
-        
+
         Fine-grained access tokens require the "Metadata" repository permissions (read)
         """
         try:
-            async for collab_resp in self.client.get(f"repos/{repo_full_name}/collaborators"):
+            async for collab_resp in self.client.get(
+                f"repos/{repo_full_name}/collaborators"
+            ):
                 yield simplify_user(collab_resp)
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                _permission_warning_fine_grained(
-                    "repo collaborators", repo_full_name, "Metadata", exc_info=True
+                logger.permission_warning(
+                    "repo collaborators",
+                    repo_full_name,
+                    PermissionName.METADATA,
+                    PermissionCategory.REPO,
+                    exc_info=True,
                 )
             else:
                 logger.warning(
@@ -187,8 +180,12 @@ class GithubReposExtractor(Extractor):
                 yield wh_resp
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                _permission_warning_fine_grained(
-                    "repo webhook", repo_full_name, "Webhooks", exc_info=True
+                logger.permission_warning(
+                    "repo webhook",
+                    repo_full_name,
+                    PermissionName.WEBHOOKS,
+                    PermissionCategory.REPO,
+                    exc_info=True,
                 )
             else:
                 logger.warning(
@@ -217,7 +214,7 @@ class GithubReposExtractor(Extractor):
         async for repo in self.client.get("repositories"):
             yield repo
 
-    async def _fetch_org_repos(self) -> AsyncIterator[GithubRepo]:
+    async def _fetch_repos_by_org(self) -> AsyncIterator[GithubRepo]:
         logger.info("Fetching org repos... %s", self.collecting)
         async for org in self.client.get("organizations"):
             if self.collecting.org_public:
@@ -246,8 +243,12 @@ class GithubReposExtractor(Extractor):
                 yield repo
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                _permission_warning_fine_grained(
-                    "org repos", login, "Metadata", exc_info=True,
+                logger.permission_warning(
+                    "org repos",
+                    login,
+                    PermissionName.METADATA,
+                    PermissionCategory.REPO,
+                    exc_info=True,
                 )
             else:
                 logger.warning("Problem getting org repos for '%s': %s", login, e)
@@ -260,11 +261,11 @@ class GithubReposExtractor(Extractor):
                 e,
             )
 
-    async def _fetch_user_repos(self) -> AsyncIterator[GithubRepo]:
+    async def _fetch_repos_by_user(self) -> AsyncIterator[GithubRepo]:
         """Fetches repositories for the specified user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
-        
+
         If using a fine-grained access token, the token must have the "Metadata"
         repository permissions (read)
         """
@@ -287,8 +288,12 @@ class GithubReposExtractor(Extractor):
                 yield repo
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 403:
-                _permission_warning_fine_grained(
-                    "user repos", login, "Metadata", exc_info=True
+                logger.permission_warning(
+                    "user repos",
+                    login,
+                    PermissionName.METADATA,
+                    PermissionCategory.REPO,
+                    exc_info=True,
                 )
             else:
                 logger.warning("Problem getting user repos for '%s': %s", login, e)
