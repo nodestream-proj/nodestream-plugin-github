@@ -1,6 +1,6 @@
 - implementation: nodestream_github:GithubUserExtractor
   arguments:
-    github_endpoint: !config 'github_endpoint'
+    github_hostname: !config 'github_hostname'
     auth_token: !config 'auth_token'
     user_agent: !config 'user_agent'
 - implementation: nodestream.interpreting:Interpreter
