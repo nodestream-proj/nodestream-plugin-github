@@ -1,3 +1,4 @@
+from nodestream_github.types import GithubRepo
 from tests.data.users import OCTOCAT_USER
 from tests.data.util import encode_as_node_id
 
@@ -6,14 +7,10 @@ def repo(
     owner: dict[str, any] | None = None,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
-    **kwargs,
-):
+    **kwargs: any,
+) -> GithubRepo:
 
-    if owner is None:
-        repo_owner = OCTOCAT_USER
-    else:
-        repo_owner = owner
-
+    repo_owner = OCTOCAT_USER if owner is None else owner
     owner_login = repo_owner["login"]
 
     return {

@@ -9,11 +9,11 @@ from .teams import GithubTeamsExtractor
 from .users import GithubUserExtractor
 
 __all__ = (
-    "GithubPlugin",
-    "GithubUserExtractor",
-    "GithubReposExtractor",
     "GithubOrganizationsExtractor",
+    "GithubPlugin",
+    "GithubReposExtractor",
     "GithubTeamsExtractor",
+    "GithubUserExtractor",
     "RepositoryRelationshipInterpretation",
     "UserRelationshipInterpretation",
 )

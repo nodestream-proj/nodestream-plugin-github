@@ -5,20 +5,21 @@ Developed using Enterprise Server 3.12
 https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
-from typing import AsyncIterator
+import logging
+from collections.abc import AsyncIterator
 
 from nodestream.pipeline import Extractor
 
 from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
 from .types import OrgRecord, SimplifiedUser
-from .util import GithubRestApiClient, init_logger
+from .util import GithubRestApiClient
 
-logger = init_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class GithubOrganizationsExtractor(Extractor):
-    def __init__(self, **github_client_kwargs):
+    def __init__(self, **github_client_kwargs: any):
         self.client = GithubRestApiClient(**github_client_kwargs)
 
     async def extract_records(self) -> AsyncIterator[OrgRecord]:
@@ -27,7 +28,7 @@ class GithubOrganizationsExtractor(Extractor):
             if enhanced_org:
                 yield enhanced_org
 
-    async def _extract_organization(self, login) -> OrgRecord | None:
+    async def _extract_organization(self, login: str) -> OrgRecord | None:
         full_org = await self.client.fetch_full_org(login)
         if not full_org:
             return None
@@ -39,7 +40,7 @@ class GithubOrganizationsExtractor(Extractor):
         ]
         return full_org
 
-    async def _fetch_all_members(self, login) -> AsyncIterator[SimplifiedUser]:
+    async def _fetch_all_members(self, login: str) -> AsyncIterator[SimplifiedUser]:
         async for admin in self.client.fetch_members_for_org(login, "admin"):
             yield simplify_user(admin) | {"role": "admin"}
 

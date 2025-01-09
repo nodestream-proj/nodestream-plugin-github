@@ -1,8 +1,14 @@
+from nodestream_github.types import GithubOrgSummary, GithubTeam, GithubTeamSummary
 from tests.data.orgs import GITHUB_ORG
 from tests.data.util import encode_as_node_id
 
 
-def team_summary(team_id=1, slug="justice-league", org_login="github", **kwargs):
+def team_summary(
+    team_id: int = 1,
+    slug: str = "justice-league",
+    org_login: str = "github",
+    **kwargs: any,
+) -> GithubTeamSummary:
     return {
         "id": team_id,
         "node_id": encode_as_node_id(f"04:Team{team_id}"),
@@ -20,8 +26,13 @@ def team_summary(team_id=1, slug="justice-league", org_login="github", **kwargs)
     } | kwargs
 
 
-def team(team_id=1, organization=None, slug="justice-league", **kwargs):
-    org = GITHUB_ORG if not organization else organization
+def team(
+    team_id: int = 1,
+    organization: GithubOrgSummary | None = None,
+    slug: str = "justice-league",
+    **kwargs: any,
+) -> GithubTeam:
+    org = organization if organization else GITHUB_ORG
     summary = team_summary(team_id=team_id, org_login=org["login"], slug=slug)
     return (
         summary

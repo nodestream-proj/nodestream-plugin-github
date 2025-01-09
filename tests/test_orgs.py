@@ -10,7 +10,12 @@ from tests.data.orgs import (
 )
 from tests.data.repos import HELLO_WORLD_REPO
 from tests.data.users import OCTOCAT_USER, TURBO_USER
-from tests.mocks.githubrest import DEFAULT_ENDPOINT, DEFAULT_PER_PAGE, GithubHttpxMock
+from tests.mocks.githubrest import (
+    DEFAULT_BASE_URL,
+    DEFAULT_HOSTNAME,
+    DEFAULT_PER_PAGE,
+    GithubHttpxMock,
+)
 
 BASE_EXPECTED_GITHUB_ORG = {
     "advanced_security_enabled_for_new_repositories": False,
@@ -82,10 +87,10 @@ BASE_EXPECTED_GITHUB_ORG = {
 
 
 @pytest.fixture
-def org_client():
+def org_client() -> GithubOrganizationsExtractor:
     return GithubOrganizationsExtractor(
         auth_token="test-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,
@@ -212,7 +217,7 @@ async def test_orgs_continue_through_org_detail_connection_fail(
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
     gh_rest_mock.add_exception(
         exception=httpx.ReadTimeout("Mock Timeout Exception"),
-        url=f"{DEFAULT_ENDPOINT}/orgs/github",
+        url=f"{DEFAULT_BASE_URL}/orgs/github",
         is_reusable=True,
     )
     gh_rest_mock.get_org("example", json=EXAMPLE_ORG)

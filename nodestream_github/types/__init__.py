@@ -1,4 +1,4 @@
-from .types import (
+from .github import (
     GithubOrg,
     GithubOrgSummary,
     GithubRepo,
@@ -15,21 +15,25 @@ from .types import (
     UserRecord,
     Webhook,
 )
+from .httpx import HeaderTypes, PrimitiveData, QueryParamTypes
 
 __all__ = [
-    "JSONType",
-    "GithubOrgSummary",
     "GithubOrg",
+    "GithubOrgSummary",
     "GithubRepo",
-    "GithubUser",
-    "Webhook",
     "GithubTeam",
     "GithubTeamSummary",
+    "GithubUser",
+    "HeaderTypes",
+    "JSONType",
     "LanguageRecord",
     "OrgRecord",
+    "PrimitiveData",
+    "QueryParamTypes",
     "RepositoryRecord",
-    "TeamRecord",
-    "UserRecord",
     "SimplifiedRepo",
     "SimplifiedUser",
+    "TeamRecord",
+    "UserRecord",
+    "Webhook",
 ]

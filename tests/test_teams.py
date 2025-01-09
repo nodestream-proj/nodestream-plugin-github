@@ -5,14 +5,14 @@ from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO
 from tests.data.teams import JUSTICE_LEAGUE_TEAM, JUSTICE_LEAGUE_TEAM_SUMMARY
 from tests.data.users import OCTOCAT_USER, TURBO_USER
-from tests.mocks.githubrest import DEFAULT_ENDPOINT, DEFAULT_PER_PAGE, GithubHttpxMock
+from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
 
 
 @pytest.fixture
-def team_client():
+def team_client() -> GithubTeamsExtractor:
     return GithubTeamsExtractor(
         auth_token="test-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,

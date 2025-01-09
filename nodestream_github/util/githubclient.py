@@ -4,14 +4,13 @@ An async client for accessing GitHub.
 """
 
 import logging
+from collections.abc import AsyncIterator
 from enum import Enum
-from typing import AsyncIterator
 
 import httpx
-from httpx import AsyncClient, Request, TransportError
-from limits import RateLimitItemPerMinute
+from limits import RateLimitItem, RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
-from limits.aio.strategies import MovingWindowRateLimiter
+from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
 from tenacity import (
     AsyncRetrying,
     after_log,
@@ -21,117 +20,185 @@ from tenacity import (
     wait_random_exponential,
 )
 
-from nodestream_github.types import (
-    GithubOrg,
-    GithubRepo,
-    GithubTeam,
-    GithubTeamSummary,
-    GithubUser,
-    JSONType,
-    Webhook,
-)
+import nodestream_github.types as types
 
-from .logutil import init_logger
-from .permissions import PermissionCategory, PermissionName
-
-# per hour / 60 / 60
-DEFAULT_REQUEST_RATE_LIMIT = int(13000 / 60)
+DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
 
 
-logger = init_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class AllowedAuditActionsPhrases(Enum):
     BRANCH_PROTECTION = "protected_branch"
 
 
-class RateLimitedException(Exception):
-    def __init__(self, url):
+class RateLimitedError(Exception):
+    def __init__(self, url: str | httpx.URL):
         super().__init__(f"Rate limited when calling {url}")
 
 
+def _fetch_problem(title: str, e: httpx.HTTPError):
+    if (
+        isinstance(e, httpx.HTTPStatusError)
+        and e.response.status_code == httpx.codes.FORBIDDEN
+    ):
+        logger.warning(
+            "Current token lacks permissions for %s", e.request.url.path, stacklevel=2
+        )
+    else:
+        logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
+
+
 class GithubRestApiClient:
-    def __init__(self, auth_token, github_endpoint, user_agent, **kwargs):
-        logger.debug("client kwargs: %s", kwargs)
-        self.auth_token = auth_token
-        self.github_endpoint = github_endpoint
-        if "page_size" in kwargs:
-            self.page_size = kwargs["page_size"]
+    def __init__(
+        self,
+        auth_token: str,
+        github_hostname: str = "api.github.com",
+        user_agent: str | None = None,
+        per_page: int = DEFAULT_PAGE_SIZE,
+        max_retries: int = DEFAULT_MAX_RETRIES,
+        rate_limit_per_minute: int = DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE,
+        min_retry_wait_seconds: float = 1.0,
+        max_retry_wait_seconds: int = 60 * 5,
+    ):
+        if per_page < 1:
+            msg = "page_size must be an integer greater than 0"
+            raise ValueError(msg)
+        if max_retries < 0:
+            msg = "max_retries must be a positive integer"
+            raise ValueError(msg)
+        if min_retry_wait_seconds < 0:
+            msg = "min_retry_wait_seconds must be a number greater than 0"
+            raise ValueError(msg)
+
+        self._auth_token = auth_token
+        if github_hostname != "api.github.com":
+            self._base_url = f"https://{github_hostname}/api/v3"
         else:
-            self.page_size = DEFAULT_PAGE_SIZE
-        logger.debug("Page Size: %s", self.page_size)
-        self.limit_storage = MemoryStorage()
-        if not user_agent:
-            raise ValueError("user_agent")
-        logger.debug("User Agent: %s", user_agent)
-        self.headers = {
+            self._base_url = "https://api.github.com"
+        self._per_page = per_page
+        self._limit_storage = MemoryStorage()
+        self._default_headers = httpx.Headers({
             "Accept": "application/vnd.github+json",
             "Authorization": "Bearer " + self.auth_token,
             "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": user_agent,
-        }
-        self.max_retries = kwargs.get("max_retries", -1)
-        if self.max_retries < 0:
-            self.max_retries = DEFAULT_MAX_RETRIES
-        logger.debug("Max retries: %s", self.max_retries)
+        })
+        if user_agent:
+            self._default_headers["User-Agent"] = user_agent
+        self._max_retries = max_retries
 
-        rate_limit = kwargs.get("request_rate_limit", -1)
-        if rate_limit < 0:
-            rate_limit = DEFAULT_REQUEST_RATE_LIMIT
-        logger.debug("RateLimit per minute: %s", rate_limit)
-        self.limit_per_second = RateLimitItemPerMinute(rate_limit, 1)
-        self.rate_limiter = MovingWindowRateLimiter(self.limit_storage)
-        self.session = AsyncClient()
+        logger.debug("RateLimit per minute: %s", rate_limit_per_minute)
+        self._limit_per_minute = RateLimitItemPerMinute(rate_limit_per_minute, 1)
+        self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
+        self._session = httpx.AsyncClient()
 
+        self.min_retry_wait = min_retry_wait_seconds
+        self.max_retry_wait = max_retry_wait_seconds
         self._retryer = AsyncRetrying(
-            wait=wait_random_exponential(),
+            wait=wait_random_exponential(
+                multiplier=min_retry_wait_seconds,
+                max=max_retry_wait_seconds,
+            ),
             stop=stop_after_attempt(self.max_retries),
-            retry=retry_if_exception_type((RateLimitedException, TransportError)),
-            before_sleep=before_sleep_log(logger.logger, logging.WARNING),
-            after=after_log(logger.logger, logging.WARNING),
+            retry=retry_if_exception_type((RateLimitedError, httpx.TransportError)),
+            before_sleep=before_sleep_log(logger, logging.WARNING),
+            after=after_log(logger, logging.WARNING),
             reraise=True,
         )
 
-    async def log_metrics(self, method: str):
-        waiting = await self.rate_limiter.get_window_stats(self.limit_per_second)
-        logger.info(f"{method=}, {waiting=}")
-
     @property
-    def retryer(self):
+    def retryer(self) -> AsyncRetrying:
         return self._retryer
 
-    async def _get(self, url: str):
-        # nothing should ever call this directly, so it's hidden here
-        async def _get_inner():
-            can_try_hit: bool = await self.rate_limiter.test(self.limit_per_second)
-            if not can_try_hit:
-                raise RateLimitedException(url)
-            can_hit: bool = await self.rate_limiter.hit(self.limit_per_second)
-            if not can_hit:
-                raise RateLimitedException(url)
+    @property
+    def session(self) -> httpx.AsyncClient:
+        return self._session
 
-            response = await self.session.get(
-                url,
-                headers=self.headers,
-            )
-            response.raise_for_status()
-            return response
+    @property
+    def rate_limiter(self) -> RateLimiter:
+        return self._rate_limiter
 
-        return await self.retryer(_get_inner)
+    @property
+    def limit_per_minute(self) -> RateLimitItem:
+        return self._limit_per_minute
 
-    async def _get_paginated(self, path: str, params=None) -> AsyncIterator[JSONType]:
-        url = f"{self.github_endpoint}/{path}"
-        logger.debug("GET (paginated): %s", url)
-        page_params = {"per_page": self.page_size}
+    @property
+    def max_retries(self) -> int:
+        return self._max_retries
+
+    @property
+    def limit_storage(self) -> MemoryStorage:
+        return self._limit_storage
+
+    @property
+    def default_headers(self) -> httpx.Headers:
+        return self._default_headers
+
+    @property
+    def auth_token(self) -> str:
+        return self._auth_token
+
+    @property
+    def base_url(self) -> str:
+        return self._base_url
+
+    @property
+    def per_page(self) -> int:
+        return self._per_page
+
+    async def _get(
+        self,
+        url: str,
+        params: types.QueryParamTypes | None,
+        headers: types.HeaderTypes | None,
+    ) -> httpx.Response:
+        """
+        Perform a GET request.
+
+        DO NOT CALL THIS DIRECTLY. ONLY USE _get_retrying
+        """
+        can_try_hit: bool = await self.rate_limiter.test(self.limit_per_minute)
+        if not can_try_hit:
+            raise RateLimitedError(url)
+        can_hit: bool = await self.rate_limiter.hit(self.limit_per_minute)
+        if not can_hit:
+            raise RateLimitedError(url)
+
+        merged_headers = httpx.Headers(self.default_headers)
+        merged_headers.update(headers)
+        response = await self.session.get(
+            url,
+            params=params,
+            headers=merged_headers,
+        )
+        response.raise_for_status()
+        return response
+
+    async def _get_retrying(
+        self,
+        url: str | httpx.URL,
+        params: types.QueryParamTypes | None = None,
+        headers: types.HeaderTypes | None = None,
+    ) -> httpx.Response:
+        return await self.retryer(self._get, url, params, headers)
+
+    async def _get_paginated(
+        self,
+        path: str,
+        params: types.QueryParamTypes | None = None,
+        headers: types.HeaderTypes | None = None,
+    ) -> AsyncIterator[types.JSONType]:
+        url = f"{self.base_url}/{path}"
+        query_params = {"per_page": self.per_page}
         if params:
-            page_params.update(params)
-        req = Request("GET", url, params=page_params)
-        url = req.url
+            query_params.update(params)
+
         while url is not None:
-            logger.debug(f"{url=}")
-            response = await self._get(url)
+            response = await self._get_retrying(
+                url, headers=headers, params=query_params
+            )
             if response is None:
                 return
             for tag in response.json():
@@ -139,19 +206,22 @@ class GithubRestApiClient:
 
             url = response.links.get("next", {}).get("url")
 
-    async def _get_item(self, path):
-        url = f"{self.github_endpoint}/{path}"
-        logger.debug("GET: %s", url)
-        response = await self._get(url)
+    async def _get_item(
+        self,
+        path: str | httpx.URL,
+        headers: types.HeaderTypes | None = None,
+        params: types.QueryParamTypes | None = None,
+    ) -> types.JSONType:
+        url = f"{self.base_url}/{path}"
+        response = await self._get_retrying(url, headers=headers, params=params)
 
         if response:
             return response.json()
-        else:
-            return {}
+        return {}
 
     async def fetch_repos_for_org(
-        self, org_login, repo_type: str | None = None
-    ) -> AsyncIterator[GithubRepo]:
+        self, org_login: str, repo_type: str | None = None
+    ) -> AsyncIterator[types.GithubRepo]:
         """Fetches repositories for the specified organization.
 
         Note: In order to see the security_and_analysis block for a repository you
@@ -167,32 +237,17 @@ class GithubRestApiClient:
             params = {}
             if repo_type:
                 params["type"] = repo_type
-            async for response in self._get_paginated(f"orgs/{org_login}/repos", params):
+            async for response in self._get_paginated(
+                f"orgs/{org_login}/repos", params=params
+            ):
                 yield response
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "org repos",
-                    org_login,
-                    PermissionName.METADATA,
-                    PermissionCategory.REPO,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting repos for org %s", org_login, exc_info=True
-                )
 
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting org repo info for %s",
-                org_login,
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem(f"repos for org {org_login}", e)
 
     async def fetch_members_for_org(
         self, org_login: str, role: str | None = None
-    ) -> AsyncIterator[GithubUser]:
+    ) -> AsyncIterator[types.GithubUser]:
         """Fetch all users who are members of an organization.
 
         If the authenticated user is also a member of this organization then both
@@ -206,29 +261,15 @@ class GithubRestApiClient:
             params = {}
             if role:
                 params["role"] = role
-            async for member in self._get_paginated(f"orgs/{org_login}/members", params):
+            async for member in self._get_paginated(
+                f"orgs/{org_login}/members", params=params
+            ):
                 yield member
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "org members",
-                    org_login,
-                    PermissionName.MEMBERS,
-                    PermissionCategory.ORG,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting org members for %s", org_login, exc_info=True
-                )
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting org membership info for %s",
-                org_login,
-                exc_info=True,
-            )
 
-    async def fetch_all_organizations(self) -> AsyncIterator[GithubOrg]:
+        except httpx.HTTPError as e:
+            _fetch_problem(f"members for org {org_login}", e)
+
+    async def fetch_all_organizations(self) -> AsyncIterator[types.GithubOrg]:
         """Fetches all organizations, in the order that they were created.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/orgs/orgs?apiVersion=2022-11-28#list-organizations
@@ -236,12 +277,10 @@ class GithubRestApiClient:
         try:
             async for org in self._get_paginated("organizations"):
                 yield org
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting list of all github organizations.", exc_info=True
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem("all organizations", e)
 
-    async def fetch_full_org(self, org_login: str) -> GithubOrg | None:
+    async def fetch_full_org(self, org_login: str) -> types.GithubOrg | None:
         """Fetches the complete org record.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/orgs/orgs?apiVersion=2022-11-28#get-an-organization
@@ -252,34 +291,16 @@ class GithubRestApiClient:
         The fine-grained token does not require any permissions.
         """
         try:
-            logger.debug(f"fetching full org={org_login}")
+            logger.debug("fetching full org=%s", org_login)
             return await self._get_item(f"orgs/{org_login}")
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.warning(
-                    "Current access token does not have permissions to get org details for %s",
-                    org_login,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting full-org info for '%s'",
-                    org_login,
-                    exc_info=True,
-                )
-
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting full-org info for '%s'",
-                org_login,
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem(f"full organization info for {org_login}", e)
 
     async def fetch_repos_for_user(
         self,
         user_login: str,
         repo_type: str | None = None,
-    ) -> AsyncIterator[GithubRepo]:
+    ) -> AsyncIterator[types.GithubRepo]:
         """Fetches repositories for a user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
@@ -290,27 +311,13 @@ class GithubRestApiClient:
             params = {}
             if repo_type:
                 params["type"] = repo_type
-            async for repo in self._get_paginated(f"users/{user_login}/repos", params):
+            async for repo in self._get_paginated(
+                f"users/{user_login}/repos", params=params
+            ):
                 yield repo
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "user repos",
-                    user_login,
-                    PermissionName.METADATA,
-                    PermissionCategory.REPO,
-                    exc_info=True,
-                )
-            else:
-                logger.warning("Problem getting user repos for '%s': %s", user_login, e)
 
         except httpx.HTTPError as e:
-            logger.warning(
-                "Major problem getting user repo info for '%s' (%s): %s",
-                user_login,
-                e.request.url,
-                e,
-            )
+            _fetch_problem(f"repos for user {user_login}", e)
 
     async def fetch_languages_for_repo(
         self, owner_login: str, repo_name: str
@@ -327,36 +334,16 @@ class GithubRestApiClient:
                 f"repos/{owner_login}/{repo_name}/languages"
             ):
                 yield lang_resp
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "repo languages",
-                    f"{owner_login}/{repo_name}",
-                    PermissionName.METADATA,
-                    PermissionCategory.REPO,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting languages for %s/%s",
-                    owner_login,
-                    repo_name,
-                    exc_info=True,
-                )
-        except httpx.HTTPError:
-            logger.warning(
-                "Problem getting languages for %s",
-                owner_login,
-                repo_name,
-                exc_info=True,
-            )
+
+        except httpx.HTTPError as e:
+            _fetch_problem(f"languages for repo {owner_login}/{repo_name}", e)
 
     async def fetch_webhooks_for_repo(
         self, owner_login: str, repo_name: str
-    ) -> AsyncIterator[Webhook]:
-        """Try to get webhook data for this repo.
+    ) -> AsyncIterator[types.Webhook]:
+        """Try to get types.webhook data for this repo.
 
-        https://docs.github.com/en/enterprise-server@3.12/rest/repos/webhooks?apiVersion=2022-11-28#list-repository-webhooks
+        https://docs.github.com/en/enterprise-server@3.12/rest/repos/webhooks?apiVersion=2022-11-28#list-repository-types.webhooks
 
         Fine-grained access tokens require the "Webhooks" repository permissions (read).
         """
@@ -365,35 +352,15 @@ class GithubRestApiClient:
                 f"repos/{owner_login}/{repo_name}/webhooks"
             ):
                 yield hook
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "repo webhook",
-                    f"{owner_login}/{repo_name}",
-                    PermissionName.WEBHOOKS,
-                    PermissionCategory.REPO,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting webhooks for %s/%s",
-                    owner_login,
-                    repo_name,
-                    exc_info=True,
-                )
-        except httpx.HTTPError:
-            logger.warning(
-                "Problem getting webhooks for %s/%s",
-                owner_login,
-                repo_name,
-                exc_info=True,
-            )
+
+        except httpx.HTTPError as e:
+            _fetch_problem(f"webhooks for repo {owner_login}/{repo_name}", e)
 
     async def fetch_collaborators_for_repo(
         self,
         owner_login: str,
         repo_name: str,
-    ) -> AsyncIterator[GithubUser]:
+    ) -> AsyncIterator[types.GithubUser]:
         """Try to get collaborator data for this repo.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/collaborators/collaborators?apiVersion=2022-11-28
@@ -406,31 +373,10 @@ class GithubRestApiClient:
             ):
                 yield collab_resp
 
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "repo collaborators",
-                    f"{owner_login}/{repo_name}",
-                    PermissionName.METADATA,
-                    PermissionCategory.REPO,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting collaborators for %s/%s",
-                    owner_login,
-                    repo_name,
-                    exc_info=True,
-                )
-        except httpx.HTTPError:
-            logger.warning(
-                "Problem getting collaborators for '%s': %s",
-                owner_login,
-                repo_name,
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem(f"collaborators for repo {owner_login}/{repo_name}", e)
 
-    async def fetch_all_public_repos(self) -> AsyncIterator[GithubRepo]:
+    async def fetch_all_public_repos(self) -> AsyncIterator[types.GithubRepo]:
         """
         Returns all public repositories in the order that they were created.
 
@@ -448,13 +394,11 @@ class GithubRestApiClient:
         try:
             async for repo in self._get_paginated("repositories"):
                 yield repo
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting list of all public github repositories.",
-                exc_info=True,
-            )
 
-    async def fetch_all_users(self) -> AsyncIterator[GithubUser]:
+        except httpx.HTTPError as e:
+            _fetch_problem("all public repositories", e)
+
+    async def fetch_all_users(self) -> AsyncIterator[types.GithubUser]:
         """
         Fetches all users in the order that they were created.
 
@@ -463,65 +407,41 @@ class GithubRestApiClient:
         try:
             async for user in self._get_paginated("users"):
                 yield user
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting list of all github users",
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem("all users", e)
 
-    async def fetch_teams_for_org(self, org_login) -> AsyncIterator[GithubTeamSummary]:
-        """Fetch all teams in an organization that are visible to the authenticated user.
+    async def fetch_teams_for_org(
+        self, org_login: str
+    ) -> AsyncIterator[types.GithubTeamSummary]:
+        """Fetch all teams in an organization visible to the authenticated user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/teams/teams?apiVersion=2022-11-28#list-teams
 
         Fine-grained tokens must have the "Members" organization permissions (read)
         """
         try:
-            logger.debug("Getting teams for %s", org_login)
+            logger.debug("Fetch teams for %s", org_login)
             async for team_summary in self._get_paginated(
                 f"orgs/{org_login}/teams",
             ):
                 yield team_summary
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == httpx.codes.FORBIDDEN:
-                logger.permission_warning(
-                    "org teams",
-                    org_login,
-                    PermissionName.MEMBERS,
-                    PermissionCategory.ORG,
-                    exc_info=True,
-                )
-            else:
-                logger.warning(
-                    "Problem getting team info for org %s",
-                    org_login,
-                    exc_info=True,
-                )
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting team info for org %s",
-                org_login,
-                exc_info=True,
-            )
 
-    async def fetch_team(self, org_login: str, slug: str) -> GithubTeam | None:
+        except httpx.HTTPError as e:
+            _fetch_problem(f"teams for org {org_login}", e)
+
+    async def fetch_team(self, org_login: str, slug: str) -> types.GithubTeam | None:
         """Fetches a single team for an org by the team slug.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/teams/teams?apiVersion=2022-11-28#get-a-team-by-name
         """
         try:
             return await self._get_item(f"orgs/{org_login}/teams/{slug}")
-        except httpx.HTTPError:
-            logger.warning(
-                "Major problem getting team info for %s/%s",
-                org_login,
-                slug,
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem(f"full team info for {org_login}/{slug}", e)
 
     async def fetch_members_for_team(
         self, team_id: int, role: str | None = None
-    ) -> AsyncIterator[GithubUser]:
+    ) -> AsyncIterator[types.GithubUser]:
         """Fetch all users that have a given role for a specified team.
 
         These endpoints are only available to authenticated members of the
@@ -537,20 +457,17 @@ class GithubRestApiClient:
             params = {}
             if role:
                 params["role"] = role
-            async for member in self._get_paginated(f"teams/{team_id}/members", params):
+            async for member in self._get_paginated(
+                f"teams/{team_id}/members", params=params
+            ):
                 yield member
-        except httpx.HTTPError:
-            logger.warning(
-                "Problem getting %smembers for team '%s'",
-                f"{role} " if role else "",
-                team_id,
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem(f"members for team {team_id}", e)
 
     async def fetch_repos_for_team(
         self, org_login: str, slug: str
-    ) -> AsyncIterator[GithubRepo]:
-        """Fetch all repos for a specified team that are visible to the authenticated user.
+    ) -> AsyncIterator[types.GithubRepo]:
+        """Fetch all repos for a specified team visible to the authenticated user.
 
         These endpoints are only available to authenticated members of the
         team's organization.
@@ -562,10 +479,5 @@ class GithubRestApiClient:
                 f"orgs/{org_login}/teams/{slug}/repos"
             ):
                 yield repo
-        except httpx.HTTPError:
-            logger.warning(
-                "Problem getting repos for team '%s/%s'",
-                org_login,
-                slug,
-                exc_info=True,
-            )
+        except httpx.HTTPError as e:
+            _fetch_problem(f"repos for team {org_login}/{slug}", e)

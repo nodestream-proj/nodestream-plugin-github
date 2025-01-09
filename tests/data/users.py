@@ -1,7 +1,8 @@
+from nodestream_github.types import GithubUser
 from tests.data.util import encode_as_node_id
 
 
-def user(login="octocat", user_id=1, **kwargs):
+def user(login: str = "octocat", user_id: int = 1, **kwargs: any) -> GithubUser:
 
     return {
         "login": f"{login}",

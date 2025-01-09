@@ -5,22 +5,23 @@ Developed using Enterprise Server 3.12
 https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
+import logging
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 from nodestream.pipeline import Extractor
 
 from .interpretations.relationship.user import simplify_user
 from .types import GithubRepo, RepositoryRecord
-from .util import GithubRestApiClient, init_logger
+from .util import GithubRestApiClient
 
-logger = init_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
-def _dict_val_to_bool(d: dict[str, any], key: str, default: bool = False) -> bool:
+def _dict_val_to_bool(d: dict[str, any], key: str) -> bool:
     value = d.get(key)
     if value is None:
-        return default
+        return False
     if isinstance(value, bool):
         return value
 
@@ -43,30 +44,30 @@ class CollectWhichRepos:
     def user_any(self) -> bool:
         return self.user_public or self.user_private
 
-    @classmethod
-    def from_dict(cls, raw_input: dict[str, any]):
-        org_all = _dict_val_to_bool(raw_input, "org_all", False)
-        user_all = _dict_val_to_bool(raw_input, "user_all", False)
 
-        return CollectWhichRepos(
-            all_public=_dict_val_to_bool(raw_input, "all_public", False),
-            org_public=org_all | _dict_val_to_bool(raw_input, "org_public", False),
-            org_private=org_all | _dict_val_to_bool(raw_input, "org_private", False),
-            user_public=user_all | _dict_val_to_bool(raw_input, "user_public", False),
-            user_private=user_all | _dict_val_to_bool(raw_input, "user_private", False),
-        )
+def _cwr_from_dict(raw_input: dict[str, any]) -> CollectWhichRepos:
+    org_all = _dict_val_to_bool(raw_input, "org_all")
+    user_all = _dict_val_to_bool(raw_input, "user_all")
+
+    return CollectWhichRepos(
+        all_public=_dict_val_to_bool(raw_input, "all_public"),
+        org_public=org_all | _dict_val_to_bool(raw_input, "org_public"),
+        org_private=org_all | _dict_val_to_bool(raw_input, "org_private"),
+        user_public=user_all | _dict_val_to_bool(raw_input, "user_public"),
+        user_private=user_all | _dict_val_to_bool(raw_input, "user_private"),
+    )
 
 
 class GithubReposExtractor(Extractor):
     def __init__(
         self,
         collecting: CollectWhichRepos | dict[str, any] | None = None,
-        **kwargs,
+        **kwargs: any,
     ):
         if isinstance(collecting, CollectWhichRepos):
             self.collecting = collecting
         elif isinstance(collecting, dict):
-            self.collecting = CollectWhichRepos.from_dict(collecting)
+            self.collecting = _cwr_from_dict(collecting)
         else:
             self.collecting = CollectWhichRepos()
         self.client = GithubRestApiClient(**kwargs)
@@ -85,7 +86,6 @@ class GithubReposExtractor(Extractor):
                 yield await self._extract_repo(repo)
 
     async def _extract_repo(self, repo: GithubRepo) -> RepositoryRecord:
-        """Enhances raw GitHub json data into a dict that supports using it in pipelines."""
         owner = repo.pop("owner", {})
         if owner.get("type") == "User":
             repo["user_owner"] = owner

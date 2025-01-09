@@ -3,6 +3,8 @@
     github_endpoint: !config 'github_endpoint'
     auth_token: !config 'auth_token'
     user_agent: !config 'user_agent'
+    collecting:
+      user_all: true
 - implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
@@ -45,9 +47,9 @@
         pushed_at: !jmespath 'pushed_at'
         created_at: !jmespath 'created_at'
         updated_at: !jmespath 'updated_at'
-        "security_and_analysis_advanced_security": !jmespath 'security_and_analysis.advanced_security.status'
-        "security_and_analysis_secret_scanning": !jmespath 'security_and_analysis.secret_scanning.status'
-        "security_and_analysis_secret_scanning_push_protection": !jmespath 'security_and_analysis.secret_scanning_push_protection.status'
+        security_and_analysis_advanced_security: !jmespath 'security_and_analysis.advanced_security.status'
+        security_and_analysis_secret_scanning: !jmespath 'security_and_analysis.secret_scanning.status'
+        security_and_analysis_secret_scanning_push_protection: !jmespath 'security_and_analysis.secret_scanning_push_protection.status'
 
     - type: relationship
       node_type: GithubOrg

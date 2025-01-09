@@ -1,4 +1,5 @@
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from nodestream.interpreting.interpretations import RelationshipInterpretation
 from nodestream.pipeline.value_providers import (
@@ -27,12 +28,12 @@ class UserRelationshipInterpretation(
         relationship_type: StaticValueOrValueProvider,
         relationship_key: None | dict[str, StaticValueOrValueProvider] = None,
         relationship_properties: None | dict[str, StaticValueOrValueProvider] = None,
-        outbound: bool = True,
-        find_many: bool = False,
+        outbound: bool = True,  # noqa: FBT001, FBT002
+        find_many: bool = False,  # noqa: FBT001, FBT002
         iterate_on: ValueProvider | None = None,
         cardinality: str = "SINGLE",
         node_creation_rule: str | None = None,
-        key_normalization: dict[str, Any] = None,
+        key_normalization: dict[str, Any] | None = None,
         properties_normalization: dict[str, Any] | None = None,
         node_additional_types: Iterable[str] | None = None,
     ):

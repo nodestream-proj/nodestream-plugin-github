@@ -1,7 +1,10 @@
+from nodestream_github.types import GithubOrg, GithubOrgSummary
 from tests.data.util import encode_as_node_id
 
 
-def org_summary(login="github", org_id=1, **kwargs):
+def org_summary(
+    login: str = "github", org_id: int = 1, **kwargs: any
+) -> GithubOrgSummary:
     return {
         "login": login,
         "id": org_id,
@@ -20,7 +23,7 @@ def org_summary(login="github", org_id=1, **kwargs):
     } | kwargs
 
 
-def org(login="github", org_id=1, **kwargs):
+def org(login: str = "github", org_id: int = 1, **kwargs: any) -> GithubOrg:
     summary = org_summary(login, org_id)
     login = summary["login"]
     return (

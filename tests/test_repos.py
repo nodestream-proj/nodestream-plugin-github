@@ -5,14 +5,14 @@ from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO, repo
 from tests.data.users import OCTOCAT_USER, TURBO_USER
 from tests.data.webhooks import HELLO_WORLD_WEBHOOK
-from tests.mocks.githubrest import DEFAULT_ENDPOINT, DEFAULT_PER_PAGE, GithubHttpxMock
+from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
 
 
 @pytest.fixture
-def repo_client():
+def repo_client() -> GithubReposExtractor:
     return GithubReposExtractor(
         auth_token="test-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,
@@ -21,10 +21,10 @@ def repo_client():
 
 
 @pytest.mark.asyncio
-async def test_pull_org_repos(gh_rest_mock):
+async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
     extractor = GithubReposExtractor(
         auth_token="test-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,
@@ -48,10 +48,10 @@ async def test_pull_org_repos(gh_rest_mock):
 
 
 @pytest.mark.asyncio
-async def test_pull_user_repos(gh_rest_mock):
+async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
     extractor = GithubReposExtractor(
         auth_token="test-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,

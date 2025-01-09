@@ -15,7 +15,7 @@ _TEST_EXPECTATION = {
 
 
 @pytest.fixture
-def context():
+def context() -> ProviderContext:
     return ProviderContext(_TEST_EXPECTATION, DesiredIngestion())
 
 
@@ -34,7 +34,7 @@ def test_simplify_user_keep_perms():
     assert simplify_user(test_input) == test_input
 
 
-def test_user_relationship(context):
+def test_user_relationship(context: ProviderContext):
     sample = UserRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
     assert sample.node_type.single_value(context) == "GithubUser"
     assert sample.relationship_type.single_value(context) == "TEST_RELATIONSHIP_TYPE"

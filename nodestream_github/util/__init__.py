@@ -1,11 +1,6 @@
-from .githubclient import GithubRestApiClient, RateLimitedException
-from .logutil import init_logger
-from .permissions import PermissionCategory, PermissionName
+from .githubclient import GithubRestApiClient, RateLimitedError
 
 __all__ = [
     "GithubRestApiClient",
-    "RateLimitedException",
-    "init_logger",
-    "PermissionName",
-    "PermissionCategory",
+    "RateLimitedError",
 ]

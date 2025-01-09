@@ -1,9 +1,12 @@
+from nodestream_github.types import Webhook
+
+
 def webhook(
     webhook_type: str = "Repository",
     owner_login: str = "octocat",
     repo_name: str = "Hello-World",
     webhook_id: int = 12345678,
-):
+) -> Webhook:
     return {
         "type": webhook_type,
         "id": 12345678,

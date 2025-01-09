@@ -2,11 +2,8 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from nodestream_github.util.githubclient import (
-    GithubRestApiClient,
-    RateLimitedException,
-)
-from tests.mocks.githubrest import DEFAULT_ENDPOINT
+from nodestream_github.util.githubclient import GithubRestApiClient, RateLimitedError
+from tests.mocks.githubrest import DEFAULT_BASE_URL, DEFAULT_HOSTNAME
 
 
 @pytest.mark.parametrize(
@@ -19,67 +16,68 @@ from tests.mocks.githubrest import DEFAULT_ENDPOINT
         httpx.codes.BAD_GATEWAY,
         httpx.codes.SERVICE_UNAVAILABLE,
         httpx.codes.GATEWAY_TIMEOUT,
-        httpx.codes.BAD_GATEWAY,
     ],
 )
 @pytest.mark.asyncio
-async def test_do_not_retry_bad_status(httpx_mock: HTTPXMock, status_code):
+async def test_retry_bad_status(httpx_mock: HTTPXMock, status_code: int):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-user-agent",
         max_retries=5,
+        min_retry_wait_seconds=0.1,
+        max_retry_wait_seconds=0,
     )
 
     httpx_mock.add_response(
-        url=f"{DEFAULT_ENDPOINT}/example?per_page=100",
+        url=f"{DEFAULT_BASE_URL}/example?per_page=100",
         status_code=status_code,
         is_reusable=False,
     )
 
     with pytest.raises(httpx.HTTPStatusError):
-        [item async for item in client._get_paginated("example")]
+        _ignore = [item async for item in client._get_paginated("example")]
 
 
 @pytest.mark.asyncio
 async def test_retry_ratelimited(httpx_mock: HTTPXMock):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-user-agent",
         max_retries=2,
-        request_rate_limit=1,
+        rate_limit_per_minute=1,
     )
 
     httpx_mock.add_response(
-        url=f"{DEFAULT_ENDPOINT}/example?per_page=100", json=["a", "b"]
+        url=f"{DEFAULT_BASE_URL}/example?per_page=100", json=["a", "b"]
     )
 
-    with pytest.raises(RateLimitedException):
-        for _ in range(100):
-            [item async for item in client._get_paginated("example")]
+    _ignored = [item async for item in client._get_paginated("example")]
+    with pytest.raises(RateLimitedError):
+        _ignored = [item async for item in client._get_paginated("example")]
 
 
 @pytest.mark.asyncio
 async def test_pagination(httpx_mock: HTTPXMock):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
-        github_endpoint=DEFAULT_ENDPOINT,
+        github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-user-agent",
         max_retries=0,
-        page_size=2,
+        per_page=2,
     )
 
+    next_page = f'<{DEFAULT_BASE_URL}/example?per_page=2&page=1>; rel="next"'
+    first_page = f'<${DEFAULT_BASE_URL}/example?per_page=2&page=0>; rel="first"'
     httpx_mock.add_response(
-        url=f"{DEFAULT_ENDPOINT}/example?per_page=2",
+        url=f"{DEFAULT_BASE_URL}/example?per_page=2",
         json=["a", "b"],
         is_reusable=False,
-        headers={
-            "link": f'<{DEFAULT_ENDPOINT}/example?per_page=2&page=1>; rel="next", <${DEFAULT_ENDPOINT}/example?per_page=2>; rel="first"'
-        },
+        headers={"link": f"{next_page}, {first_page}"},
     )
     httpx_mock.add_response(
-        url=f"{DEFAULT_ENDPOINT}/example?per_page=2&page=1",
+        url=f"{DEFAULT_BASE_URL}/example?per_page=2&page=1",
         json=["c", "d"],
         is_reusable=False,
     )
