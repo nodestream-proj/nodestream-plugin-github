@@ -4,6 +4,7 @@ from tests.data.util import encode_as_node_id
 
 
 def repo(
+    *,
     owner: dict[str, any] | None = None,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,

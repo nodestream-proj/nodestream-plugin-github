@@ -3,28 +3,28 @@ from tests.data.util import encode_as_node_id
 
 
 def org_summary(
-    login: str = "github", org_id: int = 1, **kwargs: any
+    *, org_login: str = "github", org_id: int = 1, **kwargs: any
 ) -> GithubOrgSummary:
     return {
-        "login": login,
+        "login": org_login,
         "id": org_id,
         "node_id": encode_as_node_id(f"012:Organization{org_id}"),
         "url": "https://HOSTNAME/orgs/github",
-        "repos_url": f"https://HOSTNAME/orgs/{login}/repos",
-        "events_url": f"https://HOSTNAME/orgs/{login}/events",
-        "hooks_url": f"https://HOSTNAME/orgs/{login}/hooks",
-        "issues_url": f"https://HOSTNAME/orgs/{login}/issues",
-        "members_url": f"https://HOSTNAME/orgs/{login}/members{{/member}}",
+        "repos_url": f"https://HOSTNAME/orgs/{org_login}/repos",
+        "events_url": f"https://HOSTNAME/orgs/{org_login}/events",
+        "hooks_url": f"https://HOSTNAME/orgs/{org_login}/hooks",
+        "issues_url": f"https://HOSTNAME/orgs/{org_login}/issues",
+        "members_url": f"https://HOSTNAME/orgs/{org_login}/members{{/member}}",
         "public_members_url": (
-            f"https://HOSTNAME/orgs/{login}/public_members{{/member}}"
+            f"https://HOSTNAME/orgs/{org_login}/public_members{{/member}}"
         ),
         "avatar_url": "https://github.com/images/error/octocat_happy.gif",
         "description": "A great organization",
     } | kwargs
 
 
-def org(login: str = "github", org_id: int = 1, **kwargs: any) -> GithubOrg:
-    summary = org_summary(login, org_id)
+def org(*, org_login: str = "github", org_id: int = 1, **kwargs: any) -> GithubOrg:
+    summary = org_summary(org_login=org_login, org_id=org_id)
     login = summary["login"]
     return (
         summary
@@ -88,5 +88,5 @@ def org(login: str = "github", org_id: int = 1, **kwargs: any) -> GithubOrg:
 
 GITHUB_ORG_SUMMARY = org_summary()
 GITHUB_ORG = org()
-EXAMPLE_ORG_SUMMARY = org_summary(login="example", org_id=2)
-EXAMPLE_ORG = org(login="example", org_id=2)
+EXAMPLE_ORG_SUMMARY = org_summary(org_login="example", org_id=2)
+EXAMPLE_ORG = org(org_login="example", org_id=2)

@@ -2,6 +2,7 @@ from nodestream_github.types import Webhook
 
 
 def webhook(
+    *,
     webhook_type: str = "Repository",
     owner_login: str = "octocat",
     repo_name: str = "Hello-World",

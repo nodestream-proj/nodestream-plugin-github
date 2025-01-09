@@ -4,6 +4,7 @@ from tests.data.util import encode_as_node_id
 
 
 def team_summary(
+    *,
     team_id: int = 1,
     slug: str = "justice-league",
     org_login: str = "github",
@@ -27,6 +28,7 @@ def team_summary(
 
 
 def team(
+    *,
     team_id: int = 1,
     organization: GithubOrgSummary | None = None,
     slug: str = "justice-league",

@@ -4,7 +4,7 @@ An async client for accessing GitHub.
 """
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from enum import Enum
 
 import httpx
@@ -56,6 +56,7 @@ class GithubRestApiClient:
         self,
         auth_token: str,
         github_hostname: str = "api.github.com",
+        *,
         user_agent: str | None = None,
         per_page: int = DEFAULT_PAGE_SIZE,
         max_retries: int = DEFAULT_MAX_RETRIES,
@@ -189,7 +190,7 @@ class GithubRestApiClient:
         path: str,
         params: types.QueryParamTypes | None = None,
         headers: types.HeaderTypes | None = None,
-    ) -> AsyncIterator[types.JSONType]:
+    ) -> AsyncGenerator[types.JSONType]:
         url = f"{self.base_url}/{path}"
         query_params = {"per_page": self.per_page}
         if params:
@@ -221,7 +222,7 @@ class GithubRestApiClient:
 
     async def fetch_repos_for_org(
         self, org_login: str, repo_type: str | None = None
-    ) -> AsyncIterator[types.GithubRepo]:
+    ) -> AsyncGenerator[types.GithubRepo]:
         """Fetches repositories for the specified organization.
 
         Note: In order to see the security_and_analysis block for a repository you
@@ -247,7 +248,7 @@ class GithubRestApiClient:
 
     async def fetch_members_for_org(
         self, org_login: str, role: str | None = None
-    ) -> AsyncIterator[types.GithubUser]:
+    ) -> AsyncGenerator[types.GithubUser]:
         """Fetch all users who are members of an organization.
 
         If the authenticated user is also a member of this organization then both
@@ -269,7 +270,7 @@ class GithubRestApiClient:
         except httpx.HTTPError as e:
             _fetch_problem(f"members for org {org_login}", e)
 
-    async def fetch_all_organizations(self) -> AsyncIterator[types.GithubOrg]:
+    async def fetch_all_organizations(self) -> AsyncGenerator[types.GithubOrg]:
         """Fetches all organizations, in the order that they were created.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/orgs/orgs?apiVersion=2022-11-28#list-organizations
@@ -300,7 +301,7 @@ class GithubRestApiClient:
         self,
         user_login: str,
         repo_type: str | None = None,
-    ) -> AsyncIterator[types.GithubRepo]:
+    ) -> AsyncGenerator[types.GithubRepo]:
         """Fetches repositories for a user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
@@ -321,7 +322,7 @@ class GithubRestApiClient:
 
     async def fetch_languages_for_repo(
         self, owner_login: str, repo_name: str
-    ) -> AsyncIterator[str]:
+    ) -> AsyncGenerator[str]:
         """Fetch languages for the specified repository.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repository-languages
@@ -340,7 +341,7 @@ class GithubRestApiClient:
 
     async def fetch_webhooks_for_repo(
         self, owner_login: str, repo_name: str
-    ) -> AsyncIterator[types.Webhook]:
+    ) -> AsyncGenerator[types.Webhook]:
         """Try to get types.webhook data for this repo.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/webhooks?apiVersion=2022-11-28#list-repository-types.webhooks
@@ -360,7 +361,7 @@ class GithubRestApiClient:
         self,
         owner_login: str,
         repo_name: str,
-    ) -> AsyncIterator[types.GithubUser]:
+    ) -> AsyncGenerator[types.GithubUser]:
         """Try to get collaborator data for this repo.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/collaborators/collaborators?apiVersion=2022-11-28
@@ -376,7 +377,7 @@ class GithubRestApiClient:
         except httpx.HTTPError as e:
             _fetch_problem(f"collaborators for repo {owner_login}/{repo_name}", e)
 
-    async def fetch_all_public_repos(self) -> AsyncIterator[types.GithubRepo]:
+    async def fetch_all_public_repos(self) -> AsyncGenerator[types.GithubRepo]:
         """
         Returns all public repositories in the order that they were created.
 
@@ -398,7 +399,7 @@ class GithubRestApiClient:
         except httpx.HTTPError as e:
             _fetch_problem("all public repositories", e)
 
-    async def fetch_all_users(self) -> AsyncIterator[types.GithubUser]:
+    async def fetch_all_users(self) -> AsyncGenerator[types.GithubUser]:
         """
         Fetches all users in the order that they were created.
 
@@ -412,7 +413,7 @@ class GithubRestApiClient:
 
     async def fetch_teams_for_org(
         self, org_login: str
-    ) -> AsyncIterator[types.GithubTeamSummary]:
+    ) -> AsyncGenerator[types.GithubTeamSummary]:
         """Fetch all teams in an organization visible to the authenticated user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/teams/teams?apiVersion=2022-11-28#list-teams
@@ -441,7 +442,7 @@ class GithubRestApiClient:
 
     async def fetch_members_for_team(
         self, team_id: int, role: str | None = None
-    ) -> AsyncIterator[types.GithubUser]:
+    ) -> AsyncGenerator[types.GithubUser]:
         """Fetch all users that have a given role for a specified team.
 
         These endpoints are only available to authenticated members of the
@@ -466,7 +467,7 @@ class GithubRestApiClient:
 
     async def fetch_repos_for_team(
         self, org_login: str, slug: str
-    ) -> AsyncIterator[types.GithubRepo]:
+    ) -> AsyncGenerator[types.GithubRepo]:
         """Fetch all repos for a specified team visible to the authenticated user.
 
         These endpoints are only available to authenticated members of the

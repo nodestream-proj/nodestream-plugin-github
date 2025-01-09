@@ -6,7 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 
 from nodestream.pipeline import Extractor
@@ -72,7 +72,7 @@ class GithubReposExtractor(Extractor):
             self.collecting = CollectWhichRepos()
         self.client = GithubRestApiClient(**kwargs)
 
-    async def extract_records(self) -> AsyncIterator[RepositoryRecord]:
+    async def extract_records(self) -> AsyncGenerator[RepositoryRecord]:
         if self.collecting.all_public:
             async for repo in self.client.fetch_all_public_repos():
                 yield await self._extract_repo(repo)
@@ -112,7 +112,7 @@ class GithubReposExtractor(Extractor):
         ]
         return repo
 
-    async def _fetch_repos_by_org(self) -> AsyncIterator[GithubRepo]:
+    async def _fetch_repos_by_org(self) -> AsyncGenerator[GithubRepo]:
         async for org in self.client.fetch_all_organizations():
             if self.collecting.org_public:
                 async for repo in self.client.fetch_repos_for_org(
@@ -125,7 +125,7 @@ class GithubReposExtractor(Extractor):
                 ):
                     yield repo
 
-    async def _fetch_repos_by_user(self) -> AsyncIterator[GithubRepo]:
+    async def _fetch_repos_by_user(self) -> AsyncGenerator[GithubRepo]:
         """Fetches repositories for the specified user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user

@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any
 
 from nodestream.interpreting.interpretations import RelationshipInterpretation
 from nodestream.pipeline.value_providers import (
@@ -33,7 +33,7 @@ class RepositoryRelationshipInterpretation(
         iterate_on: ValueProvider | None = None,
         cardinality: str = "SINGLE",
         node_creation_rule: str | None = None,
-        key_normalization: Optional[dict[str, Any]] = None,
+        key_normalization: dict[str, Any] | None = None,
         properties_normalization: dict[str, Any] | None = None,
         node_additional_types: Iterable[str] | None = None,
     ):

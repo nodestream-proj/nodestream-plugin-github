@@ -6,7 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 from nodestream.pipeline import Extractor
 
@@ -22,7 +22,7 @@ class GithubTeamsExtractor(Extractor):
     def __init__(self, **github_client_kwargs: any):
         self.client = GithubRestApiClient(**github_client_kwargs)
 
-    async def extract_records(self) -> AsyncIterator[TeamRecord]:
+    async def extract_records(self) -> AsyncGenerator[TeamRecord]:
         async for page in self.client.fetch_all_organizations():
             login = page["login"]
             async for team in self.client.fetch_teams_for_org(login):
@@ -30,7 +30,7 @@ class GithubTeamsExtractor(Extractor):
                 if team_record:
                     yield team_record
 
-    async def _fetch_members(self, team: GithubTeam) -> AsyncIterator[SimplifiedUser]:
+    async def _fetch_members(self, team: GithubTeam) -> AsyncGenerator[SimplifiedUser]:
         logger.debug(
             "Getting members for team %s/%s",
             team["organization"]["login"],

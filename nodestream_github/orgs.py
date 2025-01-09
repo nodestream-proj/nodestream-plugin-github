@@ -6,7 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 from nodestream.pipeline import Extractor
 
@@ -22,7 +22,7 @@ class GithubOrganizationsExtractor(Extractor):
     def __init__(self, **github_client_kwargs: any):
         self.client = GithubRestApiClient(**github_client_kwargs)
 
-    async def extract_records(self) -> AsyncIterator[OrgRecord]:
+    async def extract_records(self) -> AsyncGenerator[OrgRecord]:
         async for org in self.client.fetch_all_organizations():
             enhanced_org = await self._extract_organization(org["login"])
             if enhanced_org:
@@ -40,7 +40,7 @@ class GithubOrganizationsExtractor(Extractor):
         ]
         return full_org
 
-    async def _fetch_all_members(self, login: str) -> AsyncIterator[SimplifiedUser]:
+    async def _fetch_all_members(self, login: str) -> AsyncGenerator[SimplifiedUser]:
         async for admin in self.client.fetch_members_for_org(login, "admin"):
             yield simplify_user(admin) | {"role": "admin"}
 

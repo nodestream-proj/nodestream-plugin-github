@@ -6,7 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 
 from nodestream.pipeline import Extractor
 
@@ -21,7 +21,7 @@ class GithubUserExtractor(Extractor):
     def __init__(self, **github_client_kwargs: any):
         self.client = GithubRestApiClient(**github_client_kwargs)
 
-    async def extract_records(self) -> AsyncIterator[UserRecord]:
+    async def extract_records(self) -> AsyncGenerator[UserRecord]:
         """Scrapes the GitHub REST api for all users and converts them to records."""
         async for user in self.client.fetch_all_users():
             if user["type"] != "User":
