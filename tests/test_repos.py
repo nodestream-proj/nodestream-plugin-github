@@ -189,7 +189,7 @@ async def test_extract_records(
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
             "notifications_url": "https://HOSTNAME/repos/octocat/Hello-World/notifications{?since,all,participating}",
             "open_issues_count": 0,
-            "owner_login": {
+            "user_owner": {
                 "avatar_url": "https://github.com/images/error/octocat_happy.gif",
                 "events_url": "https://HOSTNAME/users/octocat/events{/privacy}",
                 "followers_url": "https://HOSTNAME/users/octocat/followers",
@@ -387,5 +387,21 @@ async def test_extract_records(
                 "updated_at": "2019-06-03T00:57:16Z",
                 "url": "https://HOSTNAME/repos/octocat/Hello-World/hooks/12345678",
             }],
+            "org_owner": {
+                "avatar_url": "https://github.com/images/error/octocat_happy.gif",
+                "description": "A great organization",
+                "events_url": "https://HOSTNAME/orgs/github/events",
+                "hooks_url": "https://HOSTNAME/orgs/github/hooks",
+                "id": 1,
+                "issues_url": "https://HOSTNAME/orgs/github/issues",
+                "login": "github",
+                "members_url": "https://HOSTNAME/orgs/github/members{/member}",
+                "node_id": "MDEyOk9yZ2FuaXphdGlvbjE=",
+                "public_members_url": (
+                    "https://HOSTNAME/orgs/github/public_members{/member}"
+                ),
+                "repos_url": "https://HOSTNAME/orgs/github/repos",
+                "url": "https://HOSTNAME/orgs/github",
+            },
         },
     ]

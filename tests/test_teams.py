@@ -41,7 +41,8 @@ async def test_extract_records(
         json=[TURBO_USER],
     )
     gh_rest_mock.get_repos_for_team(
-        team_id=1,
+        org_login="github",
+        slug="justice-league",
         json=[HELLO_WORLD_REPO],
     )
 

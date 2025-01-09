@@ -38,7 +38,7 @@ async def test_do_not_retry_bad_status(httpx_mock: HTTPXMock, status_code):
     )
 
     with pytest.raises(httpx.HTTPStatusError):
-        [item async for item in client.get("example")]
+        [item async for item in client._get_paginated("example")]
 
 
 @pytest.mark.asyncio
@@ -57,7 +57,7 @@ async def test_retry_ratelimited(httpx_mock: HTTPXMock):
 
     with pytest.raises(RateLimitedException):
         for _ in range(100):
-            [item async for item in client.get("example")]
+            [item async for item in client._get_paginated("example")]
 
 
 @pytest.mark.asyncio
@@ -84,5 +84,5 @@ async def test_pagination(httpx_mock: HTTPXMock):
         is_reusable=False,
     )
 
-    items = [item async for item in client.get("example")]
+    items = [item async for item in client._get_paginated("example")]
     assert items == ["a", "b", "c", "d"]

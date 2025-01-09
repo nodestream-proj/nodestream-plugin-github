@@ -21,6 +21,7 @@ def repo(
         "node_id": encode_as_node_id(f"010:Repository{repo_id}"),
         "name": repo_name,
         "full_name": f"{owner_login}/{repo_name}",
+        "owner": repo_owner,
         "private": False,
         "html_url": f"https://github.com/{owner_login}/{repo_name}",
         "description": "This your first repo!",
@@ -142,4 +143,4 @@ def repo(
     } | kwargs
 
 
-HELLO_WORLD_REPO = repo(owner_login=OCTOCAT_USER, repo_name="Hello-World")
+HELLO_WORLD_REPO = repo(owner=OCTOCAT_USER, repo_name="Hello-World")

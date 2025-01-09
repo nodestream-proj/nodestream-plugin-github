@@ -1,5 +1,7 @@
 .PHONY: clean
 clean: clean-pyc 
+	find . \( -name "coverage.xml" -or -name ".coverage" \) -delete
+	find . -name htmlcov -exec rm -rf {} +
 
 .PHONY: clean-pyc
 clean-pyc:

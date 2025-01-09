@@ -97,9 +97,9 @@ class GithubHttpxMock:
             **kwargs,
         )
 
-    def get_repos_for_team(self, team_id: int, **kwargs):
+    def get_repos_for_team(self, org_login: str, slug: str, **kwargs):
         self.add_response(
-            url=f"{self.endpoint}/teams/{team_id}/repos?per_page={self.per_page}",
+            url=f"{self.endpoint}/orgs/{org_login}/teams/{slug}/repos?per_page={self.per_page}",
             **kwargs,
         )
 
