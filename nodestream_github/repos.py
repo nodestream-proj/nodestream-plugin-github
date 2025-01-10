@@ -6,7 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass
 
 from nodestream.pipeline import Extractor
 
@@ -30,21 +30,11 @@ def _dict_val_to_bool(d: dict[str, any], key: str) -> bool:
 
 @dataclass
 class CollectWhichRepos:
-    org_all: InitVar[bool] = field(default=False)
-    user_all: InitVar[bool] = field(default=False)
     all_public: bool = False
     org_public: bool = False
     org_private: bool = False
     user_public: bool = False
     user_private: bool = False
-
-    def __post_init__(self, org_all: bool, user_all: bool):
-        if org_all:
-            self.org_public = True
-            self.org_private = True
-        if user_all:
-            self.user_public = True
-            self.user_private = True
 
     @property
     def org_any(self) -> bool:
@@ -53,6 +43,19 @@ class CollectWhichRepos:
     @property
     def user_any(self) -> bool:
         return self.user_public or self.user_private
+
+    @staticmethod
+    def from_dict(raw_dict: dict[str, any]) -> "CollectWhichRepos":
+        org_all = _dict_val_to_bool(raw_dict, "org_all")
+        user_all = _dict_val_to_bool(raw_dict, "user_all")
+
+        return CollectWhichRepos(
+            all_public=_dict_val_to_bool(raw_dict, "all_public"),
+            org_public=org_all or _dict_val_to_bool(raw_dict, "org_public"),
+            org_private=org_all or _dict_val_to_bool(raw_dict, "org_private"),
+            user_public=user_all or _dict_val_to_bool(raw_dict, "user_public"),
+            user_private=user_all or _dict_val_to_bool(raw_dict, "user_private"),
+        )
 
 
 class GithubReposExtractor(Extractor):
@@ -64,7 +67,7 @@ class GithubReposExtractor(Extractor):
         if isinstance(collecting, CollectWhichRepos):
             self.collecting = collecting
         elif isinstance(collecting, dict):
-            self.collecting = CollectWhichRepos(**collecting)
+            self.collecting = CollectWhichRepos.from_dict(collecting)
         else:
             self.collecting = CollectWhichRepos()
         self.client = GithubRestApiClient(**kwargs)

@@ -20,8 +20,8 @@ fmt:
 	poetry run isort nodestream_github tests
 	poetry run black nodestream_github tests
 
-.PHONY: fmt
-lint:
+.PHONY: lint
+lint: fmt
 	poetry run ruff check nodestream_github tests --fix
 	
 .PHONY: test

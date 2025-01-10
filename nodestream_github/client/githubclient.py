@@ -23,7 +23,7 @@ from tenacity import (
 import nodestream_github.types as types
 from nodestream_github.logging import get_plugin_logger
 
-DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60 )
+DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
 

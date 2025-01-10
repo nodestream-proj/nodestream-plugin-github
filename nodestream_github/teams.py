@@ -28,7 +28,11 @@ class GithubTeamsExtractor(Extractor):
             async for team in self.client.fetch_teams_for_org(login):
                 team_record = await self._fetch_team(login, team)
                 if team_record:
-                    logger.debug("yielded GithubTeam{org=%s,slug=%s}", team_record["organization"]["login"], team_record["slug"], )
+                    logger.debug(
+                        "yielded GithubTeam{org=%s,slug=%s}",
+                        team_record["organization"]["login"],
+                        team_record["slug"],
+                    )
                     yield team_record
 
     async def _fetch_members(self, team: GithubTeam) -> AsyncGenerator[SimplifiedUser]:
