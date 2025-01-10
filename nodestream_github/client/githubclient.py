@@ -21,13 +21,14 @@ from tenacity import (
 )
 
 import nodestream_github.types as types
+from nodestream_github.logging import get_plugin_logger
 
-DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
+DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60 )
 DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
 
 
-logger = logging.getLogger(__name__)
+logger = get_plugin_logger(__name__)
 
 
 class AllowedAuditActionsPhrases(Enum):
@@ -41,14 +42,22 @@ class RateLimitedError(Exception):
 
 def _fetch_problem(title: str, e: httpx.HTTPError):
     if isinstance(e, httpx.HTTPStatusError):
-        message = f" - { e.response.json().get("message")}" if e.response.json() else ""
+        error_message = None
+        try:
+            error_message = e.response.json().get("message")
+        except AttributeError:
+            # ignore if no message
+            pass
+        except ValueError:
+            # ignore if no json
+            pass
 
         logger.warning(
             "%s %s - %s%s",
             e.response.status_code,
             e.response.reason_phrase,
             e.request.url.path,
-            message,
+            f" - {error_message}" if error_message else "",
             stacklevel=2,
         )
     else:
@@ -90,8 +99,8 @@ class GithubRestApiClient:
             self._default_headers["User-Agent"] = user_agent
         self._max_retries = max_retries
 
-        logger.debug("RateLimit per minute: %s", rate_limit_per_minute)
-        self._limit_per_minute = RateLimitItemPerMinute(rate_limit_per_minute, 1)
+        self._rate_limit = RateLimitItemPerMinute(rate_limit_per_minute, 1)
+        logger.info("GitHub REST RateLimit set to %s", self._rate_limit)
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self._session = httpx.AsyncClient()
 
@@ -120,8 +129,8 @@ class GithubRestApiClient:
         return self._rate_limiter
 
     @property
-    def limit_per_minute(self) -> RateLimitItem:
-        return self._limit_per_minute
+    def rate_limit(self) -> RateLimitItem:
+        return self._rate_limit
 
     @property
     def max_retries(self) -> int:
@@ -158,10 +167,10 @@ class GithubRestApiClient:
 
         DO NOT CALL THIS DIRECTLY. ONLY USE _get_retrying
         """
-        can_try_hit: bool = await self.rate_limiter.test(self.limit_per_minute)
+        can_try_hit: bool = await self.rate_limiter.test(self.rate_limit)
         if not can_try_hit:
             raise RateLimitedError(url)
-        can_hit: bool = await self.rate_limiter.hit(self.limit_per_minute)
+        can_hit: bool = await self.rate_limiter.hit(self.rate_limit)
         if not can_hit:
             raise RateLimitedError(url)
 

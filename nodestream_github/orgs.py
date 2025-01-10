@@ -5,17 +5,17 @@ Developed using Enterprise Server 3.12
 https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
-import logging
 from collections.abc import AsyncGenerator
 
 from nodestream.pipeline import Extractor
 
+from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
+from .logging import get_plugin_logger
 from .types import OrgRecord, SimplifiedUser
-from .util import GithubRestApiClient
 
-logger = logging.getLogger(__name__)
+logger = get_plugin_logger(__name__)
 
 
 class GithubOrganizationsExtractor(Extractor):
@@ -26,6 +26,7 @@ class GithubOrganizationsExtractor(Extractor):
         async for org in self.client.fetch_all_organizations():
             enhanced_org = await self._extract_organization(org["login"])
             if enhanced_org:
+                logger.debug("yielded GithubOrg{login=%s}", enhanced_org["login"])
                 yield enhanced_org
 
     async def _extract_organization(self, login: str) -> OrgRecord | None:

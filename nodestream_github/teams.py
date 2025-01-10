@@ -5,17 +5,17 @@ Developed using Enterprise Server 3.12
 https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
-import logging
 from collections.abc import AsyncGenerator
 
 from nodestream.pipeline import Extractor
 
+from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
+from .logging import get_plugin_logger
 from .types import GithubTeam, GithubTeamSummary, SimplifiedUser, TeamRecord
-from .util import GithubRestApiClient
 
-logger = logging.getLogger(__name__)
+logger = get_plugin_logger(__name__)
 
 
 class GithubTeamsExtractor(Extractor):
@@ -28,6 +28,7 @@ class GithubTeamsExtractor(Extractor):
             async for team in self.client.fetch_teams_for_org(login):
                 team_record = await self._fetch_team(login, team)
                 if team_record:
+                    logger.debug("yielded GithubTeam{org=%s,slug=%s}", team_record["organization"]["login"], team_record["slug"], )
                     yield team_record
 
     async def _fetch_members(self, team: GithubTeam) -> AsyncGenerator[SimplifiedUser]:

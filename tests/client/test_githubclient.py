@@ -2,7 +2,7 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from nodestream_github.util.githubclient import GithubRestApiClient, RateLimitedError
+from nodestream_github.client.githubclient import GithubRestApiClient, RateLimitedError
 from tests.mocks.githubrest import DEFAULT_BASE_URL, DEFAULT_HOSTNAME
 
 
@@ -25,7 +25,6 @@ async def test_retry_bad_status(httpx_mock: HTTPXMock, status_code: int):
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-user-agent",
         max_retries=5,
-        min_retry_wait_seconds=0.1,
         max_retry_wait_seconds=0,
     )
 

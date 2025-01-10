@@ -126,7 +126,7 @@ class GithubHttpxMock:
 
     def get_webhooks_for_repo(self, owner_login: str, repo_name: str, **kwargs: any):
         self.add_response(
-            url=f"{self.base_url}/repos/{owner_login}/{repo_name}/webhooks?per_page={self.per_page}",
+            url=f"{self.base_url}/repos/{owner_login}/{repo_name}/hooks?per_page={self.per_page}",
             **kwargs,
         )
 

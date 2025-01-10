@@ -5,16 +5,16 @@ Developed using Enterprise Server 3.12
 https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
-import logging
 from collections.abc import AsyncGenerator
 
 from nodestream.pipeline import Extractor
 
+from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
+from .logging import get_plugin_logger
 from .types import UserRecord
-from .util import GithubRestApiClient
 
-logger = logging.getLogger(__name__)
+logger = get_plugin_logger(__name__)
 
 
 class GithubUserExtractor(Extractor):
@@ -29,4 +29,5 @@ class GithubUserExtractor(Extractor):
                 simplify_repo(repo)
                 async for repo in self.client.fetch_repos_for_user(login, "all")
             ]
+            logger.debug("yielded GithubUser{login=%s}", login)
             yield user

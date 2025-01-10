@@ -5,17 +5,17 @@ Developed using Enterprise Server 3.12
 https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
-import logging
 from collections.abc import AsyncGenerator
 from dataclasses import InitVar, dataclass, field
 
 from nodestream.pipeline import Extractor
 
+from .client import GithubRestApiClient
 from .interpretations.relationship.user import simplify_user
+from .logging import get_plugin_logger
 from .types import GithubRepo, RepositoryRecord
-from .util import GithubRestApiClient
 
-logger = logging.getLogger(__name__)
+logger = get_plugin_logger(__name__)
 
 
 def _dict_val_to_bool(d: dict[str, any], key: str) -> bool:
@@ -107,6 +107,7 @@ class GithubReposExtractor(Extractor):
                 owner["login"], repo["name"]
             )
         ]
+        logger.debug("yielded GithubRepo{full_name=%s}", repo["full_name"])
         return repo
 
     async def _fetch_repos_by_org(self) -> AsyncGenerator[GithubRepo]:
