@@ -3,8 +3,7 @@
     github_hostname: !config 'github_hostname'
     auth_token: !config 'auth_token'
     user_agent: !config 'user_agent'
-    collecting:
-      user_all: true
+    collecting: !config 'collecting'
 - implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
@@ -96,6 +95,7 @@
       node_type: GithubWebhook
       iterate_on: !jmespath 'webhooks[*]'
       relationship_type: WEBHOOK_ON
+      outbound: false
       relationship_properties:
         events: !jmespath "events"
       node_key:
@@ -111,4 +111,7 @@
         updated_at: !jmespath 'updated_at'
         created_at: !jmespath 'created_at'
         url: !jmespath 'url'
+        last_response_code: !jmespath 'last_response.code'
+        last_response_status: !jmespath 'last_response.status'
+        last_response_message: !jmespath 'last_response.message'
 

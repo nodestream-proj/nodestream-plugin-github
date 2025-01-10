@@ -40,12 +40,16 @@ class RateLimitedError(Exception):
 
 
 def _fetch_problem(title: str, e: httpx.HTTPError):
-    if (
-        isinstance(e, httpx.HTTPStatusError)
-        and e.response.status_code == httpx.codes.FORBIDDEN
-    ):
+    if isinstance(e, httpx.HTTPStatusError):
+        message = f" - { e.response.json().get("message")}" if e.response.json() else ""
+
         logger.warning(
-            "Current token lacks permissions for %s", e.request.url.path, stacklevel=2
+            "%s %s - %s%s",
+            e.response.status_code,
+            e.response.reason_phrase,
+            e.request.url.path,
+            message,
+            stacklevel=2,
         )
     else:
         logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
@@ -61,7 +65,6 @@ class GithubRestApiClient:
         per_page: int = DEFAULT_PAGE_SIZE,
         max_retries: int = DEFAULT_MAX_RETRIES,
         rate_limit_per_minute: int = DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE,
-        min_retry_wait_seconds: float = 1.0,
         max_retry_wait_seconds: int = 60 * 5,
     ):
         if per_page < 1:
@@ -69,9 +72,6 @@ class GithubRestApiClient:
             raise ValueError(msg)
         if max_retries < 0:
             msg = "max_retries must be a positive integer"
-            raise ValueError(msg)
-        if min_retry_wait_seconds < 0:
-            msg = "min_retry_wait_seconds must be a number greater than 0"
             raise ValueError(msg)
 
         self._auth_token = auth_token
@@ -95,11 +95,9 @@ class GithubRestApiClient:
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self._session = httpx.AsyncClient()
 
-        self.min_retry_wait = min_retry_wait_seconds
         self.max_retry_wait = max_retry_wait_seconds
         self._retryer = AsyncRetrying(
             wait=wait_random_exponential(
-                multiplier=min_retry_wait_seconds,
                 max=max_retry_wait_seconds,
             ),
             stop=stop_after_attempt(self.max_retries),
@@ -327,7 +325,7 @@ class GithubRestApiClient:
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repository-languages
 
-        Fine-grained access tokens require the "Webhooks" repository permissions (read).
+        Fine-grained access tokens require the "Metadata" repository permissions (read).
         """
         try:
 
@@ -344,13 +342,13 @@ class GithubRestApiClient:
     ) -> AsyncGenerator[types.Webhook]:
         """Try to get types.webhook data for this repo.
 
-        https://docs.github.com/en/enterprise-server@3.12/rest/repos/webhooks?apiVersion=2022-11-28#list-repository-types.webhooks
+        https://docs.github.com/en/enterprise-server@3.12/rest/repos/webhooks?apiVersion=2022-11-28#list-repository-webhooks
 
         Fine-grained access tokens require the "Webhooks" repository permissions (read).
         """
         try:
             async for hook in self._get_paginated(
-                f"repos/{owner_login}/{repo_name}/webhooks"
+                f"repos/{owner_login}/{repo_name}/hooks"
             ):
                 yield hook
 
@@ -364,7 +362,20 @@ class GithubRestApiClient:
     ) -> AsyncGenerator[types.GithubUser]:
         """Try to get collaborator data for this repo.
 
+        For organization-owned repositories, the list of collaborators includes
+        outside collaborators, organization members that are direct collaborators,
+        organization members with access through team memberships, organization
+        members with access through default organization permissions,
+        and organization owners. Organization members with write, maintain, or admin
+        privileges on the organization-owned repository can use this endpoint.
+
         https://docs.github.com/en/enterprise-server@3.12/rest/collaborators/collaborators?apiVersion=2022-11-28
+
+        The authenticated user must have push access to the repository to use
+        this endpoint.
+
+        OAuth app tokens and personal access tokens (classic) need the `read:org`
+        and `repo` scopes to use this endpoint.
 
         Fine-grained access tokens require the "Metadata" repository permissions (read)
         """
@@ -407,7 +418,8 @@ class GithubRestApiClient:
         """
         try:
             async for user in self._get_paginated("users"):
-                yield user
+                if user["type"] == "User":
+                    yield user
         except httpx.HTTPError as e:
             _fetch_problem("all users", e)
 

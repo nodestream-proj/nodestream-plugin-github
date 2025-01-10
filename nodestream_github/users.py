@@ -24,9 +24,6 @@ class GithubUserExtractor(Extractor):
     async def extract_records(self) -> AsyncGenerator[UserRecord]:
         """Scrapes the GitHub REST api for all users and converts them to records."""
         async for user in self.client.fetch_all_users():
-            if user["type"] != "User":
-                continue  # GitHub returns both users and orgs as users
-
             login = user["login"]
             user["repositories"] = [
                 simplify_repo(repo)
