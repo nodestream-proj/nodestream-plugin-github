@@ -1,0 +1,117 @@
+- implementation: nodestream_github:GithubReposExtractor
+  arguments:
+    github_hostname: !config 'github_hostname'
+    auth_token: !config 'auth_token'
+    user_agent: !config 'user_agent'
+    collecting: !config 'collecting'
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+    - type: source_node
+      node_type: GithubRepo
+      additional_indexes:
+      - full_name
+      - html_url
+      key:
+        node_id: !jmespath 'node_id'
+    - type: properties
+      properties:
+        id: !jmespath 'id'
+        name: !jmespath 'name'
+        full_name: !jmespath 'full_name'
+        private: !jmespath 'private'
+        html_url: !jmespath 'html_url'
+        description: !jmespath 'description'
+        fork: !jmespath 'fork'
+        url: !jmespath 'url'
+        homepage: !jmespath 'homepage'
+        language: !jmespath 'language'
+        forks_count: !jmespath 'forks_count'
+        stargazers_count: !jmespath 'stargazers_count'
+        watchers_count: !jmespath 'watchers_count'
+        size: !jmespath 'size'
+        default_branch: !jmespath 'default_branch'
+        open_issues_count: !jmespath 'open_issues_count'
+        is_template: !jmespath 'is_template'
+        topics: !jmespath 'topics'
+        has_issues: !jmespath 'has_issues'
+        has_projects: !jmespath 'has_projects'
+        has_wiki: !jmespath 'has_wiki'
+        has_pages: !jmespath 'has_pages'
+        has_downloads: !jmespath 'has_downloads'
+        has_discussions: !jmespath 'has_discussions'
+        archived: !jmespath 'archived'
+        disabled: !jmespath 'disabled'
+        visibility: !jmespath 'visibility'
+        pushed_at: !jmespath 'pushed_at'
+        created_at: !jmespath 'created_at'
+        updated_at: !jmespath 'updated_at'
+        security_and_analysis_advanced_security: !jmespath 'security_and_analysis.advanced_security.status'
+        security_and_analysis_secret_scanning: !jmespath 'security_and_analysis.secret_scanning.status'
+        security_and_analysis_secret_scanning_push_protection: !jmespath 'security_and_analysis.secret_scanning_push_protection.status'
+
+    - type: relationship
+      node_type: GithubOrg
+      relationship_type: IN_ORGANIZATION
+      node_key:
+        node_id: !jmespath 'org_owner.node_id'
+      node_properties:
+        id: !jmespath "org_owner.id"
+        name: !jmespath "org_owner.name"
+        login: !jmespath "org_owner.login"
+
+
+    - type: relationship
+      node_type: GithubUser
+      relationship_type: IS_OWNER
+      outbound: false
+      node_key:
+        node_id: !jmespath 'user_owner.node_id'
+      node_properties:
+        id: !jmespath "user_owner.id"
+        login: !jmespath "user_owner.login"
+
+    - type: github-user-relationship
+      relationship_type: IS_COLLABORATOR
+      iterate_on: !jmespath 'collaborators[*]'
+      outbound: false
+      relationship_properties:
+        triage: !jmespath 'permissions.triage'
+        maintain: !jmespath 'permissions.maintain'
+        admin: !jmespath 'permissions.admin'
+        push: !jmespath 'permissions.push'
+        pull: !jmespath 'permissions.pull'
+
+    - type: relationship
+      node_type: ProgrammingLanguage
+      relationship_type: HAS_LANGUAGE
+      node_key:
+        name: !jmespath 'name'
+      relationship_properties:
+        size: !jmespath size
+      iterate_on: !jmespath 'languages'
+
+    - type: relationship
+      node_type: GithubWebhook
+      iterate_on: !jmespath 'webhooks[*]'
+      relationship_type: WEBHOOK_ON
+      outbound: false
+      relationship_properties:
+        events: !jmespath "events"
+      node_key:
+        id: !jmespath 'id'
+      node_properties:
+        type: !jmespath 'type'
+        id: !jmespath 'id'
+        name: !jmespath 'name'
+        active: !jmespath 'active'
+        config_content_type: !jmespath 'config.content_type'
+        config_insecure_ssl: !jmespath 'config.insecure_ssl'
+        config_url: !jmespath 'config.url'
+        updated_at: !jmespath 'updated_at'
+        created_at: !jmespath 'created_at'
+        url: !jmespath 'url'
+        last_response_code: !jmespath 'last_response.code'
+        last_response_status: !jmespath 'last_response.status'
+        last_response_message: !jmespath 'last_response.message'
+

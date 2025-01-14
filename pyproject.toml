@@ -1,0 +1,60 @@
+[tool.poetry]
+name = "nodestream-plugin-github"
+version = "0.13.0"
+description = ""
+authors = ["Jon Bristow <jonathan_bristow@intuit.com>"]
+packages = [
+    { include = "nodestream_github" }
+]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+nodestream = "^0.13.0"
+limits = "^3.14.1"
+tenacity = "^9.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.1"
+black = "^24.10.0"
+isort = "^5.13.2"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.1"
+pytest-httpx = "0.34.0"
+pytest-cov = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+preview = true
+enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "parens_for_long_if_clauses_in_case_block", "remove_redundant_guard_parens", "wrap_long_dict_values_in_parens"]
+
+[tool.isort]
+profile = "black"
+
+[tool.poetry.plugins."nodestream.plugins"]
+projects = "nodestream_github.plugin"
+interpretations = "nodestream_github.interpretations"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github"
+
+[tool.ruff.lint]
+select = [ "A", "ANN", "ARG", "ASYNC", "B", "C4", "DTZ", "E", "EM", "ERA", "F", "FBT", "FURB", "G", "I", "INP", "N", "PIE", "PT", "RET", "RUF", "S", "SIM", "T20", "TC", "UP", ]
+ignore = []
+
+unfixable = ["B"]
+
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S106"]
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+suppress-none-returning = true

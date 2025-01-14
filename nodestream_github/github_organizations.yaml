@@ -1,0 +1,85 @@
+- implementation: nodestream_github:GithubOrganizationsExtractor
+  arguments:
+    github_hostname: !config 'github_hostname'
+    auth_token: !config 'auth_token'
+    user_agent: !config 'user_agent'
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+    - type: source_node
+      node_type: GithubOrg
+      key:
+        node_id: !jmespath 'node_id'
+      additional_indexes:
+        - name
+        - login
+        - html_url
+    - type: properties
+      properties:
+        login: !jmespath 'login'
+        id: !jmespath 'id'
+        url: !jmespath 'url'
+        description: !jmespath 'description'
+        name: !jmespath 'name'
+        company: !jmespath 'company'
+        blog: !jmespath 'blog'
+        location: !jmespath 'location'
+        email: !jmespath 'email'
+        twitter_username: !jmespath 'twitter_username'
+        is_verified: !jmespath 'is_verified'
+        has_organization_projects: !jmespath 'has_organization_projects'
+        has_repository_projects: !jmespath 'has_repository_projects'
+        public_repos: !jmespath 'public_repos'
+        public_gists: !jmespath 'public_gists'
+        followers: !jmespath 'followers'
+        following: !jmespath 'following'
+        html_url: !jmespath 'html_url'
+        created_at: !jmespath 'created_at'
+        type: !jmespath 'type'
+        total_private_repos: !jmespath 'total_private_repos'
+        owned_private_repos: !jmespath 'owned_private_repos'
+        private_gists: !jmespath 'private_gists'
+        disk_usage: !jmespath 'disk_usage'
+        collaborators: !jmespath 'collaborators'
+        billing_email: !jmespath 'billing_email'
+        plan: !jmespath 'plan.name'
+        default_repository_permission: !jmespath 'default_repository_permission'
+        members_can_create_repositories: !jmespath 'members_can_create_repositories'
+        two_factor_requirement_enabled: !jmespath 'two_factor_requirement_enabled'
+        members_allowed_repository_creation_type: !jmespath 'members_allowed_repository_creation_type'
+        members_can_create_public_repositories: !jmespath 'members_can_create_public_repositories'
+        members_can_create_private_repositories: !jmespath 'members_can_create_private_repositories'
+        members_can_create_internal_repositories: !jmespath 'members_can_create_internal_repositories'
+        members_can_create_pages: !jmespath 'members_can_create_pages'
+        members_can_create_public_pages: !jmespath 'members_can_create_public_pages'
+        members_can_create_private_pages: !jmespath 'members_can_create_private_pages'
+        members_can_fork_private_repositories: !jmespath 'members_can_fork_private_repositories'
+        web_commit_signoff_required: !jmespath 'web_commit_signoff_required'
+        updated_at: !jmespath 'updated_at'
+        dependency_graph_enabled_for_new_repositories: !jmespath 'dependency_graph_enabled_for_new_repositories'
+        dependabot_alerts_enabled_for_new_repositories: !jmespath 'dependabot_alerts_enabled_for_new_repositories'
+        dependabot_security_updates_enabled_for_new_repositories: !jmespath 'dependabot_security_updates_enabled_for_new_repositories'
+        advanced_security_enabled_for_new_repositories: !jmespath 'advanced_security_enabled_for_new_repositories'
+        secret_scanning_enabled_for_new_repositories: !jmespath 'secret_scanning_enabled_for_new_repositories'
+        secret_scanning_push_protection_enabled_for_new_repositories: !jmespath 'secret_scanning_push_protection_enabled_for_new_repositories'
+        secret_scanning_push_protection_custom_link: !jmespath 'secret_scanning_push_protection_custom_link'
+        secret_scanning_push_protection_custom_link_enabled: !jmespath 'secret_scanning_push_protection_custom_link_enabled'
+
+    - type: github-user-relationship
+      relationship_type: IS_MEMBER
+      iterate_on: !jmespath 'members[*]'
+      outbound: false
+      relationship_properties:
+        role: !jmespath 'role'
+
+    - type: github-repo-relationship
+      relationship_type: IN_ORGANIZATION
+      iterate_on: !jmespath 'repositories[*]'
+      outbound: false
+      relationship_properties:
+          triage: !jmespath 'permissions.triage'
+          maintain: !jmespath 'permissions.maintain'
+          admin: !jmespath 'permissions.admin'
+          push: !jmespath 'permissions.push'
+          pull: !jmespath 'permissions.pull'
+

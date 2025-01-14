@@ -1,0 +1,54 @@
+- implementation: nodestream_github:GithubUserExtractor
+  arguments:
+    github_hostname: !config 'github_hostname'
+    auth_token: !config 'auth_token'
+    user_agent: !config 'user_agent'
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+      - type: source_node
+        node_type: GithubUser
+        key:
+          node_id: !jmespath 'node_id'
+        additional_indexes:
+          - login
+          - html_url
+      - type: properties
+        properties:
+          login: !jmespath 'login'
+          id: !jmespath 'id'
+          gravatar_id: !jmespath 'gravatar_id'
+          url: !jmespath 'url'
+          html_url: !jmespath 'html_url'
+          type: !jmespath 'type'
+          site_admin: !jmespath 'site_admin'
+          name: !jmespath 'name'
+          company: !jmespath 'company'
+          blog: !jmespath 'blog'
+          location: !jmespath 'location'
+          email: !jmespath 'email'
+          hireable: !jmespath 'hireable'
+          bio: !jmespath 'bio'
+          public_repos: !jmespath 'public_repos'
+          public_gists: !jmespath 'public_gists'
+          followers: !jmespath 'followers'
+          following: !jmespath 'following'
+          created_at: !jmespath 'created_at'
+          updated_at: !jmespath 'updated_at'
+          private_gists: !jmespath 'private_gists'
+          total_private_repos: !jmespath 'total_private_repos'
+          owned_private_repos: !jmespath 'owned_private_repos'
+          disk_usage: !jmespath 'disk_usage'
+          collaborators: !jmespath 'collaborators'
+          two_factor_authentication: !jmespath 'two_factor_authentication'
+          plan: !jmespath 'plan.name'
+      - type: github-repo-relationship
+        iterate_on: !jmespath 'repositories[*]'
+        relationship_type: IS_COLLABORATOR
+        outbound: true
+        relationship_properties:
+          triage: !jmespath 'permissions.triage'
+          maintain: !jmespath 'permissions.maintain'
+          admin: !jmespath 'permissions.admin'
+          push: !jmespath 'permissions.push'
+          pull: !jmespath 'permissions.pull'
