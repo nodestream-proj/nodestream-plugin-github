@@ -23,6 +23,7 @@ NOTE: These values will be used in your `.env`
 1. Install necessary dependencies: `poetry install`
 1. In `nodestream.yaml` add the following:
 ```yaml
+plugins:
   - name: github
     config:
       github_hostname: github.example.com
@@ -37,6 +38,7 @@ NOTE: These values will be used in your `.env`
     pipelines:
         - name: github_repos
         - name: github_teams
+targets:
     database: neo4j 
     uri: bolt://localhost:7687
     username: neo4j
