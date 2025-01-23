@@ -26,8 +26,8 @@ jobs:
           poetry install
       - name: Run Lints
         run: |
-          poetry run black nodestream_akamai tests --check
-          poetry run isort nodestream_akamai tests --check-only
+          poetry run black nodestream_github tests --check
+          poetry run isort nodestream_github tests --check-only
           poetry run ruff check nodestream_github tests 
       - name: Run Tests
         run: |
