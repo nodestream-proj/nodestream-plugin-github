@@ -56,10 +56,6 @@
       iterate_on: !jmespath 'repos[*]'
       key_normalization:
         do_lowercase_strings: false
-      outbound: false
       relationship_properties:
-          triage: !jmespath 'permissions.triage'
-          maintain: !jmespath 'permissions.maintain'
-          admin: !jmespath 'permissions.admin'
-          push: !jmespath 'permissions.push'
-          pull: !jmespath 'permissions.pull'
+        permission: !jmespath 'permission'
+      outbound: false

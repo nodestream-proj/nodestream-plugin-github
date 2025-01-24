@@ -13,7 +13,7 @@ from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
-from .types import GithubTeam, GithubTeamSummary, SimplifiedUser, TeamRecord
+from .types import GithubRepo, GithubTeam, GithubTeamSummary, SimplifiedUser, TeamRecord
 
 logger = get_plugin_logger(__name__)
 
@@ -59,7 +59,7 @@ class GithubTeamsExtractor(Extractor):
             simplify_user(member) async for member in self._fetch_members(team)
         ]
         team["repos"] = [
-            simplify_repo(repo)
+            simplify_repo(repo, permission=team.get("permission"))
             async for repo in self.client.fetch_repos_for_team(login, team["slug"])
         ]
         return team
