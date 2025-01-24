@@ -17,7 +17,11 @@ def simplify_repo(repo: GithubRepo, *, permission: str | None = None) -> Simplif
     """Simplify repo data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    return {k: repo[k] for k in _REPO_KEYS_TO_PRESERVE if k in repo} | {permission: permission} if permission else {}  # type: ignore
+    output = {k: repo[k] for k in _REPO_KEYS_TO_PRESERVE if k in repo}
+
+    if permission:
+        output["permission"] = permission
+    return output
 
 
 class RepositoryRelationshipInterpretation(

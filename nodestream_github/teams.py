@@ -13,7 +13,7 @@ from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
-from .types import GithubRepo, GithubTeam, GithubTeamSummary, SimplifiedUser, TeamRecord
+from .types import GithubTeam, GithubTeamSummary, SimplifiedUser, TeamRecord
 
 logger = get_plugin_logger(__name__)
 
