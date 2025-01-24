@@ -8,6 +8,8 @@
     interpretations:
     - type: source_node
       node_type: GithubTeam
+      key_normalization:
+        do_lowercase_strings: false
       key:
         node_id: !jmespath 'node_id'
       additional_indexes:
@@ -34,6 +36,8 @@
     - type: relationship
       node_type: GithubOrg
       relationship_type: IN_ORGANIZATION
+      key_normalization:
+        do_lowercase_strings: false
       node_key:
         node_id: !jmespath 'organization.node_id'
       outbound: true
@@ -41,6 +45,8 @@
     - type: github-user-relationship
       relationship_type: IS_MEMBER
       iterate_on: !jmespath 'members[*]'
+      key_normalization:
+        do_lowercase_strings: false
       outbound: false
       relationship_properties:
         role: !jmespath 'role'
@@ -48,6 +54,8 @@
     - type: github-repo-relationship
       relationship_type: IN_TEAM
       iterate_on: !jmespath 'repos[*]'
+      key_normalization:
+        do_lowercase_strings: false
       outbound: false
       relationship_properties:
           triage: !jmespath 'permissions.triage'

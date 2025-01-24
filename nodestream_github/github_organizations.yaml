@@ -8,6 +8,8 @@
     interpretations:
     - type: source_node
       node_type: GithubOrg
+      key_normalization:
+        do_lowercase_strings: false
       key:
         node_id: !jmespath 'node_id'
       additional_indexes:
@@ -69,6 +71,8 @@
       relationship_type: IS_MEMBER
       iterate_on: !jmespath 'members[*]'
       outbound: false
+      key_normalization:
+        do_lowercase_strings: false
       relationship_properties:
         role: !jmespath 'role'
 
@@ -76,6 +80,8 @@
       relationship_type: IN_ORGANIZATION
       iterate_on: !jmespath 'repositories[*]'
       outbound: false
+      key_normalization:
+        do_lowercase_strings: false
       relationship_properties:
           triage: !jmespath 'permissions.triage'
           maintain: !jmespath 'permissions.maintain'

@@ -8,6 +8,8 @@
     interpretations:
       - type: source_node
         node_type: GithubUser
+        key_normalization:
+          do_lowercase_strings: false
         key:
           node_id: !jmespath 'node_id'
         additional_indexes:
@@ -46,6 +48,8 @@
         iterate_on: !jmespath 'repositories[*]'
         relationship_type: IS_COLLABORATOR
         outbound: true
+        key_normalization:
+          do_lowercase_strings: false
         relationship_properties:
           triage: !jmespath 'permissions.triage'
           maintain: !jmespath 'permissions.maintain'
