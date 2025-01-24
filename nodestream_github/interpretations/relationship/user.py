@@ -10,7 +10,7 @@ from nodestream.pipeline.value_providers import (
 
 from nodestream_github.types import GithubUser, SimplifiedUser
 
-_USER_KEYS_TO_PRESERVE = ["id", "login", "node_id", "role", "permissions"]
+_USER_KEYS_TO_PRESERVE = ["id", "login", "node_id", "role"]
 
 
 def simplify_user(user: GithubUser) -> SimplifiedUser:

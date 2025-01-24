@@ -147,7 +147,7 @@ async def test_extract_records(
             "id": 1296269,
             "name": "Hello-World",
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-            "permissions": {"admin": False, "pull": True, "push": False},
+            "permission": "admin",
             "url": "https://HOSTNAME/repos/octocat/Hello-World",
         }],
         "repos_count": 10,

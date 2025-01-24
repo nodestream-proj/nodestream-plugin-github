@@ -29,9 +29,8 @@ def test_simplify_user():
     assert simplify_user(additional_keys) == _TEST_EXPECTATION
 
 
-def test_simplify_user_keep_perms():
-    test_input = _TEST_EXPECTATION | {"permissions": {"admin": True}}
-    assert simplify_user(test_input) == test_input
+def test_simplify_user_identity():
+    assert simplify_user(_TEST_EXPECTATION) == _TEST_EXPECTATION
 
 
 def test_user_relationship(context: ProviderContext):
