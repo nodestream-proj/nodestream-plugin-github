@@ -94,7 +94,7 @@ async def test_extract_records(
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
-        json=[TURBO_USER|{"role_name":"write"}],
+        json=[TURBO_USER | {"role_name": "write"}],
     )
     gh_rest_mock.get_languages_for_repo(
         owner_login="github",
@@ -125,7 +125,12 @@ async def test_extract_records(
                 "https://HOSTNAME/repos/octocat/Hello-World/branches{/branch}"
             ),
             "clone_url": "https://github.com/octocat/Hello-World.git",
-            "collaborators": [{"id": 2, "login": "turbo", "node_id": "MDQ6VXNlcjI=", "role_name": "write"}],
+            "collaborators": [{
+                "id": 2,
+                "login": "turbo",
+                "node_id": "MDQ6VXNlcjI=",
+                "role_name": "write",
+            }],
             "collaborators_url": "https://HOSTNAME/repos/octocat/Hello-World/collaborators{/collaborator}",
             "comments_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/comments{/number}"
