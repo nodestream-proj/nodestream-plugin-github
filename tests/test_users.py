@@ -44,7 +44,6 @@ async def test_github_user_extractor(
                 "id": 1296269,
                 "name": "Hello-World",
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-                "permissions": {"admin": False, "pull": True, "push": False},
                 "url": "https://HOSTNAME/repos/octocat/Hello-World",
             }]
         }

@@ -12,6 +12,8 @@
       additional_indexes:
       - full_name
       - html_url
+      key_normalization:
+        do_lowercase_strings: false
       key:
         node_id: !jmespath 'node_id'
     - type: properties
@@ -53,6 +55,8 @@
     - type: relationship
       node_type: GithubOrg
       relationship_type: IN_ORGANIZATION
+      key_normalization:
+        do_lowercase_strings: false
       node_key:
         node_id: !jmespath 'org_owner.node_id'
       node_properties:
@@ -65,6 +69,8 @@
       node_type: GithubUser
       relationship_type: IS_OWNER
       outbound: false
+      key_normalization:
+        do_lowercase_strings: false
       node_key:
         node_id: !jmespath 'user_owner.node_id'
       node_properties:
@@ -75,16 +81,16 @@
       relationship_type: IS_COLLABORATOR
       iterate_on: !jmespath 'collaborators[*]'
       outbound: false
+      key_normalization:
+        do_lowercase_strings: false
       relationship_properties:
-        triage: !jmespath 'permissions.triage'
-        maintain: !jmespath 'permissions.maintain'
-        admin: !jmespath 'permissions.admin'
-        push: !jmespath 'permissions.push'
-        pull: !jmespath 'permissions.pull'
+        "permission": !jmespath "role_name"
 
     - type: relationship
       node_type: ProgrammingLanguage
       relationship_type: HAS_LANGUAGE
+      key_normalization:
+        do_lowercase_strings: true
       node_key:
         name: !jmespath 'name'
       relationship_properties:
@@ -96,6 +102,8 @@
       iterate_on: !jmespath 'webhooks[*]'
       relationship_type: WEBHOOK_ON
       outbound: false
+      key_normalization:
+        do_lowercase_strings: false
       relationship_properties:
         events: !jmespath "events"
       node_key:

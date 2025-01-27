@@ -146,7 +146,7 @@ async def test_orgs_continue_through_org_member_status_fail(
                 "id": 1296269,
                 "name": "Hello-World",
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-                "permissions": {"admin": False, "pull": True, "push": False},
+                "permission": "read",
                 "url": "https://HOSTNAME/repos/octocat/Hello-World",
             }],
         }
@@ -261,7 +261,7 @@ async def test_get_orgs(
                 "id": 1296269,
                 "name": "Hello-World",
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-                "permissions": {"admin": False, "pull": True, "push": False},
+                "permission": "read",
                 "url": "https://HOSTNAME/repos/octocat/Hello-World",
             }],
         }
