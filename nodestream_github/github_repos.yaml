@@ -84,11 +84,7 @@
       key_normalization:
         do_lowercase_strings: false
       relationship_properties:
-        triage: !jmespath 'permissions.triage'
-        maintain: !jmespath 'permissions.maintain'
-        admin: !jmespath 'permissions.admin'
-        push: !jmespath 'permissions.push'
-        pull: !jmespath 'permissions.pull'
+        "permission": !jmespath "role_name"
 
     - type: relationship
       node_type: ProgrammingLanguage

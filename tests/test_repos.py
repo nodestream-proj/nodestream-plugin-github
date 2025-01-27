@@ -94,7 +94,7 @@ async def test_extract_records(
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
-        json=[TURBO_USER],
+        json=[TURBO_USER|{"role_name":"write"}],
     )
     gh_rest_mock.get_languages_for_repo(
         owner_login="github",
@@ -125,7 +125,7 @@ async def test_extract_records(
                 "https://HOSTNAME/repos/octocat/Hello-World/branches{/branch}"
             ),
             "clone_url": "https://github.com/octocat/Hello-World.git",
-            "collaborators": [{"id": 2, "login": "turbo", "node_id": "MDQ6VXNlcjI="}],
+            "collaborators": [{"id": 2, "login": "turbo", "node_id": "MDQ6VXNlcjI=", "role_name": "write"}],
             "collaborators_url": "https://HOSTNAME/repos/octocat/Hello-World/collaborators{/collaborator}",
             "comments_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/comments{/number}"
@@ -211,7 +211,6 @@ async def test_extract_records(
                 "type": "User",
                 "url": "https://HOSTNAME/users/octocat",
             },
-            "permissions": {"admin": False, "pull": True, "push": False},
             "private": False,
             "pulls_url": "https://HOSTNAME/repos/octocat/Hello-World/pulls{/number}",
             "pushed_at": "2011-01-26T19:06:43Z",
@@ -338,7 +337,6 @@ async def test_extract_records(
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
             "notifications_url": "https://HOSTNAME/repos/github/Hello-Moon/notifications{?since,all,participating}",
             "open_issues_count": 0,
-            "permissions": {"admin": False, "pull": True, "push": False},
             "private": False,
             "pulls_url": "https://HOSTNAME/repos/github/Hello-Moon/pulls{/number}",
             "pushed_at": "2011-01-26T19:06:43Z",
