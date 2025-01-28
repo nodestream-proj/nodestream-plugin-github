@@ -26,6 +26,7 @@ from nodestream_github.logging import get_plugin_logger
 DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
+DEFAULT_MAX_RETRY_WAIT_SECONDS = 300 # 5 minutes
 
 
 logger = get_plugin_logger(__name__)
@@ -71,15 +72,20 @@ class GithubRestApiClient:
         github_hostname: str = "api.github.com",
         *,
         user_agent: str | None = None,
-        per_page: int = DEFAULT_PAGE_SIZE,
-        max_retries: int = DEFAULT_MAX_RETRIES,
-        rate_limit_per_minute: int = DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE,
-        max_retry_wait_seconds: int = 60 * 5,
+        per_page: int | None = None,
+        max_retries: int | None = None,
+        rate_limit_per_minute: int | None = None,
+        max_retry_wait_seconds: int | None = None,
     ):
-        if per_page < 1:
+        if per_page is None:
+            per_page = DEFAULT_PAGE_SIZE
+        elif per_page < 1:
             msg = "page_size must be an integer greater than 0"
             raise ValueError(msg)
-        if max_retries < 0:
+
+        if max_retries is None:
+            max_retries = DEFAULT_MAX_RETRIES
+        elif max_retries < 0:
             msg = "max_retries must be a positive integer"
             raise ValueError(msg)
 
@@ -99,12 +105,23 @@ class GithubRestApiClient:
             self._default_headers["User-Agent"] = user_agent
         self._max_retries = max_retries
 
-        self._rate_limit = RateLimitItemPerMinute(rate_limit_per_minute, 1)
+        self._rate_limit = RateLimitItemPerMinute(
+            (
+                DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE
+                if rate_limit_per_minute is None
+                else rate_limit_per_minute
+            ),
+            1,
+        )
         logger.info("GitHub REST RateLimit set to %s", self._rate_limit)
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self._session = httpx.AsyncClient()
 
-        self.max_retry_wait = max_retry_wait_seconds
+        max_retry_wait_seconds = (
+            DEFAULT_MAX_RETRY_WAIT_SECONDS
+            if max_retry_wait_seconds is None
+            else max_retry_wait_seconds
+        )
         self._retryer = AsyncRetrying(
             wait=wait_random_exponential(
                 max=max_retry_wait_seconds,
