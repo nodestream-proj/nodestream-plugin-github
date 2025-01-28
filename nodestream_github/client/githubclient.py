@@ -26,7 +26,7 @@ from nodestream_github.logging import get_plugin_logger
 DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
-DEFAULT_MAX_RETRY_WAIT_SECONDS = 300 # 5 minutes
+DEFAULT_MAX_RETRY_WAIT_SECONDS = 300  # 5 minutes
 
 
 logger = get_plugin_logger(__name__)
