@@ -97,7 +97,6 @@ class GithubReposExtractor(Extractor):
                 owner["login"], repo["name"]
             )
         ]
-        logger.info("owner=%s", owner)
         repo["webhooks"] = [
             hook
             async for hook in self.client.fetch_webhooks_for_repo(
