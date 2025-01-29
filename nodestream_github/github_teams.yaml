@@ -14,7 +14,6 @@
         node_id: !jmespath 'node_id'
       additional_indexes:
         - slug
-        - name
         - html_url
     - type: properties
       properties:
