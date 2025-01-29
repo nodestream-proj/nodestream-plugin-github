@@ -83,3 +83,8 @@ async def test_pagination(httpx_mock: HTTPXMock):
 
     items = [item async for item in client._get_paginated("example")]
     assert items == ["a", "b", "c", "d"]
+
+
+def test_all_null_args():
+    # noinspection PyTypeChecker
+    assert GithubRestApiClient(auth_token=None, github_hostname=None)

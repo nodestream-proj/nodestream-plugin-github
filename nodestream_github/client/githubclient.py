@@ -3,6 +3,7 @@
 An async client for accessing GitHub.
 """
 
+import json
 import logging
 from collections.abc import AsyncGenerator
 from enum import Enum
@@ -27,6 +28,7 @@ DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
 DEFAULT_MAX_RETRY_WAIT_SECONDS = 300  # 5 minutes
+DEFAULT_GITHUB_HOST = "api.github.com"
 
 
 logger = get_plugin_logger(__name__)
@@ -41,36 +43,39 @@ class RateLimitedError(Exception):
         super().__init__(f"Rate limited when calling {url}")
 
 
-def _fetch_problem(title: str, e: httpx.HTTPError):
-    if isinstance(e, httpx.HTTPStatusError):
-        error_message = None
-        try:
-            error_message = e.response.json().get("message")
-        except AttributeError:
-            # ignore if no message
-            pass
-        except ValueError:
-            # ignore if no json
-            pass
+def _safe_get_json_error_message(response: httpx.Response) -> str:
+    try:
+        return response.json().get("message")
+    except AttributeError:
+        # ignore if no message
+        return json.dumps(response.json())
+    except ValueError:
+        # ignore if no json
+        return response.text
 
-        logger.warning(
-            "%s %s - %s%s",
-            e.response.status_code,
-            e.response.reason_phrase,
-            e.request.url.path,
-            f" - {error_message}" if error_message else "",
-            stacklevel=2,
-        )
-    else:
-        logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
+
+def _fetch_problem(title: str, e: httpx.HTTPError):
+    match e:
+        case httpx.HTTPStatusError(response=response):
+            error_message = _safe_get_json_error_message(response)
+            logger.warning(
+                "%s %s - %s%s",
+                response.status_code,
+                response.reason_phrase,
+                e.request.url.path,
+                f" - {error_message}" if error_message else "",
+                stacklevel=2,
+            )
+        case _:
+            logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
 
 class GithubRestApiClient:
     def __init__(
         self,
-        auth_token: str,
-        github_hostname: str = "api.github.com",
         *,
+        auth_token: str | None = None,
+        github_hostname: str | None = None,
         user_agent: str | None = None,
         per_page: int | None = None,
         max_retries: int | None = None,
@@ -90,15 +95,18 @@ class GithubRestApiClient:
             raise ValueError(msg)
 
         self._auth_token = auth_token
-        if github_hostname != "api.github.com":
-            self._base_url = f"https://{github_hostname}/api/v3"
-        else:
+        if github_hostname == "api.github.com" or github_hostname is None:
             self._base_url = "https://api.github.com"
+        else:
+            self._base_url = f"https://{github_hostname}/api/v3"
+
         self._per_page = per_page
         self._limit_storage = MemoryStorage()
+        if not self.auth_token:
+            logger.warning("Missing auth_token.")
         self._default_headers = httpx.Headers({
             "Accept": "application/vnd.github+json",
-            "Authorization": "Bearer " + self.auth_token,
+            "Authorization": f"Bearer {self.auth_token}",
             "X-GitHub-Api-Version": "2022-11-28",
         })
         if user_agent:
