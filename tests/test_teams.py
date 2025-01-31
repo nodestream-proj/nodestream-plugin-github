@@ -144,6 +144,7 @@ async def test_extract_records(
         "privacy": "closed",
         "repos": [{
             "full_name": "octocat/Hello-World",
+            "html_url": "https://github.com/octocat/Hello-World",
             "id": 1296269,
             "name": "Hello-World",
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",

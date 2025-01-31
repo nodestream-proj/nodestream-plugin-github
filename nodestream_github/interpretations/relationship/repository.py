@@ -10,7 +10,15 @@ from nodestream.pipeline.value_providers import (
 
 from nodestream_github.types import GithubRepo, SimplifiedRepo
 
-_REPO_KEYS_TO_PRESERVE = ["id", "node_id", "name", "full_name", "url", "permission"]
+_REPO_KEYS_TO_PRESERVE = [
+    "id",
+    "node_id",
+    "name",
+    "full_name",
+    "url",
+    "html_url",
+    "permission",
+]
 
 
 def simplify_repo(repo: GithubRepo, *, permission: str | None = None) -> SimplifiedRepo:

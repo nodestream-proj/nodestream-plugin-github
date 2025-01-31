@@ -41,6 +41,7 @@ async def test_github_user_extractor(
         | {
             "repositories": [{
                 "full_name": "octocat/Hello-World",
+                "html_url": "https://github.com/octocat/Hello-World",
                 "id": 1296269,
                 "name": "Hello-World",
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
