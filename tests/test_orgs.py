@@ -143,6 +143,7 @@ async def test_orgs_continue_through_org_member_status_fail(
             }],
             "repositories": [{
                 "full_name": "octocat/Hello-World",
+                "html_url": "https://github.com/octocat/Hello-World",
                 "id": 1296269,
                 "name": "Hello-World",
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
@@ -258,6 +259,7 @@ async def test_get_orgs(
             ],
             "repositories": [{
                 "full_name": "octocat/Hello-World",
+                "html_url": "https://github.com/octocat/Hello-World",
                 "id": 1296269,
                 "name": "Hello-World",
                 "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
