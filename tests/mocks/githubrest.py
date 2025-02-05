@@ -131,10 +131,10 @@ class GithubHttpxMock:
         )
 
     def get_collaborators_for_repo(
-        self, owner_login: str, repo_name: str, **kwargs: any
+        self, owner_login: str, repo_name: str, affiliation: str, **kwargs: any
     ) -> None:
         self.add_response(
-            url=f"{self.base_url}/repos/{owner_login}/{repo_name}/collaborators?per_page={self.per_page}",
+            url=f"{self.base_url}/repos/{owner_login}/{repo_name}/collaborators?per_page={self.per_page}&affiliation={affiliation}",
             **kwargs,
         )
 

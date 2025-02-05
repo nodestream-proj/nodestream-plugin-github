@@ -13,11 +13,19 @@ from nodestream_github.types import GithubUser, SimplifiedUser
 _USER_KEYS_TO_PRESERVE = ["id", "login", "node_id", "role", "role_name"]
 
 
-def simplify_user(user: GithubUser) -> SimplifiedUser:
+def simplify_user(
+    user: GithubUser,
+    *,
+    affiliation: str | None = None,
+) -> SimplifiedUser:
     """Simplify user data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    return {k: user[k] for k in _USER_KEYS_TO_PRESERVE if k in user}
+    output = {k: user[k] for k in _USER_KEYS_TO_PRESERVE if k in user}
+
+    if affiliation:
+        output["affiliation"] = affiliation
+    return output
 
 
 class UserRelationshipInterpretation(

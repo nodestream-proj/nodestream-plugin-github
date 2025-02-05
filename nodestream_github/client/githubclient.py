@@ -390,9 +390,7 @@ class GithubRestApiClient:
             _fetch_problem(f"webhooks for repo {owner_login}/{repo_name}", e)
 
     async def fetch_collaborators_for_repo(
-        self,
-        owner_login: str,
-        repo_name: str,
+        self, owner_login: str, repo_name: str, affiliation: str
     ) -> AsyncGenerator[types.GithubUser]:
         """Try to get collaborator data for this repo.
 
@@ -415,7 +413,8 @@ class GithubRestApiClient:
         """
         try:
             async for collab_resp in self._get_paginated(
-                f"repos/{owner_login}/{repo_name}/collaborators"
+                f"repos/{owner_login}/{repo_name}/collaborators",
+                params={"affiliation": affiliation},
             ):
                 yield collab_resp
 

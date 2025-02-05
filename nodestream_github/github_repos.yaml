@@ -84,6 +84,7 @@
       key_normalization:
         do_lowercase_strings: false
       relationship_properties:
+        "affiliation": !jmespath "affiliation"
         "permission": !jmespath "role_name"
 
     - type: relationship
