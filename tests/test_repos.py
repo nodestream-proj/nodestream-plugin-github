@@ -3,9 +3,11 @@ import pytest
 from nodestream_github import GithubReposExtractor
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO, repo
-from tests.data.users import OCTOCAT_USER, TURBO_USER
+from tests.data.users import OCTOCAT_USER, TURBO_USER, user
 from tests.data.webhooks import HELLO_WORLD_WEBHOOK
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
+
+TEST_USER = user(user_login="bweaver", user_id=3)
 
 
 @pytest.fixture
@@ -35,13 +37,30 @@ async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_repos_for_org("github", "public", json=[HELLO_WORLD_REPO])
     gh_rest_mock.get_repos_for_org("github", "private", json=[HELLO_WORLD_REPO])
     gh_rest_mock.get_languages_for_repo(
-        "octocat", "Hello-World", json=[], is_reusable=True
+        "octocat",
+        "Hello-World",
+        json=[],
+        is_reusable=True,
     )
     gh_rest_mock.get_webhooks_for_repo(
-        "octocat", "Hello-World", json=[], is_reusable=True
+        "octocat",
+        "Hello-World",
+        json=[],
+        is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
-        "octocat", "Hello-World", json=[], is_reusable=True
+        "octocat",
+        "Hello-World",
+        affiliation="direct",
+        json=[],
+        is_reusable=True,
+    )
+    gh_rest_mock.get_collaborators_for_repo(
+        "octocat",
+        "Hello-World",
+        affiliation="outside",
+        json=[],
+        is_reusable=True,
     )
 
     assert len([record async for record in extractor.extract_records()]) == 2
@@ -62,13 +81,30 @@ async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_repos_for_user("octocat", "public", json=[HELLO_WORLD_REPO])
     gh_rest_mock.get_repos_for_user("octocat", "private", json=[HELLO_WORLD_REPO])
     gh_rest_mock.get_languages_for_repo(
-        "octocat", "Hello-World", json=[], is_reusable=True
+        "octocat",
+        "Hello-World",
+        json=[],
+        is_reusable=True,
     )
     gh_rest_mock.get_webhooks_for_repo(
-        "octocat", "Hello-World", json=[], is_reusable=True
+        "octocat",
+        "Hello-World",
+        json=[],
+        is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
-        "octocat", "Hello-World", json=[], is_reusable=True
+        "octocat",
+        "Hello-World",
+        affiliation="direct",
+        json=[],
+        is_reusable=True,
+    )
+    gh_rest_mock.get_collaborators_for_repo(
+        "octocat",
+        "Hello-World",
+        affiliation="outside",
+        json=[],
+        is_reusable=True,
     )
 
     assert len([record async for record in extractor.extract_records()]) == 2
@@ -94,7 +130,14 @@ async def test_extract_records(
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
+        affiliation="direct",
         json=[TURBO_USER | {"role_name": "write"}],
+    )
+    gh_rest_mock.get_collaborators_for_repo(
+        owner_login="octocat",
+        repo_name="Hello-World",
+        affiliation="outside",
+        json=[TEST_USER | {"role_name": "read"}],
     )
     gh_rest_mock.get_languages_for_repo(
         owner_login="github",
@@ -109,7 +152,14 @@ async def test_extract_records(
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="github",
         repo_name="Hello-Moon",
+        affiliation="direct",
         json=[TURBO_USER],
+    )
+    gh_rest_mock.get_collaborators_for_repo(
+        owner_login="github",
+        repo_name="Hello-Moon",
+        affiliation="outside",
+        json=[TEST_USER],
     )
     assert [record async for record in repo_client.extract_records()] == [
         {
@@ -125,12 +175,22 @@ async def test_extract_records(
                 "https://HOSTNAME/repos/octocat/Hello-World/branches{/branch}"
             ),
             "clone_url": "https://github.com/octocat/Hello-World.git",
-            "collaborators": [{
-                "id": 2,
-                "login": "turbo",
-                "node_id": "MDQ6VXNlcjI=",
-                "role_name": "write",
-            }],
+            "collaborators": [
+                {
+                    "affiliation": "direct",
+                    "id": 2,
+                    "login": "turbo",
+                    "node_id": "MDQ6VXNlcjI=",
+                    "role_name": "write",
+                },
+                {
+                    "affiliation": "outside",
+                    "id": 3,
+                    "login": "bweaver",
+                    "node_id": "MDQ6VXNlcjM=",
+                    "role_name": "read",
+                },
+            ],
             "collaborators_url": "https://HOSTNAME/repos/octocat/Hello-World/collaborators{/collaborator}",
             "comments_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/comments{/number}"
@@ -280,7 +340,20 @@ async def test_extract_records(
                 "https://HOSTNAME/repos/github/Hello-Moon/branches{/branch}"
             ),
             "clone_url": "https://github.com/github/Hello-Moon.git",
-            "collaborators": [{"id": 2, "login": "turbo", "node_id": "MDQ6VXNlcjI="}],
+            "collaborators": [
+                {
+                    "affiliation": "direct",
+                    "id": 2,
+                    "login": "turbo",
+                    "node_id": "MDQ6VXNlcjI=",
+                },
+                {
+                    "affiliation": "outside",
+                    "id": 3,
+                    "login": "bweaver",
+                    "node_id": "MDQ6VXNlcjM=",
+                },
+            ],
             "collaborators_url": (
                 "https://HOSTNAME/repos/github/Hello-Moon/collaborators{/collaborator}"
             ),

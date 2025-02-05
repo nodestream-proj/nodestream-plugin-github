@@ -103,12 +103,21 @@ class GithubReposExtractor(Extractor):
                 owner["login"], repo["name"]
             )
         ]
-        repo["collaborators"] = [
-            simplify_user(user)
-            async for user in self.client.fetch_collaborators_for_repo(
-                owner["login"], repo["name"]
-            )
-        ]
+        repo["collaborators"] = []
+
+        async for user in self.client.fetch_collaborators_for_repo(
+            owner["login"],
+            repo["name"],
+            "direct",
+        ):
+            repo["collaborators"].append(simplify_user(user, affiliation="direct"))
+        async for user in self.client.fetch_collaborators_for_repo(
+            owner["login"],
+            repo["name"],
+            "outside",
+        ):
+            repo["collaborators"].append(simplify_user(user, affiliation="outside"))
+
         logger.debug("yielded GithubRepo{full_name=%s}", repo["full_name"])
         return repo
 
