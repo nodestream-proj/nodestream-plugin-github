@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nodestream-plugin-github"
-version = "0.13.1-beta.6"
+version = "0.13.1-beta.7"
 description = ""
 authors = ["Jon Bristow <jonathan_bristow@intuit.com>"]
 packages = [
@@ -47,9 +47,8 @@ log_cli_level = "DEBUG"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github"
 
-
 [tool.ruff.lint]
-select = ["A", "ANN", "ARG", "ASYNC", "B", "C4", "DTZ", "E", "EM", "ERA", "F", "FBT", "FURB", "G", "I", "INP", "N", "PIE", "PT", "RET", "RUF", "S", "SIM", "T20", "TC", "UP", ]
+select = [ "A", "ANN", "ARG", "ASYNC", "B", "C4", "DTZ", "E", "EM", "ERA", "F", "FBT", "FURB", "G", "I", "INP", "N", "PIE", "PT", "RET", "RUF", "S", "SIM", "T20", "TC", "UP", ]
 ignore = []
 
 unfixable = ["B"]
