@@ -1,6 +1,7 @@
 import pytest
 
 from nodestream_github import GithubReposExtractor
+from nodestream_github.types.enums import CollaboratorAffiliation
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO, repo
 from tests.data.users import OCTOCAT_USER, TURBO_USER, user
@@ -37,8 +38,8 @@ async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_repos_for_org("github", "public", json=[HELLO_WORLD_REPO])
     gh_rest_mock.get_repos_for_org("github", "private", json=[HELLO_WORLD_REPO])
     gh_rest_mock.get_languages_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         json=[],
         is_reusable=True,
     )
@@ -51,14 +52,14 @@ async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_collaborators_for_repo(
         "octocat",
         "Hello-World",
-        affiliation="direct",
+        affiliation=CollaboratorAffiliation.DIRECT,
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
         "octocat",
         "Hello-World",
-        affiliation="outside",
+        affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[],
         is_reusable=True,
     )
@@ -95,14 +96,14 @@ async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_collaborators_for_repo(
         "octocat",
         "Hello-World",
-        affiliation="direct",
+        affiliation=CollaboratorAffiliation.DIRECT,
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
         "octocat",
         "Hello-World",
-        affiliation="outside",
+        affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[],
         is_reusable=True,
     )
@@ -130,13 +131,13 @@ async def test_extract_records(
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
-        affiliation="direct",
+        affiliation=CollaboratorAffiliation.DIRECT,
         json=[TURBO_USER | {"role_name": "write"}],
     )
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
-        affiliation="outside",
+        affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[TEST_USER | {"role_name": "read"}],
     )
     gh_rest_mock.get_languages_for_repo(
@@ -152,13 +153,13 @@ async def test_extract_records(
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="github",
         repo_name="Hello-Moon",
-        affiliation="direct",
+        affiliation=CollaboratorAffiliation.DIRECT,
         json=[TURBO_USER],
     )
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="github",
         repo_name="Hello-Moon",
-        affiliation="outside",
+        affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[TEST_USER],
     )
     assert [record async for record in repo_client.extract_records()] == [

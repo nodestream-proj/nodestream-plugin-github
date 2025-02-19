@@ -4,6 +4,7 @@ from typing import Optional
 from pytest_httpx import HTTPXMock
 
 from nodestream_github.types import HeaderTypes
+from nodestream_github.types.enums import CollaboratorAffiliation
 
 DEFAULT_HOSTNAME = "test-example.github.intuit.com"
 DEFAULT_BASE_URL = f"https://{DEFAULT_HOSTNAME}/api/v3"
@@ -71,7 +72,10 @@ class GithubHttpxMock:
         self.add_response(url=f"{self.base_url}/orgs/{org_name}", **kwargs)
 
     def get_members_for_org(
-        self, org_name: str, role: str | None = None, **kwargs: any
+        self,
+        org_name: str,
+        role: str | None = None,
+        **kwargs: any,
     ) -> None:
         actual_role = f"role={role}" if role else ""
         self.add_response(
@@ -80,7 +84,10 @@ class GithubHttpxMock:
         )
 
     def get_repos_for_org(
-        self, org_name: str, repo_type: str | None = None, **kwargs: any
+        self,
+        org_name: str,
+        repo_type: str | None = None,
+        **kwargs: any,
     ):
         type_param = f"&type={repo_type}" if repo_type else ""
         self.add_response(
@@ -117,7 +124,10 @@ class GithubHttpxMock:
         )
 
     def get_languages_for_repo(
-        self, owner_login: str, repo_name: str, **kwargs: any
+        self,
+        owner_login: str,
+        repo_name: str,
+        **kwargs: any,
     ) -> None:
         self.add_response(
             url=f"{self.base_url}/repos/{owner_login}/{repo_name}/languages?per_page={self.per_page}",
@@ -131,7 +141,11 @@ class GithubHttpxMock:
         )
 
     def get_collaborators_for_repo(
-        self, owner_login: str, repo_name: str, affiliation: str, **kwargs: any
+        self,
+        owner_login: str,
+        repo_name: str,
+        affiliation: CollaboratorAffiliation,
+        **kwargs: any,
     ) -> None:
         self.add_response(
             url=f"{self.base_url}/repos/{owner_login}/{repo_name}/collaborators?per_page={self.per_page}&affiliation={affiliation}",
@@ -144,7 +158,10 @@ class GithubHttpxMock:
         )
 
     def get_repos_for_user(
-        self, user_login: str, type_param: str | None, **kwargs: any
+        self,
+        user_login: str,
+        type_param: str | None,
+        **kwargs: any,
     ):
         type_param = f"&type={type_param}" if type_param else ""
         self.add_response(
