@@ -23,6 +23,7 @@ from tenacity import (
 
 import nodestream_github.types as types
 from nodestream_github.logging import get_plugin_logger
+from nodestream_github.types.enums import CollaboratorAffiliation
 
 DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
@@ -81,6 +82,7 @@ class GithubRestApiClient:
         max_retries: int | None = None,
         rate_limit_per_minute: int | None = None,
         max_retry_wait_seconds: int | None = None,
+        **_kwargs: any,
     ):
         if per_page is None:
             per_page = DEFAULT_PAGE_SIZE
@@ -97,8 +99,10 @@ class GithubRestApiClient:
         self._auth_token = auth_token
         if github_hostname == "api.github.com" or github_hostname is None:
             self._base_url = "https://api.github.com"
+            self._is_default_hostname = True
         else:
             self._base_url = f"https://{github_hostname}/api/v3"
+            self._is_default_hostname = False
 
         self._per_page = per_page
         self._limit_storage = MemoryStorage()
@@ -180,6 +184,10 @@ class GithubRestApiClient:
     @property
     def per_page(self) -> int:
         return self._per_page
+
+    @property
+    def is_default_hostname(self) -> bool:
+        return self._is_default_hostname
 
     async def _get(
         self,
@@ -390,7 +398,11 @@ class GithubRestApiClient:
             _fetch_problem(f"webhooks for repo {owner_login}/{repo_name}", e)
 
     async def fetch_collaborators_for_repo(
-        self, owner_login: str, repo_name: str, affiliation: str
+        self,
+        *,
+        owner_login: str,
+        repo_name: str,
+        affiliation: CollaboratorAffiliation,
     ) -> AsyncGenerator[types.GithubUser]:
         """Try to get collaborator data for this repo.
 

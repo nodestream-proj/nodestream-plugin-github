@@ -14,6 +14,7 @@ from .client import GithubRestApiClient
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
 from .types import GithubRepo, RepositoryRecord
+from .types.enums import CollaboratorAffiliation
 
 logger = get_plugin_logger(__name__)
 
@@ -106,15 +107,15 @@ class GithubReposExtractor(Extractor):
         repo["collaborators"] = []
 
         async for user in self.client.fetch_collaborators_for_repo(
-            owner["login"],
-            repo["name"],
-            "direct",
+            owner_login=owner["login"],
+            repo_name=repo["name"],
+            affiliation=CollaboratorAffiliation.DIRECT,
         ):
             repo["collaborators"].append(simplify_user(user, affiliation="direct"))
         async for user in self.client.fetch_collaborators_for_repo(
-            owner["login"],
-            repo["name"],
-            "outside",
+            owner_login=owner["login"],
+            repo_name=repo["name"],
+            affiliation=CollaboratorAffiliation.OUTSIDE,
         ):
             repo["collaborators"].append(simplify_user(user, affiliation="outside"))
 
