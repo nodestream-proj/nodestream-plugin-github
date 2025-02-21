@@ -4,7 +4,13 @@ from typing import Optional
 from pytest_httpx import HTTPXMock
 
 from nodestream_github.types import HeaderTypes
-from nodestream_github.types.enums import CollaboratorAffiliation
+from nodestream_github.types.enums import (
+    CollaboratorAffiliation,
+    OrgMemberRole,
+    OrgRepoType,
+    TeamMemberRole,
+    UserRepoType,
+)
 
 DEFAULT_HOSTNAME = "test-example.github.intuit.com"
 DEFAULT_BASE_URL = f"https://{DEFAULT_HOSTNAME}/api/v3"
@@ -68,13 +74,14 @@ class GithubHttpxMock:
             url=f"{self.base_url}/organizations?per_page={self.per_page}", **kwargs
         )
 
-    def get_org(self, org_name: str, **kwargs: any) -> None:
+    def get_org(self, *, org_name: str, **kwargs: any) -> None:
         self.add_response(url=f"{self.base_url}/orgs/{org_name}", **kwargs)
 
     def get_members_for_org(
         self,
+        *,
         org_name: str,
-        role: str | None = None,
+        role: OrgMemberRole | None = None,
         **kwargs: any,
     ) -> None:
         actual_role = f"role={role}" if role else ""
@@ -85,8 +92,9 @@ class GithubHttpxMock:
 
     def get_repos_for_org(
         self,
+        *,
         org_name: str,
-        repo_type: str | None = None,
+        repo_type: OrgRepoType | None = None,
         **kwargs: any,
     ):
         type_param = f"&type={repo_type}" if repo_type else ""
@@ -95,24 +103,30 @@ class GithubHttpxMock:
             **kwargs,
         )
 
-    def list_teams_for_org(self, org_login: str, **kwargs: any):
+    def list_teams_for_org(self, *, org_login: str, **kwargs: any):
         self.add_response(
             url=f"{self.base_url}/orgs/{org_login}/teams?per_page={self.per_page}",
             **kwargs,
         )
 
-    def get_team(self, org_login: str, team_slug: str, **kwargs: any):
+    def get_team(self, *, org_login: str, team_slug: str, **kwargs: any):
         self.add_response(
             url=f"{self.base_url}/orgs/{org_login}/teams/{team_slug}", **kwargs
         )
 
-    def get_members_for_team(self, team_id: int, role: str, **kwargs: any):
+    def get_members_for_team(
+        self,
+        *,
+        team_id: int,
+        role: TeamMemberRole,
+        **kwargs: any,
+    ):
         self.add_response(
             url=f"{self.base_url}/teams/{team_id}/members?per_page={self.per_page}&role={role}",
             **kwargs,
         )
 
-    def get_repos_for_team(self, org_login: str, slug: str, **kwargs: any):
+    def get_repos_for_team(self, *, org_login: str, slug: str, **kwargs: any):
         self.add_response(
             url=f"{self.base_url}/orgs/{org_login}/teams/{slug}/repos?per_page={self.per_page}",
             **kwargs,
@@ -125,6 +139,7 @@ class GithubHttpxMock:
 
     def get_languages_for_repo(
         self,
+        *,
         owner_login: str,
         repo_name: str,
         **kwargs: any,
@@ -134,7 +149,7 @@ class GithubHttpxMock:
             **kwargs,
         )
 
-    def get_webhooks_for_repo(self, owner_login: str, repo_name: str, **kwargs: any):
+    def get_webhooks_for_repo(self, *, owner_login: str, repo_name: str, **kwargs: any):
         self.add_response(
             url=f"{self.base_url}/repos/{owner_login}/{repo_name}/hooks?per_page={self.per_page}",
             **kwargs,
@@ -142,6 +157,7 @@ class GithubHttpxMock:
 
     def get_collaborators_for_repo(
         self,
+        *,
         owner_login: str,
         repo_name: str,
         affiliation: CollaboratorAffiliation,
@@ -159,8 +175,9 @@ class GithubHttpxMock:
 
     def get_repos_for_user(
         self,
+        *,
         user_login: str,
-        type_param: str | None,
+        type_param: UserRepoType | None,
         **kwargs: any,
     ):
         type_param = f"&type={type_param}" if type_param else ""

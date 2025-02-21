@@ -23,7 +23,7 @@ from tenacity import (
 
 import nodestream_github.types as types
 from nodestream_github.logging import get_plugin_logger
-from nodestream_github.types.enums import CollaboratorAffiliation
+from nodestream_github.types import enums
 
 DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
@@ -261,7 +261,10 @@ class GithubRestApiClient:
         return {}
 
     async def fetch_repos_for_org(
-        self, org_login: str, repo_type: str | None = None
+        self,
+        *,
+        org_login: str,
+        repo_type: enums.OrgRepoType | None = None,
     ) -> AsyncGenerator[types.GithubRepo]:
         """Fetches repositories for the specified organization.
 
@@ -287,7 +290,10 @@ class GithubRestApiClient:
             _fetch_problem(f"repos for org {org_login}", e)
 
     async def fetch_members_for_org(
-        self, org_login: str, role: str | None = None
+        self,
+        *,
+        org_login: str,
+        role: enums.OrgMemberRole | None = None,
     ) -> AsyncGenerator[types.GithubUser]:
         """Fetch all users who are members of an organization.
 
@@ -339,8 +345,9 @@ class GithubRestApiClient:
 
     async def fetch_repos_for_user(
         self,
+        *,
         user_login: str,
-        repo_type: str | None = None,
+        repo_type: enums.UserRepoType | None = None,
     ) -> AsyncGenerator[types.GithubRepo]:
         """Fetches repositories for a user.
 
@@ -361,7 +368,10 @@ class GithubRestApiClient:
             _fetch_problem(f"repos for user {user_login}", e)
 
     async def fetch_languages_for_repo(
-        self, owner_login: str, repo_name: str
+        self,
+        *,
+        owner_login: str,
+        repo_name: str,
     ) -> AsyncGenerator[str]:
         """Fetch languages for the specified repository.
 
@@ -380,7 +390,10 @@ class GithubRestApiClient:
             _fetch_problem(f"languages for repo {owner_login}/{repo_name}", e)
 
     async def fetch_webhooks_for_repo(
-        self, owner_login: str, repo_name: str
+        self,
+        *,
+        owner_login: str,
+        repo_name: str,
     ) -> AsyncGenerator[types.Webhook]:
         """Try to get types.webhook data for this repo.
 
@@ -402,7 +415,7 @@ class GithubRestApiClient:
         *,
         owner_login: str,
         repo_name: str,
-        affiliation: CollaboratorAffiliation,
+        affiliation: enums.CollaboratorAffiliation,
     ) -> AsyncGenerator[types.GithubUser]:
         """Try to get collaborator data for this repo.
 
@@ -469,7 +482,9 @@ class GithubRestApiClient:
             _fetch_problem("all users", e)
 
     async def fetch_teams_for_org(
-        self, org_login: str
+        self,
+        *,
+        org_login: str,
     ) -> AsyncGenerator[types.GithubTeamSummary]:
         """Fetch all teams in an organization visible to the authenticated user.
 
@@ -487,7 +502,7 @@ class GithubRestApiClient:
         except httpx.HTTPError as e:
             _fetch_problem(f"teams for org {org_login}", e)
 
-    async def fetch_team(self, org_login: str, slug: str) -> types.GithubTeam | None:
+    async def fetch_team(self, *, org_login: str, slug: str) -> types.GithubTeam | None:
         """Fetches a single team for an org by the team slug.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/teams/teams?apiVersion=2022-11-28#get-a-team-by-name
@@ -498,7 +513,10 @@ class GithubRestApiClient:
             _fetch_problem(f"full team info for {org_login}/{slug}", e)
 
     async def fetch_members_for_team(
-        self, team_id: int, role: str | None = None
+        self,
+        *,
+        team_id: int,
+        role: enums.TeamMemberRole | None = None,
     ) -> AsyncGenerator[types.GithubUser]:
         """Fetch all users that have a given role for a specified team.
 
@@ -523,7 +541,10 @@ class GithubRestApiClient:
             _fetch_problem(f"members for team {team_id}", e)
 
     async def fetch_repos_for_team(
-        self, org_login: str, slug: str
+        self,
+        *,
+        org_login: str,
+        slug: str,
     ) -> AsyncGenerator[types.GithubRepo]:
         """Fetch all repos for a specified team visible to the authenticated user.
 
