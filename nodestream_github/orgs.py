@@ -14,6 +14,7 @@ from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
 from .types import OrgRecord, SimplifiedUser
+from .types.enums import OrgMemberRole
 
 logger = get_plugin_logger(__name__)
 
@@ -64,8 +65,14 @@ class GithubOrganizationsExtractor(Extractor):
         return full_org
 
     async def _fetch_all_members(self, login: str) -> AsyncGenerator[SimplifiedUser]:
-        async for admin in self.client.fetch_members_for_org(login, "admin"):
+        async for admin in self.client.fetch_members_for_org(
+            org_login=login,
+            role=OrgMemberRole.ADMIN,
+        ):
             yield simplify_user(admin) | {"role": "admin"}
 
-        async for member in self.client.fetch_members_for_org(login, "member"):
+        async for member in self.client.fetch_members_for_org(
+            org_login=login,
+            role=OrgMemberRole.MEMBER,
+        ):
             yield simplify_user(member) | {"role": "member"}

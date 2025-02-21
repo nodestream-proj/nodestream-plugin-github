@@ -2,6 +2,7 @@ import httpx
 import pytest
 
 from nodestream_github import GithubOrganizationsExtractor
+from nodestream_github.types.enums import OrgMemberRole
 from tests.data.orgs import (
     EXAMPLE_ORG,
     EXAMPLE_ORG_SUMMARY,
@@ -102,12 +103,20 @@ async def test_orgs_continue_through_org_detail_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", status_code=httpx.codes.NOT_FOUND)
-    gh_rest_mock.get_org("example", json=EXAMPLE_ORG)
+    gh_rest_mock.get_org(org_name="github", status_code=httpx.codes.NOT_FOUND)
+    gh_rest_mock.get_org(org_name="example", json=EXAMPLE_ORG)
 
-    gh_rest_mock.get_members_for_org("example", json=[], role="admin")
-    gh_rest_mock.get_members_for_org("example", json=[], role="member")
-    gh_rest_mock.get_repos_for_org("example", json=[])
+    gh_rest_mock.get_members_for_org(
+        org_name="example",
+        json=[],
+        role=OrgMemberRole.ADMIN,
+    )
+    gh_rest_mock.get_members_for_org(
+        org_name="example",
+        json=[],
+        role=OrgMemberRole.MEMBER,
+    )
+    gh_rest_mock.get_repos_for_org(org_name="example", json=[])
 
     assert len([record async for record in org_client.extract_records()]) == 1
 
@@ -117,20 +126,20 @@ async def test_orgs_continue_through_org_member_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", json=GITHUB_ORG)
+    gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
 
     gh_rest_mock.get_members_for_org(
-        "github",
+        org_name="github",
         json=[],
-        role="admin",
+        role=OrgMemberRole.ADMIN,
         status_code=httpx.codes.NOT_FOUND,
     )
     gh_rest_mock.get_members_for_org(
-        "github",
-        role="member",
+        org_name="github",
+        role=OrgMemberRole.MEMBER,
         json=[TURBO_USER],
     )
-    gh_rest_mock.get_repos_for_org("github", json=[HELLO_WORLD_REPO])
+    gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
 
     assert [record async for record in org_client.extract_records()] == [
         BASE_EXPECTED_GITHUB_ORG
@@ -159,16 +168,20 @@ async def test_orgs_continue_through_org_member_status_fail_second(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", json=GITHUB_ORG)
+    gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
 
-    gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
     gh_rest_mock.get_members_for_org(
-        "github",
+        org_name="github",
+        json=[OCTOCAT_USER],
+        role=OrgMemberRole.ADMIN,
+    )
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
         json=[],
-        role="member",
+        role=OrgMemberRole.MEMBER,
         status_code=httpx.codes.NOT_FOUND,
     )
-    gh_rest_mock.get_repos_for_org("github", json=[])
+    gh_rest_mock.get_repos_for_org(org_name="github", json=[])
 
     assert [record async for record in org_client.extract_records()] == [
         BASE_EXPECTED_GITHUB_ORG
@@ -188,12 +201,20 @@ async def test_orgs_continue_through_org_repo_status_fail(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", json=GITHUB_ORG)
+    gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
 
-    gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
-    gh_rest_mock.get_members_for_org("github", json=[], role="member")
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
+        json=[OCTOCAT_USER],
+        role=OrgMemberRole.ADMIN,
+    )
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
+        json=[],
+        role=OrgMemberRole.MEMBER,
+    )
     gh_rest_mock.get_repos_for_org(
-        "github",
+        org_name="github",
         json=[],
         status_code=httpx.codes.NOT_FOUND,
     )
@@ -221,10 +242,18 @@ async def test_orgs_continue_through_org_detail_connection_fail(
         url=f"{DEFAULT_BASE_URL}/orgs/github",
         is_reusable=True,
     )
-    gh_rest_mock.get_org("example", json=EXAMPLE_ORG)
-    gh_rest_mock.get_members_for_org("example", json=[], role="admin")
-    gh_rest_mock.get_members_for_org("example", json=[], role="member")
-    gh_rest_mock.get_repos_for_org("example", json=[])
+    gh_rest_mock.get_org(org_name="example", json=EXAMPLE_ORG)
+    gh_rest_mock.get_members_for_org(
+        org_name="example",
+        json=[],
+        role=OrgMemberRole.ADMIN,
+    )
+    gh_rest_mock.get_members_for_org(
+        org_name="example",
+        json=[],
+        role=OrgMemberRole.MEMBER,
+    )
+    gh_rest_mock.get_repos_for_org(org_name="example", json=[])
 
     assert len([record async for record in org_client.extract_records()]) == 1
 
@@ -234,10 +263,18 @@ async def test_get_orgs(
     org_client: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", json=GITHUB_ORG)
-    gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
-    gh_rest_mock.get_members_for_org("github", json=[TURBO_USER], role="member")
-    gh_rest_mock.get_repos_for_org("github", json=[HELLO_WORLD_REPO])
+    gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
+        json=[OCTOCAT_USER],
+        role=OrgMemberRole.ADMIN,
+    )
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
+        json=[TURBO_USER],
+        role=OrgMemberRole.MEMBER,
+    )
+    gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
 
     all_records = [record async for record in org_client.extract_records()]
     assert all_records == [

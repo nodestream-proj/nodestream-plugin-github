@@ -14,7 +14,7 @@ from .client import GithubRestApiClient
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
 from .types import GithubRepo, RepositoryRecord
-from .types.enums import CollaboratorAffiliation
+from .types.enums import CollaboratorAffiliation, OrgRepoType, UserRepoType
 
 logger = get_plugin_logger(__name__)
 
@@ -95,13 +95,15 @@ class GithubReposExtractor(Extractor):
         repo["languages"] = [
             {"name": lang}
             async for lang in self.client.fetch_languages_for_repo(
-                owner["login"], repo["name"]
+                owner_login=owner["login"],
+                repo_name=repo["name"],
             )
         ]
         repo["webhooks"] = [
             hook
             async for hook in self.client.fetch_webhooks_for_repo(
-                owner["login"], repo["name"]
+                owner_login=owner["login"],
+                repo_name=repo["name"],
             )
         ]
         repo["collaborators"] = []
@@ -126,12 +128,14 @@ class GithubReposExtractor(Extractor):
         async for org in self.client.fetch_all_organizations():
             if self.collecting.org_public:
                 async for repo in self.client.fetch_repos_for_org(
-                    org["login"], "public"
+                    org_login=org["login"],
+                    repo_type=OrgRepoType.PUBLIC,
                 ):
                     yield repo
             if self.collecting.org_private:
                 async for repo in self.client.fetch_repos_for_org(
-                    org["login"], "private"
+                    org_login=org["login"],
+                    repo_type=OrgRepoType.PRIVATE,
                 ):
                     yield repo
 
@@ -144,13 +148,8 @@ class GithubReposExtractor(Extractor):
         repository permissions (read)
         """
         async for user in self.client.fetch_all_users():
-            if self.collecting.user_public:
-                async for repo in self.client.fetch_repos_for_user(
-                    user["login"], "public"
-                ):
-                    yield repo
-            if self.collecting.user_private:
-                async for repo in self.client.fetch_repos_for_user(
-                    user["login"], "private"
-                ):
-                    yield repo
+            async for repo in self.client.fetch_repos_for_user(
+                user_login=user["login"],
+                repo_type=UserRepoType.OWNER,
+            ):
+                yield repo
