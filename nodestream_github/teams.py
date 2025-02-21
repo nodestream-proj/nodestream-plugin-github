@@ -14,6 +14,7 @@ from .interpretations.relationship.repository import simplify_repo
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
 from .types import GithubTeam, GithubTeamSummary, SimplifiedUser, TeamRecord
+from .types.enums import TeamMemberRole
 
 logger = get_plugin_logger(__name__)
 
@@ -25,7 +26,7 @@ class GithubTeamsExtractor(Extractor):
     async def extract_records(self) -> AsyncGenerator[TeamRecord]:
         async for page in self.client.fetch_all_organizations():
             login = page["login"]
-            async for team in self.client.fetch_teams_for_org(login):
+            async for team in self.client.fetch_teams_for_org(org_login=login):
                 team_record = await self._fetch_team(login, team)
                 if team_record:
                     logger.debug(
@@ -42,17 +43,21 @@ class GithubTeamsExtractor(Extractor):
             team["slug"],
         )
 
-        async for member in self.client.fetch_members_for_team(team["id"], "member"):
+        async for member in self.client.fetch_members_for_team(
+            team_id=team["id"],
+            role=TeamMemberRole.MEMBER,
+        ):
             yield member | {"role": "member"}
         async for member in self.client.fetch_members_for_team(
-            team["id"], "maintainer"
+            team_id=team["id"],
+            role=TeamMemberRole.MAINTAINER,
         ):
             yield member | {"role": "maintainer"}
 
     async def _fetch_team(
         self, login: str, team_summary: GithubTeamSummary
     ) -> GithubTeam:
-        team = await self.client.fetch_team(login, team_summary["slug"])
+        team = await self.client.fetch_team(org_login=login, slug=team_summary["slug"])
         if not team:
             return None
         team["members"] = [
@@ -60,6 +65,9 @@ class GithubTeamsExtractor(Extractor):
         ]
         team["repos"] = [
             simplify_repo(repo, permission=team.get("permission"))
-            async for repo in self.client.fetch_repos_for_team(login, team["slug"])
+            async for repo in self.client.fetch_repos_for_team(
+                org_login=login,
+                slug=team["slug"],
+            )
         ]
         return team

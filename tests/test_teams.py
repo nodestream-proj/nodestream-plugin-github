@@ -1,6 +1,7 @@
 import pytest
 
 from nodestream_github import GithubTeamsExtractor
+from nodestream_github.types.enums import TeamMemberRole
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO
 from tests.data.teams import JUSTICE_LEAGUE_TEAM, JUSTICE_LEAGUE_TEAM_SUMMARY
@@ -24,7 +25,10 @@ async def test_extract_records(
     team_client: GithubTeamsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.list_teams_for_org("github", json=[JUSTICE_LEAGUE_TEAM_SUMMARY])
+    gh_rest_mock.list_teams_for_org(
+        org_login="github",
+        json=[JUSTICE_LEAGUE_TEAM_SUMMARY],
+    )
     gh_rest_mock.get_team(
         org_login="github",
         team_slug="justice-league",
@@ -32,12 +36,12 @@ async def test_extract_records(
     )
     gh_rest_mock.get_members_for_team(
         team_id=1,
-        role="member",
+        role=TeamMemberRole.MEMBER,
         json=[OCTOCAT_USER],
     )
     gh_rest_mock.get_members_for_team(
         team_id=1,
-        role="maintainer",
+        role=TeamMemberRole.MAINTAINER,
         json=[TURBO_USER],
     )
     gh_rest_mock.get_repos_for_team(
