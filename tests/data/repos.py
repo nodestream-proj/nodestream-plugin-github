@@ -25,7 +25,9 @@ def repo(
         "description": "This your first repo!",
         "fork": False,
         "url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}",
-        "archive_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/{{archive_format}}{{/ref}}",
+        "archive_url": (
+            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/{{archive_format}}{{/ref}}"
+        ),
         "assignees_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/assignees{{/user}}"
         ),
@@ -35,14 +37,18 @@ def repo(
         "branches_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/branches{{/branch}}"
         ),
-        "collaborators_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/collaborators{{/collaborator}}",
+        "collaborators_url": (
+            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/collaborators{{/collaborator}}"
+        ),
         "comments_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/comments{{/number}}"
         ),
         "commits_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/commits{{/sha}}"
         ),
-        "compare_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/compare/{{base}}...{{head}}",
+        "compare_url": (
+            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/compare/{{base}}...{{head}}"
+        ),
         "contents_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/contents/{{+path}}"
         ),
@@ -65,7 +71,9 @@ def repo(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/git/tags{{/sha}}"
         ),
         "git_url": f"git:github.com/{owner_login}/{repo_name}.git",
-        "issue_comment_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/issues/comments{{/number}}",
+        "issue_comment_url": (
+            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/issues/comments{{/number}}"
+        ),
         "issue_events_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/issues/events{{/number}}"
         ),
@@ -81,7 +89,9 @@ def repo(
         "milestones_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/milestones{{/number}}"
         ),
-        "notifications_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/notifications{{?since,all,participating}}",
+        "notifications_url": (
+            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/notifications{{?since,all,participating}}"
+        ),
         "pulls_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/pulls{{/number}}"
         ),

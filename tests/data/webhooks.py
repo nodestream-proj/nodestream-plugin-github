@@ -28,7 +28,9 @@ def webhook(
         "ping_url": (
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/hooks/{webhook_id}/pings"
         ),
-        "deliveries_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/hooks/{webhook_id}/deliveries",
+        "deliveries_url": (
+            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/hooks/{webhook_id}/deliveries"
+        ),
         "last_response": {"code": None, "status": "unused", "message": None},
     }
 
