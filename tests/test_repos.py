@@ -192,7 +192,9 @@ async def test_extract_records(
                     "role_name": "read",
                 },
             ],
-            "collaborators_url": "https://HOSTNAME/repos/octocat/Hello-World/collaborators{/collaborator}",
+            "collaborators_url": (
+                "https://HOSTNAME/repos/octocat/Hello-World/collaborators{/collaborator}"
+            ),
             "comments_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/comments{/number}"
             ),
@@ -253,7 +255,9 @@ async def test_extract_records(
             "mirror_url": "git:git.example.com/octocat/Hello-World",
             "name": "Hello-World",
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-            "notifications_url": "https://HOSTNAME/repos/octocat/Hello-World/notifications{?since,all,participating}",
+            "notifications_url": (
+                "https://HOSTNAME/repos/octocat/Hello-World/notifications{?since,all,participating}"
+            ),
             "open_issues_count": 0,
             "user_owner": {
                 "avatar_url": "https://github.com/images/error/octocat_happy.gif",
@@ -312,7 +316,9 @@ async def test_extract_records(
                     "url": "https://example.com/webhook",
                 },
                 "created_at": "2019-06-03T00:57:16Z",
-                "deliveries_url": "https://HOSTNAME/repos/octocat/Hello-World/hooks/12345678/deliveries",
+                "deliveries_url": (
+                    "https://HOSTNAME/repos/octocat/Hello-World/hooks/12345678/deliveries"
+                ),
                 "events": ["push", "pull_request"],
                 "id": 12345678,
                 "last_response": {"code": None, "message": None, "status": "unused"},
@@ -414,7 +420,9 @@ async def test_extract_records(
             "mirror_url": "git:git.example.com/github/Hello-Moon",
             "name": "Hello-Moon",
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-            "notifications_url": "https://HOSTNAME/repos/github/Hello-Moon/notifications{?since,all,participating}",
+            "notifications_url": (
+                "https://HOSTNAME/repos/github/Hello-Moon/notifications{?since,all,participating}"
+            ),
             "open_issues_count": 0,
             "private": False,
             "pulls_url": "https://HOSTNAME/repos/github/Hello-Moon/pulls{/number}",
@@ -449,7 +457,9 @@ async def test_extract_records(
                     "url": "https://example.com/webhook",
                 },
                 "created_at": "2019-06-03T00:57:16Z",
-                "deliveries_url": "https://HOSTNAME/repos/octocat/Hello-World/hooks/12345678/deliveries",
+                "deliveries_url": (
+                    "https://HOSTNAME/repos/octocat/Hello-World/hooks/12345678/deliveries"
+                ),
                 "events": ["push", "pull_request"],
                 "id": 12345678,
                 "last_response": {"code": None, "message": None, "status": "unused"},
