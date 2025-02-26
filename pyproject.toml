@@ -45,7 +45,7 @@ interpretations = "nodestream_github.interpretations"
 log_cli = true
 log_cli_level = "DEBUG"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github"
+addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github --junit-xml=pytest.xml"
 
 [tool.ruff.lint]
 select = ["A", "ANN", "ARG", "ASYNC", "B", "C4", "DTZ", "E", "EM", "ERA", "F", "FBT", "FURB", "G", "I", "INP", "N", "PIE", "PT", "RET", "RUF", "S", "SIM", "T20", "TC", "UP", ]
