@@ -66,6 +66,7 @@ async def test_github_user_extractor_repo_fail(
     assert actual == [OCTOCAT_USER | {"repositories": []}]
 
 
+@pytest.mark.asyncio
 async def test_github_user_extractor_repo_fail_broken(
     user_client: GithubUserExtractor,
     gh_rest_mock: GithubHttpxMock,
