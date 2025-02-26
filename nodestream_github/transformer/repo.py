@@ -25,7 +25,7 @@ class RepoToCollaboratorsTransformer(Transformer):
     async def transform_record(
         self,
         record: types.GithubRepo,
-    ) -> AsyncGenerator[types.GithubUser | types.JSONType]:
+    ) -> AsyncGenerator[types.GithubUser]:
         logging.debug("Attempting to transform %s", record)
 
         full_name = record.get(self.full_name_key)
