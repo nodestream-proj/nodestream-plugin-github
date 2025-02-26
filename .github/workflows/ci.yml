@@ -48,4 +48,7 @@ jobs:
         uses: orgoro/coverage@v3.2
         with:
             coverageFile: coverage.xml
+            thresholdAll: 0.8
+            thresholdNew: 0.8
+            thresholdModified: 0.8
             token: ${{ secrets.GITHUB_TOKEN }}

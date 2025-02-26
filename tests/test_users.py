@@ -64,3 +64,17 @@ async def test_github_user_extractor_repo_fail(
     actual = [user async for user in user_client.extract_records()]
 
     assert actual == [OCTOCAT_USER | {"repositories": []}]
+
+
+async def test_github_user_extractor_repo_fail_broken(
+    user_client: GithubUserExtractor,
+    gh_rest_mock: GithubHttpxMock,
+):
+
+    gh_rest_mock.all_users(json=[OCTOCAT_USER])
+    gh_rest_mock.get_repos_for_user(
+        "octocat", "all", status_code=httpx.codes.SERVICE_UNAVAILABLE
+    )
+    actual = [user async for user in user_client.extract_records()]
+
+    assert actual == [HELLO_WORLD_REPO | {"repositories": []}]
