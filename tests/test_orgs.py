@@ -308,9 +308,9 @@ async def test_skip_members(
 @pytest.mark.asyncio
 async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
     org_client = GithubOrganizationsExtractor(
-        include_repositories="fart",
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
+        include_repositories=False,  # putting the here to test kwargs interaction
         user_agent="test-agent",
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,

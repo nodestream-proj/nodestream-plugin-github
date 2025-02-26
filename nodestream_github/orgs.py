@@ -21,11 +21,15 @@ logger = get_plugin_logger(__name__)
 class GithubOrganizationsExtractor(Extractor):
     def __init__(
         self,
+        *,
+        include_members: bool | None = True,
+        include_repositories: bool | None = True,
         **kwargs: any,
     ):
-        self.include_members = kwargs.pop("include_members", True) is True
-        self.include_repositories = kwargs.pop("include_repositories", True) is True
-        
+
+        self.include_members = include_members is True
+        self.include_repositories = include_repositories is True
+
         self.client = GithubRestApiClient(**kwargs)
 
     async def extract_records(self) -> AsyncGenerator[OrgRecord]:
