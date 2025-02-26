@@ -43,9 +43,9 @@ jobs:
           poetry run ruff check nodestream_github tests --output-format rdjson | reviewdog -f=rdjson -name="ruff-check" -level=warning -reporter=github-pr-review
       - name: Run Tests
         run: |
-          poetry run pytest
+          poetry run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=nodestream_github tests/ | tee pytest-coverage.txt
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@v1
         with:
-          pytest-coverage-path: ./coverage.xml
+          pytest-coverage-path: ./pytest-coverage.xml
           junitxml-path: ./pytest.xml
