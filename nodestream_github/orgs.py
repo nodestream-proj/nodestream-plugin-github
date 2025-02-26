@@ -19,8 +19,14 @@ logger = get_plugin_logger(__name__)
 
 
 class GithubOrganizationsExtractor(Extractor):
-    def __init__(self, **github_client_kwargs: any):
-        self.client = GithubRestApiClient(**github_client_kwargs)
+    def __init__(
+        self,
+        **kwargs: any,
+    ):
+        self.include_members = kwargs.pop("include_members", True) is True
+        self.include_repositories = kwargs.pop("include_repositories", True) is True
+        
+        self.client = GithubRestApiClient(**kwargs)
 
     async def extract_records(self) -> AsyncGenerator[OrgRecord]:
         async for org in self.client.fetch_all_organizations():
@@ -34,14 +40,23 @@ class GithubOrganizationsExtractor(Extractor):
         if not full_org:
             return None
 
-        full_org["members"] = [user async for user in self._fetch_all_members(login)]
+        if self.include_members:
+            full_org["members"] = [
+                user async for user in self._fetch_all_members(login)
+            ]
+        else:
+            full_org["members"] = []
 
-        full_org["repositories"] = [
-            simplify_repo(
-                repo, permission=full_org.get("default_repository_permission")
-            )
-            async for repo in self.client.fetch_repos_for_org(login)
-        ]
+        if self.include_repositories:
+            full_org["repositories"] = [
+                simplify_repo(
+                    repo, permission=full_org.get("default_repository_permission")
+                )
+                async for repo in self.client.fetch_repos_for_org(login)
+            ]
+        else:
+            full_org["repositories"] = []
+
         return full_org
 
     async def _fetch_all_members(self, login: str) -> AsyncGenerator[SimplifiedUser]:
