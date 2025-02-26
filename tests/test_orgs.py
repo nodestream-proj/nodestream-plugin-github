@@ -268,3 +268,77 @@ async def test_get_orgs(
             }],
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_skip_members(
+    gh_rest_mock: GithubHttpxMock,
+):
+    org_client = GithubOrganizationsExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=0,
+        per_page=DEFAULT_PER_PAGE,
+        include_members=False,
+    )
+
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
+    gh_rest_mock.get_org("github", json=GITHUB_ORG)
+    gh_rest_mock.get_repos_for_org("github", json=[HELLO_WORLD_REPO])
+
+    all_records = [record async for record in org_client.extract_records()]
+    assert all_records == [
+        BASE_EXPECTED_GITHUB_ORG
+        | {
+            "members": [],
+            "repositories": [{
+                "full_name": "octocat/Hello-World",
+                "html_url": "https://github.com/octocat/Hello-World",
+                "id": 1296269,
+                "name": "Hello-World",
+                "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
+                "permission": "read",
+                "url": "https://HOSTNAME/repos/octocat/Hello-World",
+            }],
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
+    org_client = GithubOrganizationsExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        include_repositories=False,  # putting the here to test kwargs interaction
+        user_agent="test-agent",
+        max_retries=0,
+        per_page=DEFAULT_PER_PAGE,
+    )
+
+    gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
+    gh_rest_mock.get_org("github", json=GITHUB_ORG)
+    gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
+    gh_rest_mock.get_members_for_org("github", json=[TURBO_USER], role="member")
+
+    all_records = [record async for record in org_client.extract_records()]
+    assert all_records == [
+        BASE_EXPECTED_GITHUB_ORG
+        | {
+            "members": [
+                {
+                    "id": 1,
+                    "login": "octocat",
+                    "node_id": "MDQ6VXNlcjE=",
+                    "role": "admin",
+                },
+                {
+                    "id": 2,
+                    "login": "turbo",
+                    "node_id": "MDQ6VXNlcjI=",
+                    "role": "member",
+                },
+            ],
+            "repositories": [],
+        }
+    ]
