@@ -57,7 +57,7 @@ class GithubOrganizationsExtractor(Extractor):
                 simplify_repo(
                     repo, permission=full_org.get("default_repository_permission")
                 )
-                async for repo in self.client.fetch_repos_for_org(login)
+                async for repo in self.client.fetch_repos_for_org(org_login=login)
             ]
         else:
             full_org["repositories"] = []

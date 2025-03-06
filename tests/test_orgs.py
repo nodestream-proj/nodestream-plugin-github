@@ -321,8 +321,8 @@ async def test_skip_members(
     )
 
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", json=GITHUB_ORG)
-    gh_rest_mock.get_repos_for_org("github", json=[HELLO_WORLD_REPO])
+    gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
+    gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
 
     all_records = [record async for record in org_client.extract_records()]
     assert all_records == [
@@ -354,9 +354,17 @@ async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
     )
 
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_org("github", json=GITHUB_ORG)
-    gh_rest_mock.get_members_for_org("github", json=[OCTOCAT_USER], role="admin")
-    gh_rest_mock.get_members_for_org("github", json=[TURBO_USER], role="member")
+    gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
+        json=[OCTOCAT_USER],
+        role=OrgMemberRole.ADMIN,
+    )
+    gh_rest_mock.get_members_for_org(
+        org_name="github",
+        json=[TURBO_USER],
+        role=OrgMemberRole.MEMBER,
+    )
 
     all_records = [record async for record in org_client.extract_records()]
     assert all_records == [
