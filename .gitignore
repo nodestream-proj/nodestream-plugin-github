@@ -161,3 +161,5 @@ cython_debug/
 **/coverage.json
 **/coverage.xml
 **/htmlcov/*
+pytest-coverage.txt
+pytest.xml
