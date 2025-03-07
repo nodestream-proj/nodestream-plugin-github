@@ -65,9 +65,3 @@ jobs:
           echo "Coverage Tests - ${{ steps.coverageComment.outputs.tests }}"
           echo "Coverage Time - ${{ steps.coverageComment.outputs.time }}"
           echo "Not Success Test Info - ${{ steps.coverageComment.outputs.notSuccessTestInfo }}"
-            #      - name: Failure Check
-            #        if: ${{ steps.coverageComment.output.errors + steps.coverageComment.outputs.failures > 0 }}
-            #        uses: actions/github-script@v3
-            #        with:
-            #          script: |
-            #            core.setFailed('Coverage test below tolerance')
