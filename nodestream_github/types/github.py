@@ -11,6 +11,7 @@ GithubUser: TypeAlias = JSONType
 Webhook: TypeAlias = JSONType
 GithubTeam: TypeAlias = JSONType
 GithubTeamSummary: TypeAlias = JSONType
+GithubAuditLog: TypeAlias = JSONType
 
 LanguageRecord: TypeAlias = JSONType
 OrgRecord: TypeAlias = JSONType

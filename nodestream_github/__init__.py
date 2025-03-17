@@ -1,3 +1,4 @@
+from .audit import GithubAuditLogExtractor
 from .interpretations import (
     RepositoryRelationshipInterpretation,
     UserRelationshipInterpretation,
@@ -16,4 +17,5 @@ __all__ = (
     "GithubUserExtractor",
     "RepositoryRelationshipInterpretation",
     "UserRelationshipInterpretation",
+    "GithubAuditLogExtractor",
 )

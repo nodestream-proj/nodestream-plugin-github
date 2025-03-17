@@ -321,6 +321,25 @@ class GithubRestApiClient:
         except httpx.HTTPError as e:
             _fetch_problem("all organizations", e)
 
+    async def fetch_enterprise_audit_log(
+        self, enterprise_name, events
+    ) -> AsyncGenerator[types.GithubAuditLog]:
+        """Fetches enterprise-wide audit log data
+
+        https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
+        """
+        try:
+            params = {}
+            phrase = ", ".join(events)
+            if phrase:
+                params["phrase"] = phrase
+            async for audit in self._get_paginated(
+                f"enterprises/{enterprise_name}/audit-log", params=params
+            ):
+                yield audit
+        except httpx.HTTPError as e:
+            _fetch_problem("audit log", e)
+
     async def fetch_full_org(self, org_login: str) -> types.GithubOrg | None:
         """Fetches the complete org record.
 

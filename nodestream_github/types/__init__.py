@@ -1,4 +1,5 @@
 from .github import (
+    GithubAuditLog,
     GithubOrg,
     GithubOrgSummary,
     GithubRepo,
@@ -23,6 +24,7 @@ __all__ = [
     "GithubRepo",
     "GithubTeam",
     "GithubTeamSummary",
+    "GithubAuditLog",
     "GithubUser",
     "HeaderTypes",
     "JSONType",

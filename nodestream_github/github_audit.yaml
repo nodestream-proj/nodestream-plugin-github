@@ -1,0 +1,19 @@
+- implementation: nodestream_github:GithubAuditLogExtractor
+  arguments:
+    github_hostname: !config 'github_hostname'
+    auth_token: !config 'auth_token'
+    user_agent: !config 'user_agent'
+    enterprise_name: 'intuit'
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+    - type: source_node
+      node_type: BranchProtectionPolicyChange
+      key_normalization:
+        do_lowercase_strings: true
+      key:
+        node_id: !jmespath 'node_id'
+    - type: properties
+      properties:
+        timestamp: !jmespath 'timestamp'
+        action: !jmespath 'action'
