@@ -27,7 +27,7 @@ jobs:
           poetry env use "3.12"
           poetry install
       - name: Setup reviewdog
-        uses: reviewdog/action-setup@v1
+        uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893
       - name: Run black
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,4 +43,20 @@ jobs:
           poetry run ruff check nodestream_github tests --output-format rdjson | reviewdog -f=rdjson -name="ruff-check" -level=warning -reporter=github-pr-review
       - name: Run Tests
         run: |
-          poetry run pytest
+          poetry run pytest --cov-report=html --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=nodestream_github tests/ | tee pytest-coverage.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-info
+          path: htmlcov/
+      - name: Pytest coverage comment
+        id: coverageComment
+        uses: MishaKav/pytest-coverage-comment@v1
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
+      - name: fail on test errors
+        if: ${{ steps.coverageComment.outputs.errors > 0 || steps.coverageComment.outputs.failures > 0 }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('Pytest Failures or Errors')
