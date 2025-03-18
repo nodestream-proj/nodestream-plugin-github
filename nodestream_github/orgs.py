@@ -6,6 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from nodestream.pipeline import Extractor
 
@@ -25,7 +26,7 @@ class GithubOrganizationsExtractor(Extractor):
         *,
         include_members: bool | None = True,
         include_repositories: bool | None = True,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ):
 
         self.include_members = include_members is True

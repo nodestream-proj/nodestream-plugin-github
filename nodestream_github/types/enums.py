@@ -23,13 +23,13 @@ class UserRepoType(StrEnum):
     MEMBER = "member"
 
 
-class OrgMemberRole:
+class OrgMemberRole(StrEnum):
     ALL = "all"
     ADMIN = "admin"
     MEMBER = "member"
 
 
-class TeamMemberRole:
+class TeamMemberRole(StrEnum):
     ALL = "all"
     MAINTAINER = "maintainer"
     MEMBER = "member"

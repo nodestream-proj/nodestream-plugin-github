@@ -8,6 +8,7 @@ import logging
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from enum import Enum
+from typing import Any
 
 import httpx
 from dateutil.relativedelta import relativedelta
@@ -84,7 +85,7 @@ class GithubRestApiClient:
         max_retries: int | None = None,
         rate_limit_per_minute: int | None = None,
         max_retry_wait_seconds: int | None = None,
-        **_kwargs: any,
+        **_kwargs: dict[str, Any],
     ):
         if per_page is None:
             per_page = DEFAULT_PAGE_SIZE
