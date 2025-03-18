@@ -6,6 +6,8 @@ An async client for accessing GitHub.
 import json
 import logging
 from collections.abc import AsyncGenerator
+from datetime import datetime
+from dateutil.relativedelta import *
 from enum import Enum
 
 import httpx
@@ -328,15 +330,25 @@ class GithubRestApiClient:
             _fetch_problem("all organizations", e)
 
     async def fetch_enterprise_audit_log(
-        self, enterprise_name: str, actions: list[str]
+        self, enterprise_name: str, actions: list[str], lookback_period: dict[str, int]
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
 
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            phrase = " ".join(f"action:{action}" for action in actions)
-            params = {"phrase": phrase} if phrase else {}
+            # adding action-based filtering
+            actions_phrase = " ".join(f"action:{action}" for action in actions)
+            # adding lookback_period based filtering
+            date_filter = (
+                f"created:>={(datetime.now() - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
+                if lookback_period
+                else ''
+            )
+            search_phrase = f"{actions_phrase} {date_filter}"
+
+            params = {"phrase": search_phrase} if search_phrase else {}
+
             async for audit in self._get_paginated(
                 f"enterprises/{enterprise_name}/audit-log", params=params
             ):
