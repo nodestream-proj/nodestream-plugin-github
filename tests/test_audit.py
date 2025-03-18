@@ -18,7 +18,7 @@ def audit_client() -> GithubAuditLogExtractor:
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,
         enterprise_name="test-enterprise",
-        events=["protected_branch.create"],
+        actions=["protected_branch.create"],
     )
 
 
