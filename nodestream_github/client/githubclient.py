@@ -7,6 +7,7 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 from enum import Enum
+from typing import List
 
 import httpx
 from limits import RateLimitItem, RateLimitItemPerMinute
@@ -322,17 +323,15 @@ class GithubRestApiClient:
             _fetch_problem("all organizations", e)
 
     async def fetch_enterprise_audit_log(
-        self, enterprise_name, events
+        self, enterprise_name: str, actions: List[str]
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
 
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            params = {}
-            phrase = ", ".join(events)
-            if phrase:
-                params["phrase"] = phrase
+            phrase = ' '.join(f"action:{action}" for action in actions)
+            params = {"phrase": phrase} if phrase else {}
             async for audit in self._get_paginated(
                 f"enterprises/{enterprise_name}/audit-log", params=params
             ):

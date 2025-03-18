@@ -19,14 +19,14 @@ logger = get_plugin_logger(__name__)
 
 class GithubAuditLogExtractor(Extractor):
     def __init__(
-        self, enterprise_name: str, events: List[str], **github_client_kwargs: any
+        self, enterprise_name: str, actions: List[str], **github_client_kwargs: any
     ):
         self.enterprise_name = enterprise_name
         self.client = GithubRestApiClient(**github_client_kwargs)
-        self.events = events
+        self.actions = actions
 
     async def extract_records(self) -> AsyncGenerator[GithubAuditLog]:
         async for audit in self.client.fetch_enterprise_audit_log(
-            self.enterprise_name, self.events
+            self.enterprise_name, self.actions
         ):
             yield audit
