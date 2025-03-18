@@ -1,9 +1,11 @@
+from typing import Any
+
 from nodestream_github.types import GithubOrg, GithubOrgSummary
 from tests.data.util import encode_as_node_id
 
 
 def org_summary(
-    *, org_login: str = "github", org_id: int = 1, **kwargs: any
+    *, org_login: str = "github", org_id: int = 1, **kwargs: dict[str, Any]
 ) -> GithubOrgSummary:
     return {
         "login": org_login,

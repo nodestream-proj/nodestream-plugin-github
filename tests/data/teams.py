@@ -1,3 +1,5 @@
+from typing import Any
+
 from nodestream_github.types import GithubOrgSummary, GithubTeam, GithubTeamSummary
 from tests.data.orgs import GITHUB_ORG
 from tests.data.util import encode_as_node_id
@@ -8,7 +10,7 @@ def team_summary(
     team_id: int = 1,
     slug: str = "justice-league",
     org_login: str = "github",
-    **kwargs: any,
+    **kwargs: dict[str, Any],
 ) -> GithubTeamSummary:
     return {
         "id": team_id,
@@ -32,7 +34,7 @@ def team(
     team_id: int = 1,
     organization: GithubOrgSummary | None = None,
     slug: str = "justice-league",
-    **kwargs: any,
+    **kwargs: dict[str, Any],
 ) -> GithubTeam:
     org = organization if organization else GITHUB_ORG
     summary = team_summary(team_id=team_id, org_login=org["login"], slug=slug)

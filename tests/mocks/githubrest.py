@@ -1,5 +1,5 @@
 # noinspection PyProtectedMember
-from typing import Optional
+from typing import Any, Optional
 
 from pytest_httpx import HTTPXMock
 
@@ -41,7 +41,7 @@ class GithubHttpxMock:
     def httpx_mock(self) -> HTTPXMock:
         return self._httpx_mock
 
-    def add_exception(self, *, exception: Exception, **matchers: any):
+    def add_exception(self, *, exception: Exception, **matchers: dict[str, Any]):
         self.httpx_mock.add_exception(exception, **matchers)
 
     def add_response(
@@ -55,7 +55,7 @@ class GithubHttpxMock:
         html: str | None = None,
         stream: Optional[any] = None,
         json: Optional[any] = None,
-        **matchers: any,
+        **matchers: dict[str, Any],
     ):
         self.httpx_mock.add_response(
             status_code=status_code,
@@ -69,12 +69,12 @@ class GithubHttpxMock:
             **matchers,
         )
 
-    def all_orgs(self, **kwargs: any) -> None:
+    def all_orgs(self, **kwargs: dict[str, Any]) -> None:
         self.add_response(
             url=f"{self.base_url}/organizations?per_page={self.per_page}", **kwargs
         )
 
-    def get_org(self, *, org_name: str, **kwargs: any) -> None:
+    def get_org(self, *, org_name: str, **kwargs: dict[str, Any]) -> None:
         self.add_response(url=f"{self.base_url}/orgs/{org_name}", **kwargs)
 
     def get_members_for_org(
@@ -82,7 +82,7 @@ class GithubHttpxMock:
         *,
         org_name: str,
         role: OrgMemberRole | None = None,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ) -> None:
         actual_role = f"role={role}" if role else ""
         self.add_response(
@@ -95,7 +95,7 @@ class GithubHttpxMock:
         *,
         org_name: str,
         repo_type: OrgRepoType | None = None,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ):
         type_param = f"&type={repo_type}" if repo_type else ""
         self.add_response(
@@ -103,13 +103,13 @@ class GithubHttpxMock:
             **kwargs,
         )
 
-    def list_teams_for_org(self, *, org_login: str, **kwargs: any):
+    def list_teams_for_org(self, *, org_login: str, **kwargs: dict[str, Any]):
         self.add_response(
             url=f"{self.base_url}/orgs/{org_login}/teams?per_page={self.per_page}",
             **kwargs,
         )
 
-    def get_team(self, *, org_login: str, team_slug: str, **kwargs: any):
+    def get_team(self, *, org_login: str, team_slug: str, **kwargs: dict[str, Any]):
         self.add_response(
             url=f"{self.base_url}/orgs/{org_login}/teams/{team_slug}", **kwargs
         )
@@ -119,20 +119,22 @@ class GithubHttpxMock:
         *,
         team_id: int,
         role: TeamMemberRole,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ):
         self.add_response(
             url=f"{self.base_url}/teams/{team_id}/members?per_page={self.per_page}&role={role}",
             **kwargs,
         )
 
-    def get_repos_for_team(self, *, org_login: str, slug: str, **kwargs: any):
+    def get_repos_for_team(
+        self, *, org_login: str, slug: str, **kwargs: dict[str, Any]
+    ):
         self.add_response(
             url=f"{self.base_url}/orgs/{org_login}/teams/{slug}/repos?per_page={self.per_page}",
             **kwargs,
         )
 
-    def all_repos(self, **kwargs: any) -> None:
+    def all_repos(self, **kwargs: dict[str, Any]) -> None:
         self.add_response(
             url=f"{self.base_url}/repositories?per_page={self.per_page}", **kwargs
         )
@@ -142,14 +144,16 @@ class GithubHttpxMock:
         *,
         owner_login: str,
         repo_name: str,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ) -> None:
         self.add_response(
             url=f"{self.base_url}/repos/{owner_login}/{repo_name}/languages?per_page={self.per_page}",
             **kwargs,
         )
 
-    def get_webhooks_for_repo(self, *, owner_login: str, repo_name: str, **kwargs: any):
+    def get_webhooks_for_repo(
+        self, *, owner_login: str, repo_name: str, **kwargs: dict[str, Any]
+    ):
         self.add_response(
             url=f"{self.base_url}/repos/{owner_login}/{repo_name}/hooks?per_page={self.per_page}",
             **kwargs,
@@ -161,14 +165,14 @@ class GithubHttpxMock:
         owner_login: str,
         repo_name: str,
         affiliation: CollaboratorAffiliation,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ) -> None:
         self.add_response(
             url=f"{self.base_url}/repos/{owner_login}/{repo_name}/collaborators?per_page={self.per_page}&affiliation={affiliation}",
             **kwargs,
         )
 
-    def all_users(self, **kwargs: any):
+    def all_users(self, **kwargs: dict[str, Any]):
         self.add_response(
             url=f"{self.base_url}/users?per_page={self.per_page}", **kwargs
         )
@@ -178,7 +182,7 @@ class GithubHttpxMock:
         *,
         user_login: str,
         type_param: UserRepoType | None,
-        **kwargs: any,
+        **kwargs: dict[str, Any],
     ):
         type_param = f"&type={type_param}" if type_param else ""
         self.add_response(
