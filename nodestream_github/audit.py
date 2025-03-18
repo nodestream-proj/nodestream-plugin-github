@@ -6,6 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from nodestream.pipeline import Extractor
 
@@ -32,7 +33,7 @@ class GithubAuditLogExtractor(Extractor):
         enterprise_name: str,
         actions: list[str] | None = None,
         lookback_period: dict[str, int] | None = None,
-        **github_client_kwargs: any,
+        **github_client_kwargs: dict[str, Any] | None,
     ):
         self.enterprise_name = enterprise_name
         self.client = GithubRestApiClient(**github_client_kwargs)
