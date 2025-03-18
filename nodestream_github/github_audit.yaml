@@ -3,17 +3,24 @@
     github_hostname: !config 'github_hostname'
     auth_token: !config 'auth_token'
     user_agent: !config 'user_agent'
-    enterprise_name: 'intuit'
+    enterprise_name: 'test-enterprise'
+    actions:
+      - protected_branch.create
+      - repo.download_zip
+    lookback_period:
+      days: 1
+
 - implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
     - type: source_node
       node_type: BranchProtectionPolicyChange
-      key_normalization:
-        do_lowercase_strings: true
       key:
-        node_id: !jmespath 'node_id'
+        timestamp: !jmespath 'timestamp'
+        actor: !jmespath 'actor'
+        action: !jmespath 'action'
     - type: properties
       properties:
-        timestamp: !jmespath 'timestamp'
-        action: !jmespath 'action'
+        org: !jmespath 'org'
+        repo: !jmespath 'repo'
+        created_at: !jmespath 'created_at'
