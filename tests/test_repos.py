@@ -1,7 +1,11 @@
 import pytest
 
 from nodestream_github import GithubReposExtractor
-from nodestream_github.types.enums import CollaboratorAffiliation
+from nodestream_github.types.enums import (
+    CollaboratorAffiliation,
+    OrgRepoType,
+    UserRepoType,
+)
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO, repo
 from tests.data.users import OCTOCAT_USER, TURBO_USER, user
@@ -35,8 +39,16 @@ async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
     )
 
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
-    gh_rest_mock.get_repos_for_org("github", "public", json=[HELLO_WORLD_REPO])
-    gh_rest_mock.get_repos_for_org("github", "private", json=[HELLO_WORLD_REPO])
+    gh_rest_mock.get_repos_for_org(
+        org_name="github",
+        repo_type=OrgRepoType.PUBLIC,
+        json=[HELLO_WORLD_REPO],
+    )
+    gh_rest_mock.get_repos_for_org(
+        org_name="github",
+        repo_type=OrgRepoType.PRIVATE,
+        json=[HELLO_WORLD_REPO],
+    )
     gh_rest_mock.get_languages_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
@@ -44,21 +56,21 @@ async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
         is_reusable=True,
     )
     gh_rest_mock.get_webhooks_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.DIRECT,
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[],
         is_reusable=True,
@@ -79,36 +91,39 @@ async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
     )
 
     gh_rest_mock.all_users(json=[OCTOCAT_USER])
-    gh_rest_mock.get_repos_for_user("octocat", "public", json=[HELLO_WORLD_REPO])
-    gh_rest_mock.get_repos_for_user("octocat", "private", json=[HELLO_WORLD_REPO])
+    gh_rest_mock.get_repos_for_user(
+        user_login="octocat",
+        type_param=UserRepoType.OWNER,
+        json=[HELLO_WORLD_REPO],
+    )
     gh_rest_mock.get_languages_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_webhooks_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.DIRECT,
         json=[],
         is_reusable=True,
     )
     gh_rest_mock.get_collaborators_for_repo(
-        "octocat",
-        "Hello-World",
+        owner_login="octocat",
+        repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[],
         is_reusable=True,
     )
 
-    assert len([record async for record in extractor.extract_records()]) == 2
+    assert len([record async for record in extractor.extract_records()]) == 1
 
 
 @pytest.mark.asyncio

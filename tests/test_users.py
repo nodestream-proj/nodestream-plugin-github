@@ -4,6 +4,7 @@ import httpx
 import pytest
 
 from nodestream_github import GithubUserExtractor
+from nodestream_github.types.enums import UserRepoType
 from tests.data.repos import HELLO_WORLD_REPO
 from tests.data.users import OCTOCAT_USER
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, GithubHttpxMock
@@ -32,7 +33,11 @@ async def test_github_user_extractor(
 ):
 
     gh_rest_mock.all_users(json=[OCTOCAT_USER])
-    gh_rest_mock.get_repos_for_user("octocat", "all", json=[HELLO_WORLD_REPO])
+    gh_rest_mock.get_repos_for_user(
+        user_login="octocat",
+        type_param=UserRepoType.OWNER,
+        json=[HELLO_WORLD_REPO],
+    )
 
     actual = [record async for record in user_client.extract_records()]
 
@@ -59,7 +64,9 @@ async def test_github_user_extractor_repo_fail(
 
     gh_rest_mock.all_users(json=[OCTOCAT_USER])
     gh_rest_mock.get_repos_for_user(
-        "octocat", "all", status_code=httpx.codes.SERVICE_UNAVAILABLE
+        user_login="octocat",
+        type_param=UserRepoType.OWNER,
+        status_code=httpx.codes.SERVICE_UNAVAILABLE,
     )
     actual = [user async for user in user_client.extract_records()]
 

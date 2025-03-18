@@ -19,7 +19,6 @@ class RepoToCollaboratorsTransformer(Transformer):
         full_name_key: str = "full_name",
         **kwargs: any,
     ):
-
         self.client = GithubRestApiClient(**kwargs)
         self.full_name_key = full_name_key
 
@@ -27,10 +26,25 @@ class RepoToCollaboratorsTransformer(Transformer):
         self,
         record: types.GithubRepo,
     ) -> AsyncGenerator[types.GithubUser]:
-        (repo_owner, repo_name) = record[self.full_name_key].split("/")
-        logging.debug("Transforming record %s/%s", repo_owner, repo_name)
+        logging.debug("Attempting to transform %s", record)
 
+        full_name = record.get(self.full_name_key)
         simplified_repo = simplify_repo(record)
+
+        if full_name is not None:
+            async for user in self._transform(full_name, simplified_repo):
+                yield user
+        else:
+            logging.info("No full_name key found in record %s", record)
+
+    async def _transform(
+        self,
+        full_name: str,
+        simplified_repo: types.SimplifiedRepo,
+    ) -> AsyncGenerator[types.GithubUser]:
+        (repo_owner, repo_name) = full_name.split("/")
+
+        logging.debug("Transforming repo %s/%s", repo_owner, repo_name)
 
         async for collaborator in self.client.fetch_collaborators_for_repo(
             owner_login=repo_owner,

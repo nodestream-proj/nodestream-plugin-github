@@ -75,3 +75,20 @@ async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
         OCTOCAT_USER | {"repository": repo_summary, "affiliation": "direct"},
         TURBO_USER | {"repository": repo_summary, "affiliation": "outside"},
     ]
+
+
+@pytest.mark.asyncio
+async def test_no_full_name_key():
+    transformer = RepoToCollaboratorsTransformer(
+        full_name_key="full_name",
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=0,
+        per_page=DEFAULT_PER_PAGE,
+    )
+    modified_repo = HELLO_WORLD_REPO.copy()
+    del modified_repo["full_name"]
+
+    response = [r async for r in transformer.transform_record(modified_repo)]
+    assert response == []
