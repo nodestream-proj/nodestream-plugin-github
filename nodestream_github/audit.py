@@ -24,7 +24,7 @@ class GithubAuditLogExtractor(Extractor):
 
     lookback_period can contain keys for days, months, and/or years as ints
     actions can be found in the GitHub documentation
-    https://docs.github.com/en/enterprise-cloud@latest/admin/monitoring-activity-in-your-enterprise/reviewing-audit-logs-for-your-enterprise/searching-the-audit-log-for-your-enterprise#search-based-on-the-action-performed
+    https://docs.github.com/en/enterprise-server@3.12/admin/monitoring-activity-in-your-enterprise/reviewing-audit-logs-for-your-enterprise/searching-the-audit-log-for-your-enterprise#search-based-on-the-action-performed
     """
 
     def __init__(

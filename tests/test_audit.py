@@ -10,7 +10,7 @@ from tests.mocks.githubrest import (
 
 
 @pytest.fixture
-def audit_client() -> GithubAuditLogExtractor:
+def audit_extractor() -> GithubAuditLogExtractor:
     return GithubAuditLogExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -24,9 +24,9 @@ def audit_client() -> GithubAuditLogExtractor:
 
 @pytest.mark.asyncio
 async def test_get_audit(
-    audit_client: GithubAuditLogExtractor, gh_rest_mock: GithubHttpxMock
+    audit_extractor: GithubAuditLogExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.get_enterprise_audit_logs(status_code=200, json=GITHUB_AUDIT)
 
-    all_records = [record async for record in audit_client.extract_records()]
+    all_records = [record async for record in audit_extractor.extract_records()]
     assert all_records == GITHUB_EXPECTED_OUTPUT

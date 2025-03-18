@@ -11,7 +11,7 @@ from tests.mocks.githubrest import DEFAULT_HOSTNAME, GithubHttpxMock
 
 
 @pytest.fixture
-def user_client() -> GithubUserExtractor:
+def user_extractor() -> GithubUserExtractor:
     return GithubUserExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -29,7 +29,7 @@ async def to_list(async_generator: AsyncGenerator) -> list:
 
 @pytest.mark.asyncio
 async def test_github_user_extractor(
-    user_client: GithubUserExtractor, gh_rest_mock: GithubHttpxMock
+    user_extractor: GithubUserExtractor, gh_rest_mock: GithubHttpxMock
 ):
 
     gh_rest_mock.all_users(json=[OCTOCAT_USER])
@@ -39,7 +39,7 @@ async def test_github_user_extractor(
         json=[HELLO_WORLD_REPO],
     )
 
-    actual = [record async for record in user_client.extract_records()]
+    actual = [record async for record in user_extractor.extract_records()]
 
     assert actual == [
         OCTOCAT_USER
@@ -58,7 +58,7 @@ async def test_github_user_extractor(
 
 @pytest.mark.asyncio
 async def test_github_user_extractor_repo_fail(
-    user_client: GithubUserExtractor,
+    user_extractor: GithubUserExtractor,
     gh_rest_mock: GithubHttpxMock,
 ):
 
@@ -68,6 +68,6 @@ async def test_github_user_extractor_repo_fail(
         type_param=UserRepoType.OWNER,
         status_code=httpx.codes.SERVICE_UNAVAILABLE,
     )
-    actual = [user async for user in user_client.extract_records()]
+    actual = [user async for user in user_extractor.extract_records()]
 
     assert actual == [OCTOCAT_USER | {"repositories": []}]

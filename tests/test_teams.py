@@ -10,7 +10,7 @@ from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHtt
 
 
 @pytest.fixture
-def team_client() -> GithubTeamsExtractor:
+def teams_extractor() -> GithubTeamsExtractor:
     return GithubTeamsExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -22,7 +22,7 @@ def team_client() -> GithubTeamsExtractor:
 
 @pytest.mark.asyncio
 async def test_extract_records(
-    team_client: GithubTeamsExtractor, gh_rest_mock: GithubHttpxMock
+    teams_extractor: GithubTeamsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY])
     gh_rest_mock.list_teams_for_org(
@@ -50,7 +50,7 @@ async def test_extract_records(
         json=[HELLO_WORLD_REPO],
     )
 
-    assert [record async for record in team_client.extract_records()] == [{
+    assert [record async for record in teams_extractor.extract_records()] == [{
         "created_at": "2017-07-14T16:53:42Z",
         "description": "A great team.",
         "html_url": "https://github.com/orgs/github/teams/justice-league",
