@@ -341,11 +341,11 @@ class GithubRestApiClient:
             actions_phrase = " ".join(f"action:{action}" for action in actions)
             # adding lookback_period based filtering
             date_filter = (
-                f"created:>={(datetime.now() - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
+                f" created:>={(datetime.now() - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
                 if lookback_period
                 else ''
             )
-            search_phrase = f"{actions_phrase} {date_filter}"
+            search_phrase = f"{actions_phrase}{date_filter}"
 
             params = {"phrase": search_phrase} if search_phrase else {}
 

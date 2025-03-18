@@ -42,5 +42,5 @@ class GithubAuditLogExtractor(Extractor):
         async for audit in self.client.fetch_enterprise_audit_log(
             self.enterprise_name, self.actions, self.lookback_period
         ):
-            audit['timestamp'] = audit['@timestamp']
+            audit['timestamp'] = audit.pop('@timestamp')
             yield audit

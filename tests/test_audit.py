@@ -1,7 +1,7 @@
 import pytest
 
 from nodestream_github import GithubAuditLogExtractor
-from tests.data.audit import GITHUB_AUDIT
+from tests.data.audit import GITHUB_AUDIT, GITHUB_EXPECTED_OUTPUT
 from tests.mocks.githubrest import (
     DEFAULT_HOSTNAME,
     DEFAULT_PER_PAGE,
@@ -29,4 +29,4 @@ async def test_get_audit(
     gh_rest_mock.get_enterprise_audit_logs(status_code=200, json=GITHUB_AUDIT)
 
     all_records = [record async for record in audit_client.extract_records()]
-    assert all_records == GITHUB_AUDIT
+    assert all_records == GITHUB_EXPECTED_OUTPUT
