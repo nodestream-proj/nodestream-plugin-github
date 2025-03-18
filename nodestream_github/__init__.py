@@ -10,6 +10,7 @@ from .teams import GithubTeamsExtractor
 from .users import GithubUserExtractor
 
 __all__ = (
+    "GithubAuditLogExtractor",
     "GithubOrganizationsExtractor",
     "GithubPlugin",
     "GithubReposExtractor",
@@ -17,5 +18,4 @@ __all__ = (
     "GithubUserExtractor",
     "RepositoryRelationshipInterpretation",
     "UserRelationshipInterpretation",
-    "GithubAuditLogExtractor",
 )

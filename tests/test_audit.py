@@ -1,4 +1,3 @@
-import httpx
 import pytest
 
 from nodestream_github import GithubAuditLogExtractor

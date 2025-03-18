@@ -7,7 +7,6 @@ import json
 import logging
 from collections.abc import AsyncGenerator
 from enum import Enum
-from typing import List
 
 import httpx
 from limits import RateLimitItem, RateLimitItemPerMinute
@@ -329,7 +328,7 @@ class GithubRestApiClient:
             _fetch_problem("all organizations", e)
 
     async def fetch_enterprise_audit_log(
-        self, enterprise_name: str, actions: List[str]
+        self, enterprise_name: str, actions: list[str]
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
 

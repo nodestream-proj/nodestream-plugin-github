@@ -6,7 +6,6 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
-from typing import List
 
 from nodestream.pipeline import Extractor
 
@@ -19,7 +18,7 @@ logger = get_plugin_logger(__name__)
 
 class GithubAuditLogExtractor(Extractor):
     def __init__(
-        self, enterprise_name: str, actions: List[str], **github_client_kwargs: any
+        self, enterprise_name: str, actions: list[str], **github_client_kwargs: any
     ):
         self.enterprise_name = enterprise_name
         self.client = GithubRestApiClient(**github_client_kwargs)
