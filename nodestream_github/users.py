@@ -13,6 +13,7 @@ from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
 from .logging import get_plugin_logger
 from .types import UserRecord
+from .types.enums import UserRepoType
 
 logger = get_plugin_logger(__name__)
 
@@ -27,7 +28,10 @@ class GithubUserExtractor(Extractor):
             login = user["login"]
             user["repositories"] = [
                 simplify_repo(repo)
-                async for repo in self.client.fetch_repos_for_user(login, "all")
+                async for repo in self.client.fetch_repos_for_user(
+                    user_login=login,
+                    repo_type=UserRepoType.OWNER,
+                )
             ]
             logger.debug("yielded GithubUser{login=%s}", login)
             yield user
