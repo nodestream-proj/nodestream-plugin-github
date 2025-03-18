@@ -335,7 +335,7 @@ class GithubRestApiClient:
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            phrase = ' '.join(f"action:{action}" for action in actions)
+            phrase = " ".join(f"action:{action}" for action in actions)
             params = {"phrase": phrase} if phrase else {}
             async for audit in self._get_paginated(
                 f"enterprises/{enterprise_name}/audit-log", params=params
