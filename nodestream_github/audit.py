@@ -22,7 +22,7 @@ class GithubAuditLogExtractor(Extractor):
     You can pass the enterprise_name, actions and lookback_period to the extractor
     along with the regular GitHub parameters.
 
-    lookback_period can contain keys for days, months, and/or years. The value for the keys should be ints
+    lookback_period can contain keys for days, months, and/or years as ints
     actions can be found in the GitHub documentation
     https://docs.github.com/en/enterprise-cloud@latest/admin/monitoring-activity-in-your-enterprise/reviewing-audit-logs-for-your-enterprise/searching-the-audit-log-for-your-enterprise#search-based-on-the-action-performed
     """

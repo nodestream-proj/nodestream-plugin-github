@@ -6,11 +6,11 @@ An async client for accessing GitHub.
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 import httpx
-from dateutil.relativedelta import *
+from dateutil.relativedelta import relativedelta
 from limits import RateLimitItem, RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
@@ -341,7 +341,8 @@ class GithubRestApiClient:
             actions_phrase = " ".join(f"action:{action}" for action in actions)
             # adding lookback_period based filtering
             date_filter = (
-                f" created:>={(datetime.now() - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
+                f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
+                .strftime('%Y-%m-%d')}"
                 if lookback_period
                 else ""
             )
