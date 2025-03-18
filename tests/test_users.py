@@ -71,4 +71,3 @@ async def test_github_user_extractor_repo_fail(
     actual = [user async for user in user_client.extract_records()]
 
     assert actual == [OCTOCAT_USER | {"repositories": []}]
-
