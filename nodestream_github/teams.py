@@ -6,6 +6,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from nodestream.pipeline import Extractor
 
@@ -20,7 +21,7 @@ logger = get_plugin_logger(__name__)
 
 
 class GithubTeamsExtractor(Extractor):
-    def __init__(self, **github_client_kwargs: any):
+    def __init__(self, **github_client_kwargs: dict[str, Any]):
         self.client = GithubRestApiClient(**github_client_kwargs)
 
     async def extract_records(self) -> AsyncGenerator[TeamRecord]:

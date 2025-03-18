@@ -7,6 +7,7 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
+from typing import Any
 
 from nodestream.pipeline import Extractor
 
@@ -19,7 +20,7 @@ from .types.enums import CollaboratorAffiliation, OrgRepoType, UserRepoType
 logger = get_plugin_logger(__name__)
 
 
-def _dict_val_to_bool(d: dict[str, any], key: str) -> bool:
+def _dict_val_to_bool(d: dict[str, Any], key: str) -> bool:
     value = d.get(key)
     if value is None:
         return False
@@ -46,7 +47,7 @@ class CollectWhichRepos:
         return self.user_public or self.user_private
 
     @staticmethod
-    def from_dict(raw_dict: dict[str, any]) -> "CollectWhichRepos":
+    def from_dict(raw_dict: dict[str, Any]) -> "CollectWhichRepos":
         org_all = _dict_val_to_bool(raw_dict, "org_all")
         user_all = _dict_val_to_bool(raw_dict, "user_all")
 
@@ -62,8 +63,8 @@ class CollectWhichRepos:
 class GithubReposExtractor(Extractor):
     def __init__(
         self,
-        collecting: CollectWhichRepos | dict[str, any] | None = None,
-        **kwargs: any,
+        collecting: CollectWhichRepos | dict[str, Any] | None = None,
+        **kwargs: dict[str, Any],
     ):
         if isinstance(collecting, CollectWhichRepos):
             self.collecting = collecting
