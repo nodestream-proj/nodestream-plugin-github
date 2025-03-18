@@ -66,5 +66,6 @@ def audit_expected_output() -> GithubAuditLog:
         },
     ]
 
+
 GITHUB_AUDIT = audit()
 GITHUB_EXPECTED_OUTPUT = audit_expected_output()

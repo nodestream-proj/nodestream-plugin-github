@@ -343,7 +343,7 @@ class GithubRestApiClient:
             date_filter = (
                 f" created:>={(datetime.now() - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
                 if lookback_period
-                else ''
+                else ""
             )
             search_phrase = f"{actions_phrase}{date_filter}"
 
