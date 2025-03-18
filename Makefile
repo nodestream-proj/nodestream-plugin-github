@@ -28,3 +28,6 @@ lint: fmt
 test:
 	poetry run pytest
 
+.PHONY: coverage
+coverage:
+	poetry run coverage html
