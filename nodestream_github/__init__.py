@@ -1,3 +1,4 @@
+from .audit import GithubAuditLogExtractor
 from .interpretations import (
     RepositoryRelationshipInterpretation,
     UserRelationshipInterpretation,
@@ -9,6 +10,7 @@ from .teams import GithubTeamsExtractor
 from .users import GithubUserExtractor
 
 __all__ = (
+    "GithubAuditLogExtractor",
     "GithubOrganizationsExtractor",
     "GithubPlugin",
     "GithubReposExtractor",

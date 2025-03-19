@@ -189,3 +189,10 @@ class GithubHttpxMock:
             url=f"{self.base_url}/users/{user_login}/repos?per_page=100&{type_param}",
             **kwargs,
         )
+
+    def get_enterprise_audit_logs(self, **kwargs: dict[str, Any]):
+        url = (
+            f"{self.base_url}/enterprises/test-enterprise"
+            f"/audit-log?per_page=100&phrase=action:protected_branch.create"
+        )
+        self.add_response(url=url, **kwargs)

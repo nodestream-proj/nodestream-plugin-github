@@ -6,10 +6,12 @@ An async client for accessing GitHub.
 import json
 import logging
 from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
 import httpx
+from dateutil.relativedelta import relativedelta
 from limits import RateLimitItem, RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
@@ -327,6 +329,34 @@ class GithubRestApiClient:
                 yield org
         except httpx.HTTPError as e:
             _fetch_problem("all organizations", e)
+
+    async def fetch_enterprise_audit_log(
+        self, enterprise_name: str, actions: list[str], lookback_period: dict[str, int]
+    ) -> AsyncGenerator[types.GithubAuditLog]:
+        """Fetches enterprise-wide audit log data
+
+        https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
+        """
+        try:
+            # adding action-based filtering
+            actions_phrase = " ".join(f"action:{action}" for action in actions)
+            # adding lookback_period based filtering
+            date_filter = (
+                f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
+                .strftime('%Y-%m-%d')}"
+                if lookback_period
+                else ""
+            )
+            search_phrase = f"{actions_phrase}{date_filter}"
+
+            params = {"phrase": search_phrase} if search_phrase else {}
+
+            async for audit in self._get_paginated(
+                f"enterprises/{enterprise_name}/audit-log", params=params
+            ):
+                yield audit
+        except httpx.HTTPError as e:
+            _fetch_problem("audit log", e)
 
     async def fetch_full_org(self, org_login: str) -> types.GithubOrg | None:
         """Fetches the complete org record.

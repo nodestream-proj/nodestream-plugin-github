@@ -16,7 +16,7 @@ TEST_USER = user(user_login="bweaver", user_id=3)
 
 
 @pytest.fixture
-def repo_client() -> GithubReposExtractor:
+def repo_extractor() -> GithubReposExtractor:
     return GithubReposExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -128,7 +128,7 @@ async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
 
 @pytest.mark.asyncio
 async def test_extract_records(
-    repo_client: GithubReposExtractor, gh_rest_mock: GithubHttpxMock
+    repo_extractor: GithubReposExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_repos(
         json=[HELLO_WORLD_REPO, repo(owner=GITHUB_ORG_SUMMARY, repo_name="Hello-Moon")],
@@ -177,7 +177,7 @@ async def test_extract_records(
         affiliation=CollaboratorAffiliation.OUTSIDE,
         json=[TEST_USER],
     )
-    assert [record async for record in repo_client.extract_records()] == [
+    assert [record async for record in repo_extractor.extract_records()] == [
         {
             "archive_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/{archive_format}{/ref}"

@@ -1,0 +1,26 @@
+- implementation: nodestream_github:GithubAuditLogExtractor
+  arguments:
+    github_hostname: !config 'github_hostname'
+    auth_token: !config 'auth_token'
+    user_agent: !config 'user_agent'
+    enterprise_name: 'test-enterprise'
+    actions:
+      - protected_branch.create
+      - repo.download_zip
+    lookback_period:
+      days: 1
+
+- implementation: nodestream.interpreting:Interpreter
+  arguments:
+    interpretations:
+    - type: source_node
+      node_type: BranchProtectionPolicyChange
+      key:
+        timestamp: !jmespath 'timestamp'
+        actor: !jmespath 'actor'
+        action: !jmespath 'action'
+    - type: properties
+      properties:
+        org: !jmespath 'org'
+        repo: !jmespath 'repo'
+        created_at: !jmespath 'created_at'
