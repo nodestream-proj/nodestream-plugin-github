@@ -54,14 +54,15 @@ addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github --junit-xm
 [tool.ruff.lint]
 select = ["A", "ANN", "ARG", "ASYNC", "B", "C4", "DTZ", "E", "EM", "ERA", "F", "FBT", "FURB", "G", "I", "INP", "N", "PIE", "PT", "RET", "RUF", "S", "SIM", "T20", "TC", "UP", ]
 ignore = []
-
 unfixable = ["B"]
-
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "S106"]
 "nodestream_github/logging/__init__.py" = ["A005"]
 "nodestream_github/types/__init__.py" = ["A005"]
+
 [tool.ruff.lint.flake8-annotations]
 mypy-init-return = true
 suppress-none-returning = true
+allow-star-arg-any = true

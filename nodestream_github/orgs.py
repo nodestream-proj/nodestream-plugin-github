@@ -26,7 +26,7 @@ class GithubOrganizationsExtractor(Extractor):
         *,
         include_members: bool | None = True,
         include_repositories: bool | None = True,
-        **kwargs: dict[str, Any],
+        **kwargs: Any,
     ):
 
         self.include_members = include_members is True

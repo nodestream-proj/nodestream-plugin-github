@@ -33,7 +33,7 @@ class GithubAuditLogExtractor(Extractor):
         enterprise_name: str,
         actions: list[str] | None = None,
         lookback_period: dict[str, int] | None = None,
-        **github_client_kwargs: dict[str, Any] | None,
+        **github_client_kwargs: Any | None,
     ):
         self.enterprise_name = enterprise_name
         self.client = GithubRestApiClient(**github_client_kwargs)
