@@ -64,7 +64,7 @@ class GithubReposExtractor(Extractor):
     def __init__(
         self,
         collecting: CollectWhichRepos | dict[str, Any] | None = None,
-        **kwargs: dict[str, Any],
+        **kwargs: Any,
     ):
         if isinstance(collecting, CollectWhichRepos):
             self.collecting = collecting

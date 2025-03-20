@@ -18,7 +18,7 @@ class RepoToCollaboratorsTransformer(Transformer):
         self,
         *,
         full_name_key: str = "full_name",
-        **kwargs: dict[str, Any],
+        **kwargs: Any,
     ):
         self.client = GithubRestApiClient(**kwargs)
         self.full_name_key = full_name_key

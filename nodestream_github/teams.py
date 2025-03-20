@@ -21,7 +21,7 @@ logger = get_plugin_logger(__name__)
 
 
 class GithubTeamsExtractor(Extractor):
-    def __init__(self, **github_client_kwargs: dict[str, Any]):
+    def __init__(self, **github_client_kwargs: Any):
         self.client = GithubRestApiClient(**github_client_kwargs)
 
     async def extract_records(self) -> AsyncGenerator[TeamRecord]:

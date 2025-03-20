@@ -19,12 +19,12 @@ from .github import (
 from .httpx import HeaderTypes, PrimitiveData, QueryParamTypes
 
 __all__ = [
+    "GithubAuditLog",
     "GithubOrg",
     "GithubOrgSummary",
     "GithubRepo",
     "GithubTeam",
     "GithubTeamSummary",
-    "GithubAuditLog",
     "GithubUser",
     "HeaderTypes",
     "JSONType",

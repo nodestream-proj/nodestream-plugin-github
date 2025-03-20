@@ -10,7 +10,7 @@ def repo(
     owner: dict[str, Any] | None = None,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
-    **kwargs: dict[str, Any],
+    **kwargs: Any,
 ) -> GithubRepo:
 
     repo_owner = OCTOCAT_USER if owner is None else owner

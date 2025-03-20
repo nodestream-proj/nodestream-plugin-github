@@ -8,7 +8,7 @@ def user(
     *,
     user_login: str = "octocat",
     user_id: int = 1,
-    **kwargs: dict[str, Any],
+    **kwargs: Any,
 ) -> GithubUser:
 
     return {

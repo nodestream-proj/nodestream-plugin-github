@@ -10,7 +10,7 @@ def team_summary(
     team_id: int = 1,
     slug: str = "justice-league",
     org_login: str = "github",
-    **kwargs: dict[str, Any],
+    **kwargs: Any,
 ) -> GithubTeamSummary:
     return {
         "id": team_id,
@@ -34,7 +34,7 @@ def team(
     team_id: int = 1,
     organization: GithubOrgSummary | None = None,
     slug: str = "justice-league",
-    **kwargs: dict[str, Any],
+    **kwargs: Any,
 ) -> GithubTeam:
     org = organization if organization else GITHUB_ORG
     summary = team_summary(team_id=team_id, org_login=org["login"], slug=slug)

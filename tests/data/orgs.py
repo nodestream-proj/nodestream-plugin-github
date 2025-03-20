@@ -5,7 +5,7 @@ from tests.data.util import encode_as_node_id
 
 
 def org_summary(
-    *, org_login: str = "github", org_id: int = 1, **kwargs: dict[str, Any]
+    *, org_login: str = "github", org_id: int = 1, **kwargs: Any
 ) -> GithubOrgSummary:
     return {
         "login": org_login,
