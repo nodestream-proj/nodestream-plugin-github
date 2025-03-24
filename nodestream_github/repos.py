@@ -14,8 +14,14 @@ from nodestream.pipeline import Extractor
 from .client import GithubRestApiClient
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
-from .types import (GithubRepo, GithubUser, JSONType, RepositoryRecord, SimplifiedUser,
-                    Webhook, )
+from .types import (
+    GithubRepo,
+    GithubUser,
+    JSONType,
+    RepositoryRecord,
+    SimplifiedUser,
+    Webhook,
+)
 from .types.enums import CollaboratorAffiliation, OrgRepoType, UserRepoType
 
 logger = get_plugin_logger(__name__)
@@ -83,7 +89,12 @@ class GithubReposExtractor(Extractor):
         self.include_collaborators = include_collaborators is True
 
         self.client = GithubRestApiClient(**kwargs)
-        logger.info("%s, %s, %s", self.include_collaborators, self.include_webhooks, self.include_languages)
+        logger.info(
+            "%s, %s, %s",
+            self.include_collaborators,
+            self.include_webhooks,
+            self.include_languages,
+        )
 
     async def extract_records(self) -> AsyncGenerator[RepositoryRecord]:
         if self.collecting.all_public:
