@@ -1,5 +1,5 @@
 # noinspection PyProtectedMember
-from typing import Any, Optional
+from typing import Any
 
 from pytest_httpx import HTTPXMock
 
@@ -53,8 +53,8 @@ class GithubHttpxMock:
         content: bytes | None = None,
         text: str | None = None,
         html: str | None = None,
-        stream: Optional[any] = None,
-        json: Optional[any] = None,
+        stream: Any = None,  # noqa ANN401
+        json: Any = None,  # noqa ANN401
         **matchers: Any,
     ):
         self.httpx_mock.add_response(

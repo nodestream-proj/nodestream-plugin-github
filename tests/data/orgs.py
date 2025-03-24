@@ -25,7 +25,7 @@ def org_summary(
     } | kwargs
 
 
-def org(*, org_login: str = "github", org_id: int = 1, **kwargs: any) -> GithubOrg:
+def org(*, org_login: str = "github", org_id: int = 1, **kwargs: Any) -> GithubOrg:
     summary = org_summary(org_login=org_login, org_id=org_id)
     login = summary["login"]
     return (
