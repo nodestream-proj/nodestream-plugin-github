@@ -14,7 +14,14 @@ from nodestream.pipeline import Extractor
 from .client import GithubRestApiClient
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
-from .types import GithubRepo, RepositoryRecord
+from .types import (
+    GithubRepo,
+    GithubUser,
+    JSONType,
+    RepositoryRecord,
+    SimplifiedUser,
+    Webhook,
+)
 from .types.enums import CollaboratorAffiliation, OrgRepoType, UserRepoType
 
 logger = get_plugin_logger(__name__)
@@ -63,7 +70,11 @@ class CollectWhichRepos:
 class GithubReposExtractor(Extractor):
     def __init__(
         self,
+        *,
         collecting: CollectWhichRepos | dict[str, Any] | None = None,
+        include_languages: bool | None = True,
+        include_webhooks: bool | None = True,
+        include_collaborators: bool | None = True,
         **kwargs: Any,
     ):
         if isinstance(collecting, CollectWhichRepos):
@@ -72,7 +83,18 @@ class GithubReposExtractor(Extractor):
             self.collecting = CollectWhichRepos.from_dict(collecting)
         else:
             self.collecting = CollectWhichRepos()
+
+        self.include_languages = include_languages is True
+        self.include_webhooks = include_webhooks is True
+        self.include_collaborators = include_collaborators is True
+
         self.client = GithubRestApiClient(**kwargs)
+        logger.info(
+            "%s, %s, %s",
+            self.include_collaborators,
+            self.include_webhooks,
+            self.include_languages,
+        )
 
     async def extract_records(self) -> AsyncGenerator[RepositoryRecord]:
         if self.collecting.all_public:
@@ -93,37 +115,52 @@ class GithubReposExtractor(Extractor):
             repo["user_owner"] = owner
         elif owner:
             repo["org_owner"] = owner
-        repo["languages"] = [
-            {"name": lang}
-            async for lang in self.client.fetch_languages_for_repo(
-                owner_login=owner["login"],
-                repo_name=repo["name"],
-            )
-        ]
-        repo["webhooks"] = [
+
+        if self.include_languages:
+            repo["languages"] = await self._add_languages(owner, repo)
+        if self.include_webhooks:
+            repo["webhooks"] = await self._add_webhooks(owner, repo)
+        if self.include_collaborators:
+            repo["collaborators"] = await self._add_collaborators(owner, repo)
+
+        logger.debug("yielded GithubRepo{full_name=%s}", repo["full_name"])
+        return repo
+
+    async def _add_collaborators(
+        self, owner: GithubUser, repo: GithubRepo
+    ) -> list[SimplifiedUser]:
+        collaborators = []
+        async for user in self.client.fetch_collaborators_for_repo(
+            owner_login=owner["login"],
+            repo_name=repo["name"],
+            affiliation=CollaboratorAffiliation.DIRECT,
+        ):
+            collaborators.append(simplify_user(user, affiliation="direct"))
+        async for user in self.client.fetch_collaborators_for_repo(
+            owner_login=owner["login"],
+            repo_name=repo["name"],
+            affiliation=CollaboratorAffiliation.OUTSIDE,
+        ):
+            collaborators.append(simplify_user(user, affiliation="outside"))
+        return collaborators
+
+    async def _add_webhooks(self, owner: GithubUser, repo: GithubRepo) -> list[Webhook]:
+        return [
             hook
             async for hook in self.client.fetch_webhooks_for_repo(
                 owner_login=owner["login"],
                 repo_name=repo["name"],
             )
         ]
-        repo["collaborators"] = []
 
-        async for user in self.client.fetch_collaborators_for_repo(
-            owner_login=owner["login"],
-            repo_name=repo["name"],
-            affiliation=CollaboratorAffiliation.DIRECT,
-        ):
-            repo["collaborators"].append(simplify_user(user, affiliation="direct"))
-        async for user in self.client.fetch_collaborators_for_repo(
-            owner_login=owner["login"],
-            repo_name=repo["name"],
-            affiliation=CollaboratorAffiliation.OUTSIDE,
-        ):
-            repo["collaborators"].append(simplify_user(user, affiliation="outside"))
-
-        logger.debug("yielded GithubRepo{full_name=%s}", repo["full_name"])
-        return repo
+    async def _add_languages(self, owner: GithubUser, repo: GithubRepo) -> JSONType:
+        return [
+            {"name": lang}
+            async for lang in self.client.fetch_languages_for_repo(
+                owner_login=owner["login"],
+                repo_name=repo["name"],
+            )
+        ]
 
     async def _fetch_repos_by_org(self) -> AsyncGenerator[GithubRepo]:
         async for org in self.client.fetch_all_organizations():
