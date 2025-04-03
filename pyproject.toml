@@ -14,7 +14,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 nodestream = "^0.14"
-limits = "^4.0.1"
+limits = "^4.4.5"
 tenacity = "^9.0.0"
 httpx = ">=0.27,<0.28"
 
