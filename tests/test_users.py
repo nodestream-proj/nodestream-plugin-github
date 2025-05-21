@@ -29,7 +29,8 @@ async def to_list(async_generator: AsyncGenerator) -> list:
 
 @pytest.mark.asyncio
 async def test_github_user_extractor(
-    user_extractor: GithubUserExtractor, gh_rest_mock: GithubHttpxMock
+    user_extractor: GithubUserExtractor,
+    gh_rest_mock: GithubHttpxMock,
 ):
 
     gh_rest_mock.all_users(json=[OCTOCAT_USER])
@@ -54,6 +55,22 @@ async def test_github_user_extractor(
             }]
         }
     ]
+
+
+@pytest.mark.asyncio
+async def test_github_user_extractor_no_repos(gh_rest_mock: GithubHttpxMock):
+    user_extractor = GithubUserExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=0,
+        include_repos=False,
+    )
+    gh_rest_mock.all_users(json=[OCTOCAT_USER])
+
+    actual = [record async for record in user_extractor.extract_records()]
+
+    assert actual == [OCTOCAT_USER]
 
 
 @pytest.mark.asyncio
