@@ -10,11 +10,10 @@ from typing import Any
 
 from nodestream.pipeline import Extractor
 
-from . import types
 from .client import GithubRestApiClient
 from .interpretations.relationship.repository import simplify_repo
 from .logging import get_plugin_logger
-from .types import UserRecord
+from .types import SimplifiedUser, UserRecord
 from .types.enums import UserRepoType
 
 logger = get_plugin_logger(__name__)
@@ -38,7 +37,7 @@ class GithubUserExtractor(Extractor):
             logger.debug("yielded GithubUser{login=%s}", login)
             yield user
 
-    async def _user_repos(self, *, login: str) -> list[types.SimplifiedRepo]:
+    async def _user_repos(self, *, login: str) -> list[SimplifiedUser]:
         return [
             simplify_repo(repo)
             async for repo in self.client.fetch_repos_for_user(
