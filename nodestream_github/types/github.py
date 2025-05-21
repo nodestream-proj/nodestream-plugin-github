@@ -3,21 +3,22 @@ from typing import TypeAlias
 JSONType: TypeAlias = (
     dict[str, "JSONType"] | list["JSONType"] | str | int | float | bool | None
 )
+JSONObject: TypeAlias = dict[str, JSONType]
 
-GithubOrgSummary: TypeAlias = JSONType
-GithubOrg: TypeAlias = JSONType
-GithubRepo: TypeAlias = JSONType
-GithubUser: TypeAlias = JSONType
-Webhook: TypeAlias = JSONType
-GithubTeam: TypeAlias = JSONType
-GithubTeamSummary: TypeAlias = JSONType
-GithubAuditLog: TypeAlias = JSONType
+GithubOrgSummary: TypeAlias = JSONObject
+GithubOrg: TypeAlias = JSONObject
+GithubRepo: TypeAlias = JSONObject
+GithubUser: TypeAlias = JSONObject
+Webhook: TypeAlias = JSONObject
+GithubTeam: TypeAlias = JSONObject
+GithubTeamSummary: TypeAlias = JSONObject
+GithubAuditLog: TypeAlias = JSONObject
 
-LanguageRecord: TypeAlias = JSONType
-OrgRecord: TypeAlias = JSONType
-RepositoryRecord: TypeAlias = JSONType
-TeamRecord: TypeAlias = JSONType
-UserRecord: TypeAlias = JSONType
+LanguageRecord: TypeAlias = JSONObject
+OrgRecord: TypeAlias = JSONObject
+RepositoryRecord: TypeAlias = JSONObject
+TeamRecord: TypeAlias = JSONObject
+UserRecord: TypeAlias = JSONObject
 
-SimplifiedRepo: TypeAlias = JSONType
-SimplifiedUser: TypeAlias = JSONType
+SimplifiedRepo: TypeAlias = JSONObject
+SimplifiedUser: TypeAlias = JSONObject

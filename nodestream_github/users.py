@@ -27,9 +27,13 @@ class GithubUserExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[UserRecord]:
         """Scrapes the GitHub REST api for all users and converts them to records."""
-        async for user in self.client.fetch_all_users():
-            login = user["login"]
+        async for user_short in self.client.fetch_all_users():
+            login = user_short["login"]
+            user = await self.client.fetch_user(username=login)
+            if user is None:
+                continue
             if self.include_repos:
+                logger.debug("including repos for %s", user)
                 user["repositories"] = await self._user_repos(login=login)
             logger.debug("yielded GithubUser{login=%s}", login)
             yield user

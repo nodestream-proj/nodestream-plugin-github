@@ -57,7 +57,7 @@ class GithubTeamsExtractor(Extractor):
 
     async def _fetch_team(
         self, login: str, team_summary: GithubTeamSummary
-    ) -> GithubTeam:
+    ) -> GithubTeam | None:
         team = await self.client.fetch_team(org_login=login, slug=team_summary["slug"])
         if not team:
             return None

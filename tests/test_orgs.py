@@ -10,7 +10,7 @@ from tests.data.orgs import (
     GITHUB_ORG_SUMMARY,
 )
 from tests.data.repos import HELLO_WORLD_REPO
-from tests.data.users import OCTOCAT_USER, TURBO_USER
+from tests.data.users import OCTOCAT_USER_SHORT, TURBO_USER_SHORT
 from tests.mocks.githubrest import (
     DEFAULT_BASE_URL,
     DEFAULT_HOSTNAME,
@@ -137,7 +137,7 @@ async def test_orgs_continue_through_org_member_status_fail(
     gh_rest_mock.get_members_for_org(
         org_name="github",
         role=OrgMemberRole.MEMBER,
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
     )
     gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
 
@@ -172,7 +172,7 @@ async def test_orgs_continue_through_org_member_status_fail_second(
 
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
         role=OrgMemberRole.ADMIN,
     )
     gh_rest_mock.get_members_for_org(
@@ -205,7 +205,7 @@ async def test_orgs_continue_through_org_repo_status_fail(
 
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
         role=OrgMemberRole.ADMIN,
     )
     gh_rest_mock.get_members_for_org(
@@ -266,12 +266,12 @@ async def test_get_orgs(
     gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
         role=OrgMemberRole.ADMIN,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
         role=OrgMemberRole.MEMBER,
     )
     gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
@@ -357,12 +357,12 @@ async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_org(org_name="github", json=GITHUB_ORG)
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
         role=OrgMemberRole.ADMIN,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
         role=OrgMemberRole.MEMBER,
     )
 

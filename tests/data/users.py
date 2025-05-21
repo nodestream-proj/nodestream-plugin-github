@@ -4,7 +4,7 @@ from nodestream_github.types import GithubUser
 from tests.data.util import encode_as_node_id
 
 
-def user(
+def user_short(
     *,
     user_login: str = "octocat",
     user_id: int = 1,
@@ -37,5 +37,37 @@ def user(
     } | kwargs
 
 
-OCTOCAT_USER = user(user_login="octocat")
-TURBO_USER = user(user_login="turbo", user_id=2)
+def user(
+    *,
+    user_login: str = "octocat",
+    user_id: int = 1,
+    **kwargs: Any,
+) -> GithubUser:
+
+    return (
+        user_short(user_login=user_login, user_id=user_id)
+        | {
+            "name": "monalisa octocat",
+            "company": "GitHub",
+            "blog": "https://github.com/blog",
+            "location": "San Francisco",
+            "email": "octocat@github.com",
+            "hireable": False,
+            "bio": "There once was...",
+            "twitter_username": "monatheoctocat",
+            "public_repos": 2,
+            "public_gists": 1,
+            "followers": 20,
+            "following": 0,
+            "created_at": "2008-01-14T04:33:35Z",
+            "updated_at": "2008-01-14T04:33:35Z",
+        }
+        | kwargs
+    )
+
+
+OCTOCAT_USER_SHORT = user_short(user_login="octocat")
+TURBO_USER_SHORT = user_short(user_login="turbo", user_id=2)
+
+OCTOCAT_USER = user_short(user_login="octocat")
+TURBO_USER = user_short(user_login="turbo", user_id=2)

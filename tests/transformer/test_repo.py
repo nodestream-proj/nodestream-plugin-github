@@ -4,7 +4,7 @@ from nodestream_github.interpretations.relationship.repository import simplify_r
 from nodestream_github.transformer.repo import RepoToCollaboratorsTransformer
 from nodestream_github.types.enums import CollaboratorAffiliation
 from tests.data.repos import HELLO_WORLD_REPO
-from tests.data.users import OCTOCAT_USER, TURBO_USER
+from tests.data.users import OCTOCAT_USER_SHORT, TURBO_USER_SHORT
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
 
 
@@ -22,13 +22,13 @@ async def test_transform_records(gh_rest_mock: GithubHttpxMock):
         owner_login="octocat",
         repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.DIRECT,
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
     )
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.OUTSIDE,
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
     )
 
     repo_summary = simplify_repo(HELLO_WORLD_REPO)
@@ -36,8 +36,8 @@ async def test_transform_records(gh_rest_mock: GithubHttpxMock):
     response = [r async for r in transformer.transform_record(HELLO_WORLD_REPO)]
 
     assert response == [
-        OCTOCAT_USER | {"repository": repo_summary, "affiliation": "direct"},
-        TURBO_USER | {"repository": repo_summary, "affiliation": "outside"},
+        OCTOCAT_USER_SHORT | {"repository": repo_summary, "affiliation": "direct"},
+        TURBO_USER_SHORT | {"repository": repo_summary, "affiliation": "outside"},
     ]
 
 
@@ -56,13 +56,13 @@ async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
         owner_login="octocat",
         repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.DIRECT,
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
     )
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.OUTSIDE,
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
     )
 
     modified_repo = HELLO_WORLD_REPO | {"nameWithOwner": "octocat/Hello-World"}
@@ -72,8 +72,8 @@ async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
     response = [r async for r in transformer.transform_record(modified_repo)]
 
     assert response == [
-        OCTOCAT_USER | {"repository": repo_summary, "affiliation": "direct"},
-        TURBO_USER | {"repository": repo_summary, "affiliation": "outside"},
+        OCTOCAT_USER_SHORT | {"repository": repo_summary, "affiliation": "direct"},
+        TURBO_USER_SHORT | {"repository": repo_summary, "affiliation": "outside"},
     ]
 
 
