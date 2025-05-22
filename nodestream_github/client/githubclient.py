@@ -373,6 +373,7 @@ class GithubRestApiClient:
             return await self._get_item(f"orgs/{org_login}")
         except httpx.HTTPError as e:
             _fetch_problem(f"full organization info for {org_login}", e)
+            return None
 
     async def fetch_repos_for_user(
         self,
@@ -542,6 +543,7 @@ class GithubRestApiClient:
             return await self._get_item(f"orgs/{org_login}/teams/{slug}")
         except httpx.HTTPError as e:
             _fetch_problem(f"full team info for {org_login}/{slug}", e)
+            return None
 
     async def fetch_members_for_team(
         self,
@@ -591,3 +593,15 @@ class GithubRestApiClient:
                 yield repo
         except httpx.HTTPError as e:
             _fetch_problem(f"repos for team {org_login}/{slug}", e)
+
+    async def fetch_user(self, *, username: str) -> types.GithubUser | None:
+        """
+        Provides publicly available information about someone with a GitHub account.
+
+        https://docs.github.com/en/enterprise-server@3.12/rest/users/users?apiVersion=2022-11-28#get-a-user
+        """
+        try:
+            return await self._get_item(f"users/{username}")
+        except httpx.HTTPError as e:
+            _fetch_problem(f"full user info for {username}", e)
+            return None

@@ -8,11 +8,11 @@ from nodestream_github.types.enums import (
 )
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO, repo
-from tests.data.users import OCTOCAT_USER, TURBO_USER, user
+from tests.data.users import OCTOCAT_USER_SHORT, TURBO_USER_SHORT, user_short
 from tests.data.webhooks import HELLO_WORLD_WEBHOOK
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
 
-TEST_USER = user(user_login="bweaver", user_id=3)
+TEST_USER = user_short(user_login="bweaver", user_id=3)
 
 
 @pytest.fixture
@@ -90,7 +90,7 @@ async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
         collecting={"user_all": True},
     )
 
-    gh_rest_mock.all_users(json=[OCTOCAT_USER])
+    gh_rest_mock.all_users(json=[OCTOCAT_USER_SHORT])
     gh_rest_mock.get_repos_for_user(
         user_login="octocat",
         type_param=UserRepoType.OWNER,
@@ -147,7 +147,7 @@ async def test_extract_records(
         owner_login="octocat",
         repo_name="Hello-World",
         affiliation=CollaboratorAffiliation.DIRECT,
-        json=[TURBO_USER | {"role_name": "write"}],
+        json=[TURBO_USER_SHORT | {"role_name": "write"}],
     )
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="octocat",
@@ -169,7 +169,7 @@ async def test_extract_records(
         owner_login="github",
         repo_name="Hello-Moon",
         affiliation=CollaboratorAffiliation.DIRECT,
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
     )
     gh_rest_mock.get_collaborators_for_repo(
         owner_login="github",

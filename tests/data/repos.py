@@ -1,7 +1,7 @@
 from typing import Any
 
 from nodestream_github.types import GithubRepo
-from tests.data.users import OCTOCAT_USER
+from tests.data.users import OCTOCAT_USER_SHORT
 from tests.data.util import encode_as_node_id
 
 
@@ -13,7 +13,7 @@ def repo(
     **kwargs: Any,
 ) -> GithubRepo:
 
-    repo_owner = OCTOCAT_USER if owner is None else owner
+    repo_owner = OCTOCAT_USER_SHORT if owner is None else owner
     owner_login = repo_owner["login"]
 
     return {
@@ -152,4 +152,4 @@ def repo(
     } | kwargs
 
 
-HELLO_WORLD_REPO = repo(owner=OCTOCAT_USER, repo_name="Hello-World")
+HELLO_WORLD_REPO = repo(owner=OCTOCAT_USER_SHORT, repo_name="Hello-World")

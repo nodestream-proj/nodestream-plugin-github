@@ -173,6 +173,12 @@ class GithubHttpxMock:
             url=f"{self.base_url}/users?per_page={self.per_page}", **kwargs
         )
 
+    def get_user(self, *, username: str, **kwargs: Any):
+        self.add_response(
+            url=f"{self.base_url}/users/{username}",
+            **kwargs,
+        )
+
     def get_repos_for_user(
         self,
         *,

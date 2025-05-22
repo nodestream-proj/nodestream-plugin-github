@@ -2,9 +2,9 @@ name: Release
 
 # Trigger the workflow on a release event. 
 # This will trigger the workflow when a release is published - so draft releases will not trigger the workflow.
-on: 
+on:
   release:
-    types: [published]
+    types: [ published ]
 
 jobs:
   publish:
@@ -18,8 +18,8 @@ jobs:
     permissions:
       id-token: write
       attestations: write
-  
-    # Use the Github Actions Environment to isolate the workflow from the rest of the repository. 
+
+    # Use the GitHub Actions Environment to isolate the workflow from the rest of the repository.
     # See here: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
     environment:
       name: pypi
@@ -35,9 +35,9 @@ jobs:
 
       # Set up Python 3.12 to build the package.
       # Python version here does not really matter as long as it works with 
-      # poetry because its simply building the package. We've confirmed functionality
+      # poetry because it's simply building the package. We've confirmed functionality
       # with CI testing before this step.
-      - name: Set up Python 3.12 
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
@@ -68,7 +68,7 @@ jobs:
           name: python-package-distribution
           path: dist/
 
-      # We are then going to sign the package using Github's Attest Build Provenance action.
+      # We are then going to sign the package using GitHub's Attest Build Provenance action.
       # This action will sign the package and upload the signature to the GitHub release.
       # This is to ensure that the package is verified and trusted by the user.
       - uses: actions/attest-build-provenance@v2

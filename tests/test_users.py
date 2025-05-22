@@ -6,7 +6,7 @@ import pytest
 from nodestream_github import GithubUserExtractor
 from nodestream_github.types.enums import UserRepoType
 from tests.data.repos import HELLO_WORLD_REPO
-from tests.data.users import OCTOCAT_USER
+from tests.data.users import OCTOCAT_USER, OCTOCAT_USER_SHORT
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, GithubHttpxMock
 
 
@@ -29,10 +29,12 @@ async def to_list(async_generator: AsyncGenerator) -> list:
 
 @pytest.mark.asyncio
 async def test_github_user_extractor(
-    user_extractor: GithubUserExtractor, gh_rest_mock: GithubHttpxMock
+    user_extractor: GithubUserExtractor,
+    gh_rest_mock: GithubHttpxMock,
 ):
 
-    gh_rest_mock.all_users(json=[OCTOCAT_USER])
+    gh_rest_mock.all_users(json=[OCTOCAT_USER_SHORT])
+    gh_rest_mock.get_user(username="octocat", json=OCTOCAT_USER)
     gh_rest_mock.get_repos_for_user(
         user_login="octocat",
         type_param=UserRepoType.OWNER,
@@ -57,12 +59,30 @@ async def test_github_user_extractor(
 
 
 @pytest.mark.asyncio
+async def test_github_user_extractor_no_repos(gh_rest_mock: GithubHttpxMock):
+    user_extractor = GithubUserExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=0,
+        include_repos=False,
+    )
+    gh_rest_mock.all_users(json=[OCTOCAT_USER])
+    gh_rest_mock.get_user(username="octocat", json=OCTOCAT_USER)
+
+    actual = [record async for record in user_extractor.extract_records()]
+
+    assert actual == [OCTOCAT_USER]
+
+
+@pytest.mark.asyncio
 async def test_github_user_extractor_repo_fail(
     user_extractor: GithubUserExtractor,
     gh_rest_mock: GithubHttpxMock,
 ):
 
-    gh_rest_mock.all_users(json=[OCTOCAT_USER])
+    gh_rest_mock.all_users(json=[OCTOCAT_USER_SHORT])
+    gh_rest_mock.get_user(username="octocat", json=OCTOCAT_USER)
     gh_rest_mock.get_repos_for_user(
         user_login="octocat",
         type_param=UserRepoType.OWNER,

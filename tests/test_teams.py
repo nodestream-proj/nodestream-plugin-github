@@ -5,7 +5,7 @@ from nodestream_github.types.enums import TeamMemberRole
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO
 from tests.data.teams import JUSTICE_LEAGUE_TEAM, JUSTICE_LEAGUE_TEAM_SUMMARY
-from tests.data.users import OCTOCAT_USER, TURBO_USER
+from tests.data.users import OCTOCAT_USER_SHORT, TURBO_USER_SHORT
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
 
 
@@ -37,12 +37,12 @@ async def test_extract_records(
     gh_rest_mock.get_members_for_team(
         team_id=1,
         role=TeamMemberRole.MEMBER,
-        json=[OCTOCAT_USER],
+        json=[OCTOCAT_USER_SHORT],
     )
     gh_rest_mock.get_members_for_team(
         team_id=1,
         role=TeamMemberRole.MAINTAINER,
-        json=[TURBO_USER],
+        json=[TURBO_USER_SHORT],
     )
     gh_rest_mock.get_repos_for_team(
         org_login="github",
