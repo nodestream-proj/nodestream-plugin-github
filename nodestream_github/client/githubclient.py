@@ -331,7 +331,12 @@ class GithubRestApiClient:
             _fetch_problem("all organizations", e)
 
     async def fetch_enterprise_audit_log(
-        self, enterprise_name: str, actions: list[str], actors: list[str], exclude_actors: list[str], lookback_period: dict[str, int]
+        self,
+        enterprise_name: str,
+        actions: list[str],
+        actors: list[str],
+        exclude_actors: list[str],
+        lookback_period: dict[str, int],
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
 
@@ -359,9 +364,13 @@ class GithubRestApiClient:
             # adding exclude_actors based filtering
             exclude_actors_phrase = ""
             if exclude_actors:
-                exclude_actors_phrase = "".join(f" -actor:{actor}" for actor in exclude_actors)
+                exclude_actors_phrase = "".join(
+                    f" -actor:{actor}" for actor in exclude_actors
+                )
 
-            search_phrase = f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}"
+            search_phrase = (
+                f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}"
+            )
 
             params = {"phrase": search_phrase} if search_phrase else {}
 
