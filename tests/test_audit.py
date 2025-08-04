@@ -13,7 +13,10 @@ from tests.mocks.githubrest import (
 
 
 @pytest.fixture
-def audit_extractor():
+def audit_extractor() -> Callable[
+    [list[str] | None, list[str] | None, list[str] | None, dict[str, int] | None],
+    GithubAuditLogExtractor,
+]:
     def _create_extractor(
         actions: list[str] | None = None,
         actors: list[str] | None = None,
