@@ -79,7 +79,7 @@ def build_search_phrase(
     actors: list[str],
     exclude_actors: list[str],
     lookback_period: dict[str, int],
-):
+) -> str:
     # adding action-based filtering
     actions_phrase = ""
     if actions:
