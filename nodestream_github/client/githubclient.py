@@ -331,7 +331,7 @@ class GithubRestApiClient:
             _fetch_problem("all organizations", e)
 
     async def fetch_enterprise_audit_log(
-        self, enterprise_name: str, actions: list[str], lookback_period: dict[str, int]
+        self, enterprise_name: str, actions: list[str], actors: list[str], exclude_actors: list[str], lookback_period: dict[str, int]
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
 
@@ -339,7 +339,9 @@ class GithubRestApiClient:
         """
         try:
             # adding action-based filtering
-            actions_phrase = " ".join(f"action:{action}" for action in actions)
+            actions_phrase = ""
+            if actions:
+                actions_phrase = "".join(f" action:{action}" for action in actions)
             # adding lookback_period based filtering
             date_filter = (
                 f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
@@ -347,7 +349,17 @@ class GithubRestApiClient:
                 if lookback_period
                 else ""
             )
-            search_phrase = f"{actions_phrase}{date_filter}"
+
+            # adding actor-based filtering
+            actors_phrase = ""
+            if actors:
+                actors_phrase = "".join(f" actor:{actor}" for actor in actors)
+            # adding exclude_actors based filtering
+            exclude_actors_phrase = ""
+            if exclude_actors:
+                exclude_actors_phrase = "".join(f" -actor:{actor}" for actor in exclude_actors)
+
+            search_phrase = f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}"
 
             params = {"phrase": search_phrase} if search_phrase else {}
 
