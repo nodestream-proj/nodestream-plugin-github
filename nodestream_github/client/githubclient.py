@@ -74,6 +74,37 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
 
+def build_search_phrase(
+    actions: list[str],
+    actors: list[str],
+    exclude_actors: list[str],
+    lookback_period: dict[str, int],
+):
+    # adding action-based filtering
+    actions_phrase = ""
+    if actions:
+        actions_phrase = "".join(f" action:{action}" for action in actions)
+
+    # adding lookback_period based filtering
+    date_filter = (
+        f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
+        .strftime('%Y-%m-%d')}"
+        if lookback_period
+        else ""
+    )
+
+    # adding actor-based filtering
+    actors_phrase = ""
+    if actors:
+        actors_phrase = "".join(f" actor:{actor}" for actor in actors)
+
+    # adding exclude_actors based filtering
+    exclude_actors_phrase = ""
+    if exclude_actors:
+        exclude_actors_phrase = "".join(f" -actor:{actor}" for actor in exclude_actors)
+    return f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}"
+
+
 class GithubRestApiClient:
     def __init__(
         self,
@@ -343,33 +374,11 @@ class GithubRestApiClient:
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            # adding action-based filtering
-            actions_phrase = ""
-            if actions:
-                actions_phrase = "".join(f" action:{action}" for action in actions)
-
-            # adding lookback_period based filtering
-            date_filter = (
-                f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
-                .strftime('%Y-%m-%d')}"
-                if lookback_period
-                else ""
-            )
-
-            # adding actor-based filtering
-            actors_phrase = ""
-            if actors:
-                actors_phrase = "".join(f" actor:{actor}" for actor in actors)
-
-            # adding exclude_actors based filtering
-            exclude_actors_phrase = ""
-            if exclude_actors:
-                exclude_actors_phrase = "".join(
-                    f" -actor:{actor}" for actor in exclude_actors
-                )
-
-            search_phrase = (
-                f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}"
+            search_phrase = build_search_phrase(
+                actions=actions,
+                actors=actors,
+                exclude_actors=exclude_actors,
+                lookback_period=lookback_period,
             )
 
             params = {"phrase": search_phrase} if search_phrase else {}
