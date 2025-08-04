@@ -84,10 +84,10 @@ def audit_extractor():
 async def test_get_audit_parameterized(
     gh_rest_mock: GithubHttpxMock,
     audit_extractor,
-    actions: list[str] | None = None,
-    actors: list[str] | None = None,
-    exclude_actors: list[str] | None = None,
-    lookback_period: dict[str, int] | None = None,
+    actions: list[str] | None,
+    actors: list[str] | None,
+    exclude_actors: list[str] | None,
+    lookback_period: dict[str, int] | None,
 ):
     extractor = audit_extractor(
         actions=actions,
@@ -134,7 +134,7 @@ async def test_get_audit_parameterized(
 async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
     audit_extractor,
-    lookback_period: dict[str, int] | None = None,
+    lookback_period: dict[str, int] | None,
 ):
     extractor = audit_extractor(
         actions=["protected_branch.create"],
