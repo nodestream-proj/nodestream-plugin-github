@@ -273,8 +273,8 @@ class GithubRestApiClient:
         while url is not None:
             if "&page=100" in url:
                 logger.warning(
-                    "The GithubAPI has reached the maximum page size "
-                    + "of 100. The returned data may be incomplete."
+                    f"The GithubAPI has reached the maximum page size "
+                    f"of 100. The returned data may be incomplete."
                 )
 
             response = await self._get_retrying(
