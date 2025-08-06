@@ -86,7 +86,9 @@ async def test_pagination(httpx_mock: HTTPXMock):
 
 
 @pytest.mark.asyncio
-async def test_pagination_truncate_warning(httpx_mock: HTTPXMock, caplog: pytest.LogCaptureFixture):
+async def test_pagination_truncate_warning(
+    httpx_mock: HTTPXMock, caplog: pytest.LogCaptureFixture
+):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
         github_hostname=DEFAULT_HOSTNAME,
