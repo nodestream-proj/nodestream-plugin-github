@@ -131,8 +131,8 @@ async def test_get_audit_lookback_periods(
     )
 
     expected_search_phrase = (
-        "action:protected_branch.create"
-        + f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
+        "action:protected_branch.create created:>="
+        + f"{(datetime.now(tz=UTC) - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
     )
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,

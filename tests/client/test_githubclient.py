@@ -86,7 +86,7 @@ async def test_pagination(httpx_mock: HTTPXMock):
 
 
 @pytest.mark.asyncio
-async def test_pagination_truncate_warning(httpx_mock: HTTPXMock, caplog):
+async def test_pagination_truncate_warning(httpx_mock: HTTPXMock, caplog: pytest.LogCaptureFixture):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -115,10 +115,11 @@ async def test_pagination_truncate_warning(httpx_mock: HTTPXMock, caplog):
     assert items == ["a", "b", "c", "d"]
 
     # Test that the warning message was logged
-    assert (
-        "The GithubAPI has reached the maximum page size of 100. The returned data may be incomplete"
-        in caplog.text
+    expected_warning = (
+        "The GithubAPI has reached the maximum page size of 100. "
+        "The returned data may be incomplete"
     )
+    assert expected_warning in caplog.text
 
 
 def test_all_null_args():
