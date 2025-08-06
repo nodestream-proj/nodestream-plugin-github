@@ -102,7 +102,9 @@ def build_search_phrase(
     exclude_actors_phrase = ""
     if exclude_actors:
         exclude_actors_phrase = "".join(f" -actor:{actor}" for actor in exclude_actors)
-    return f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}"
+    return (
+        f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}".strip()
+    )
 
 
 class GithubRestApiClient:
