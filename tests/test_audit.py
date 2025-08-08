@@ -1,7 +1,4 @@
-from datetime import UTC, datetime
-
 import pytest
-from dateutil.relativedelta import relativedelta
 from freezegun import freeze_time
 
 from nodestream_github import GithubAuditLogExtractor
