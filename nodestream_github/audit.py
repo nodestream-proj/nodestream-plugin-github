@@ -20,11 +20,12 @@ logger = get_plugin_logger(__name__)
 class GithubAuditLogExtractor(Extractor):
     """
     Extracts audit logs from the GitHub REST API.
-    You can pass the enterprise_name, actions and lookback_period to the extractor
-    along with the regular GitHub parameters.
+    You can pass the enterprise_name, actions, actors, exclude_actors
+    and lookback_period to the extractor along with the regular
+    GitHub parameters.
 
     lookback_period can contain keys for days, months, and/or years as ints
-    actions can be found in the GitHub documentation
+    actions, and actors/exclude_actors can be found in the GitHub documentation
     https://docs.github.com/en/enterprise-server@3.12/admin/monitoring-activity-in-your-enterprise/reviewing-audit-logs-for-your-enterprise/searching-the-audit-log-for-your-enterprise#search-based-on-the-action-performed
     """
 
@@ -32,6 +33,8 @@ class GithubAuditLogExtractor(Extractor):
         self,
         enterprise_name: str,
         actions: list[str] | None = None,
+        actors: list[str] | None = None,
+        exclude_actors: list[str] | None = None,
         lookback_period: dict[str, int] | None = None,
         **github_client_kwargs: Any | None,
     ):
@@ -39,10 +42,12 @@ class GithubAuditLogExtractor(Extractor):
         self.client = GithubRestApiClient(**github_client_kwargs)
         self.lookback_period = lookback_period
         self.actions = actions
+        self.actors = actors
+        self.exclude_actors = exclude_actors
 
     async def extract_records(self) -> AsyncGenerator[GithubAuditLog]:
         async for audit in self.client.fetch_enterprise_audit_log(
-            self.enterprise_name, self.actions, self.lookback_period
+            self.enterprise_name, self.actions, self.actors, self.exclude_actors, self.lookback_period
         ):
             audit["timestamp"] = audit.pop("@timestamp")
             yield audit
