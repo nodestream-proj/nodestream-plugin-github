@@ -83,11 +83,11 @@ def build_search_phrase(
     # adding action-based filtering
     actions_phrase = ""
     if actions:
-        actions_phrase = "".join(f" action:{action}" for action in actions)
+        actions_phrase = "".join(f"action:{action}" for action in actions)
 
     # adding lookback_period based filtering
     date_filter = (
-        f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
+        f"created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
         .strftime('%Y-%m-%d')}"
         if lookback_period
         else ""
@@ -96,14 +96,21 @@ def build_search_phrase(
     # adding actor-based filtering
     actors_phrase = ""
     if actors:
-        actors_phrase = "".join(f" actor:{actor}" for actor in actors)
+        actors_phrase = "".join(f"actor:{actor}" for actor in actors)
 
     # adding exclude_actors based filtering
     exclude_actors_phrase = ""
     if exclude_actors:
-        exclude_actors_phrase = "".join(f" -actor:{actor}" for actor in exclude_actors)
-    return (
-        f"{actions_phrase}{date_filter}{actors_phrase}{exclude_actors_phrase}".strip()
+        exclude_actors_phrase = "".join(f"-actor:{actor}" for actor in exclude_actors)
+    return " ".join(
+        section
+        for section in [
+            actions_phrase,
+            date_filter,
+            actors_phrase,
+            exclude_actors_phrase,
+        ]
+        if section
     )
 
 
@@ -276,7 +283,7 @@ class GithubRestApiClient:
             if "&page=100" in url:
                 logger.warning(
                     "The GithubAPI has reached the maximum page size "
-                    "of 100. The returned data may be incomplete."
+                    f"of 100. The returned data may be incomplete. URL: {url}"
                 )
 
             response = await self._get_retrying(
