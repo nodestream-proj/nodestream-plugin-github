@@ -15,7 +15,13 @@ from tests.mocks.githubrest import (
     ("actions", "actors", "exclude_actors", "lookback_period", "expected_path"),
     [
         # Basic single action
-        (["protected_branch.create"], None, None, None, "action:protected_branch.create"),
+        (
+            ["protected_branch.create"],
+            None,
+            None,
+            None,
+            "action:protected_branch.create",
+        ),
         # Multiple actions
         (
             ["protected_branch.create", "repo.download_zip", "team.add_member"],
@@ -31,13 +37,37 @@ from tests.mocks.githubrest import (
         # Single exclude actor
         (None, None, ["exclude-user"], None, "-actor:exclude-user"),
         # Multiple exclude actors
-        (None, None, ["exclude-user1", "exclude-user2"], None, "-actor:exclude-user1 -actor:exclude-user2"),
+        (
+            None,
+            None,
+            ["exclude-user1", "exclude-user2"],
+            None,
+            "-actor:exclude-user1 -actor:exclude-user2",
+        ),
         # Actions + actors
-        (["org.create", "repo.destroy"], ["octocat"], None, None, "action:org.create action:repo.destroy actor:octocat"),
+        (
+            ["org.create", "repo.destroy"],
+            ["octocat"],
+            None,
+            None,
+            "action:org.create action:repo.destroy actor:octocat",
+        ),
         # Actions + exclude_actors
-        (["team.add_member"], None, ["bot-user"], None, "action:team.add_member -actor:bot-user"),
+        (
+            ["team.add_member"],
+            None,
+            ["bot-user"],
+            None,
+            "action:team.add_member -actor:bot-user",
+        ),
         # Actors + exclude_actors
-        (None, ["octocat", "monalisa"], ["bot-user"], None, "actor:octocat actor:monalisa -actor:bot-user"),
+        (
+            None,
+            ["octocat", "monalisa"],
+            ["bot-user"],
+            None,
+            "actor:octocat actor:monalisa -actor:bot-user",
+        ),
         # All parameters combined
         (
             ["protected_branch.create", "repo.download_zip"],
