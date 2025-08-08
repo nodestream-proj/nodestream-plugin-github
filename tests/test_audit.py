@@ -100,7 +100,7 @@ async def test_get_audit_parameterized(
 
 @freeze_time("2025-08-01")
 @pytest.mark.parametrize(
-    "lookback_period,expected_path",
+    ("lookback_period", "expected_path"),
     [
         (
             {"days": 7},
