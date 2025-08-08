@@ -87,18 +87,11 @@ async def test_get_audit_parameterized(
         lookback_period={},
     )
 
-    if expected_search_phrase:
-        gh_rest_mock.get_enterprise_audit_logs(
-            status_code=200,
-            search_phrase=expected_search_phrase,
-            json=GITHUB_AUDIT,
-        )
-    else:
-        gh_rest_mock.add_response(
-            url=f"{gh_rest_mock.base_url}/enterprises/test-enterprise/audit-log?per_page=100",
-            status_code=200,
-            json=GITHUB_AUDIT,
-        )
+    gh_rest_mock.get_enterprise_audit_logs(
+        status_code=200,
+        search_phrase=expected_search_phrase,
+        json=GITHUB_AUDIT,
+    )
 
     all_records = [record async for record in extractor.extract_records()]
     assert all_records == GITHUB_EXPECTED_OUTPUT
