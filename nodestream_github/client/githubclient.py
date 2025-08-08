@@ -273,7 +273,7 @@ class GithubRestApiClient:
         while url is not None:
             if "&page=100" in url:
                 logger.warning(
-                    f"The GithubAPI has reached the maximum page size "
+                    "The GithubAPI has reached the maximum page size "
                     "of 100. The returned data may be incomplete."
                 )
 
