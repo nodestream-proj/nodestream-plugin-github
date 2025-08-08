@@ -77,7 +77,7 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
 def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
     """Sanitize the lookback period to only include valid keys."""
 
-    def validate_positive_int(value: Any) -> int:
+    def validate_positive_int(value: int) -> int:
         converted = int(value)
         if converted <= 0:
             negative_value_exception_msg = (
