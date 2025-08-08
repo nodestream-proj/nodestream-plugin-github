@@ -2,7 +2,6 @@ import pytest
 from freezegun import freeze_time
 
 from nodestream_github import GithubAuditLogExtractor
-from nodestream_github.client.githubclient import build_search_phrase
 from tests.data.audit import GITHUB_AUDIT, GITHUB_EXPECTED_OUTPUT
 from tests.mocks.githubrest import (
     DEFAULT_HOSTNAME,
