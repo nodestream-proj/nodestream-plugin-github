@@ -1,6 +1,8 @@
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 import pytest
+from dateutil.relativedelta import relativedelta
 
 from nodestream_github import GithubAuditLogExtractor
 from nodestream_github.client.githubclient import build_search_phrase
@@ -10,33 +12,6 @@ from tests.mocks.githubrest import (
     DEFAULT_PER_PAGE,
     GithubHttpxMock,
 )
-
-
-@pytest.fixture
-def audit_extractor() -> Callable[
-    [list[str] | None, list[str] | None, list[str] | None, dict[str, int] | None],
-    GithubAuditLogExtractor,
-]:
-    def _create_extractor(
-        actions: list[str] | None = None,
-        actors: list[str] | None = None,
-        exclude_actors: list[str] | None = None,
-        lookback_period: dict[str, int] | None = None,
-    ) -> GithubAuditLogExtractor:
-        return GithubAuditLogExtractor(
-            auth_token="test-token",
-            github_hostname=DEFAULT_HOSTNAME,
-            user_agent="test-agent",
-            max_retries=0,
-            per_page=DEFAULT_PER_PAGE,
-            enterprise_name="test-enterprise",
-            actions=actions,
-            actors=actors,
-            exclude_actors=exclude_actors,
-            lookback_period=lookback_period,
-        )
-
-    return _create_extractor
 
 
 @pytest.mark.parametrize(
@@ -88,16 +63,18 @@ def audit_extractor() -> Callable[
 @pytest.mark.asyncio
 async def test_get_audit_parameterized(
     gh_rest_mock: GithubHttpxMock,
-    audit_extractor: Callable[
-        [list[str] | None, list[str] | None, list[str] | None, dict[str, int] | None],
-        GithubAuditLogExtractor,
-    ],
     actions: list[str] | None,
     actors: list[str] | None,
     exclude_actors: list[str] | None,
     lookback_period: dict[str, int] | None,
 ):
-    extractor = audit_extractor(
+    extractor = GithubAuditLogExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=0,
+        per_page=DEFAULT_PER_PAGE,
+        enterprise_name="test-enterprise",
         actions=actions,
         actors=actors,
         exclude_actors=exclude_actors,
@@ -141,24 +118,23 @@ async def test_get_audit_parameterized(
 @pytest.mark.asyncio
 async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
-    audit_extractor: Callable[
-        [list[str] | None, list[str] | None, list[str] | None, dict[str, int] | None],
-        GithubAuditLogExtractor,
-    ],
     lookback_period: dict[str, int] | None,
 ):
-    extractor = audit_extractor(
+    extractor = GithubAuditLogExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=0,
+        per_page=DEFAULT_PER_PAGE,
+        enterprise_name="test-enterprise",
         actions=["protected_branch.create"],
         lookback_period=lookback_period,
     )
 
-    expected_search_phrase = build_search_phrase(
-        actions=["protected_branch.create"],
-        actors=[],
-        exclude_actors=[],
-        lookback_period=lookback_period,
+    expected_search_phrase = (
+        "action:protected_branch.create"
+        + f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period)).strftime('%Y-%m-%d')}"
     )
-
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,
         search_phrase=expected_search_phrase,
