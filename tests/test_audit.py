@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 import pytest
 
 from nodestream_github import GithubAuditLogExtractor
@@ -35,7 +37,7 @@ def audit_extractor():
 
 
 @pytest.mark.parametrize(
-    "actions,actors,exclude_actors,lookback_period",
+    ("actions", "actors", "exclude_actors", "lookback_period"),
     [
         # Basic single action
         (["protected_branch.create"], None, None, None),
@@ -83,7 +85,10 @@ def audit_extractor():
 @pytest.mark.asyncio
 async def test_get_audit_parameterized(
     gh_rest_mock: GithubHttpxMock,
-    audit_extractor,
+    audit_extractor: Callable[
+        [list[str] | None, list[str] | None, list[str] | None, dict[str, int] | None],
+        GithubAuditLogExtractor,
+    ],
     actions: list[str] | None,
     actors: list[str] | None,
     exclude_actors: list[str] | None,
@@ -133,7 +138,10 @@ async def test_get_audit_parameterized(
 @pytest.mark.asyncio
 async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
-    audit_extractor,
+    audit_extractor: Callable[
+        [list[str] | None, list[str] | None, list[str] | None, dict[str, int] | None],
+        GithubAuditLogExtractor,
+    ],
     lookback_period: dict[str, int] | None,
 ):
     extractor = audit_extractor(
