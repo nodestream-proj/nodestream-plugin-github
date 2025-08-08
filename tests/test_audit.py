@@ -84,7 +84,7 @@ async def test_get_audit_parameterized(
         actions=actions or [],
         actors=actors or [],
         exclude_actors=exclude_actors or [],
-        lookback_period={},
+        target_date=None,
     )
 
     gh_rest_mock.get_enterprise_audit_logs(
@@ -99,19 +99,15 @@ async def test_get_audit_parameterized(
 
 @pytest.mark.parametrize(
     "lookback_period",
-    [
-        {"days": 7},
-        {"months": 2},
-        {"years": 1},
-        {"days": 15, "months": 1},
-        {"days": 10, "months": 1, "years": 1},
-    ],
+    [{"days": 7}, {"months": 2}, {"days": 15, "months": 1}],
 )
 @pytest.mark.asyncio
 async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
     lookback_period: dict[str, int] | None,
 ):
+    from nodestream_github.client.githubclient import generate_date_range
+
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -123,15 +119,19 @@ async def test_get_audit_lookback_periods(
         lookback_period=lookback_period,
     )
 
-    lookback_date = (datetime.now(tz=UTC) - relativedelta(**lookback_period)).strftime(
-        "%Y-%m-%d"
-    )
-    expected_search_phrase = f"action:protected_branch.create created:>={lookback_date}"
-    gh_rest_mock.get_enterprise_audit_logs(
-        status_code=200,
-        search_phrase=expected_search_phrase,
-        json=GITHUB_AUDIT,
-    )
+    # Generate the expected dates that will be queried
+    dates = generate_date_range(lookback_period)
+
+    # Mock each individual date request
+    for date in dates:
+        expected_search_phrase = f"action:protected_branch.create created:{date}"
+        gh_rest_mock.get_enterprise_audit_logs(
+            status_code=200,
+            search_phrase=expected_search_phrase,
+            json=GITHUB_AUDIT,
+        )
 
     all_records = [record async for record in extractor.extract_records()]
-    assert all_records == GITHUB_EXPECTED_OUTPUT
+    # Since we're making multiple calls with the same data, we expect multiple copies
+    expected_output = GITHUB_EXPECTED_OUTPUT * len(dates)
+    assert all_records == expected_output

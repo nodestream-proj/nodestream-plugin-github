@@ -6,7 +6,7 @@ An async client for accessing GitHub.
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -74,34 +74,46 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
 
+def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
+    """Generate a list of date strings in YYYY-MM-DD format for the given lookback period."""
+    if not lookback_period:
+        return []
+
+    end_date = datetime.now(tz=UTC).date()
+    start_date = (datetime.now(tz=UTC) - relativedelta(**lookback_period)).date()
+
+    dates = []
+    current_date = start_date
+    while current_date <= end_date:
+        dates.append(current_date.strftime("%Y-%m-%d"))
+        current_date += timedelta(days=1)
+
+    return dates
+
+
 def build_search_phrase(
     actions: list[str],
     actors: list[str],
     exclude_actors: list[str],
-    lookback_period: dict[str, int],
+    target_date: str | None = None,
 ) -> str:
     # adding action-based filtering
     actions_phrase = ""
     if actions:
         actions_phrase = "".join(f"action:{action}" for action in actions)
 
-    # adding lookback_period based filtering
-    date_filter = (
-        f"created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
-        .strftime('%Y-%m-%d')}"
-        if lookback_period
-        else ""
-    )
+    # adding date-based filtering for a specific date
+    date_filter = f"created:{target_date}" if target_date else ""
 
     # adding actor-based filtering
     actors_phrase = ""
     if actors:
-        actors_phrase = "".join(f"actor:{actor}" for actor in actors)
+        actors_phrase = "".join(f"actor:{actor} " for actor in actors)
 
     # adding exclude_actors based filtering
     exclude_actors_phrase = ""
     if exclude_actors:
-        exclude_actors_phrase = "".join(f"-actor:{actor}" for actor in exclude_actors)
+        exclude_actors_phrase = "".join(f"-actor:{actor} " for actor in exclude_actors)
     return " ".join(
         section
         for section in [
@@ -280,6 +292,7 @@ class GithubRestApiClient:
             query_params.update(params)
 
         while url is not None:
+            print(url)
             if "&page=100" in url:
                 logger.warning(
                     "The GithubAPI has reached the maximum page size "
@@ -385,24 +398,39 @@ class GithubRestApiClient:
         exclude_actors: list[str],
         lookback_period: dict[str, int],
     ) -> AsyncGenerator[types.GithubAuditLog]:
-        """Fetches enterprise-wide audit log data
-
+        """
+        Fetches enterprise-wide audit log data, making one API call per day in the lookback period
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            search_phrase = build_search_phrase(
-                actions=actions,
-                actors=actors,
-                exclude_actors=exclude_actors,
-                lookback_period=lookback_period,
-            )
+            dates = generate_date_range(lookback_period)
 
-            params = {"phrase": search_phrase} if search_phrase else {}
+            if not dates:
+                search_phrase = build_search_phrase(
+                    actions=actions,
+                    actors=actors,
+                    exclude_actors=exclude_actors,
+                    target_date=None,
+                )
+                params = {"phrase": search_phrase} if search_phrase else {}
+                async for audit in self._get_paginated(
+                    f"enterprises/{enterprise_name}/audit-log", params=params
+                ):
+                    yield audit
+            else:
+                for date in dates:
+                    search_phrase = build_search_phrase(
+                        actions=actions,
+                        actors=actors,
+                        exclude_actors=exclude_actors,
+                        target_date=date,
+                    )
+                    params = {"phrase": search_phrase} if search_phrase else {}
+                    async for audit in self._get_paginated(
+                        f"enterprises/{enterprise_name}/audit-log", params=params
+                    ):
+                        yield audit
 
-            async for audit in self._get_paginated(
-                f"enterprises/{enterprise_name}/audit-log", params=params
-            ):
-                yield audit
         except httpx.HTTPError as e:
             _fetch_problem("audit log", e)
 
