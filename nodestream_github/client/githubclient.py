@@ -292,7 +292,6 @@ class GithubRestApiClient:
             query_params.update(params)
 
         while url is not None:
-            print(url)
             if "&page=100" in url:
                 logger.warning(
                     "The GithubAPI has reached the maximum page size "
