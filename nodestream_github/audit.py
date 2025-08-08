@@ -47,7 +47,11 @@ class GithubAuditLogExtractor(Extractor):
 
     async def extract_records(self) -> AsyncGenerator[GithubAuditLog]:
         async for audit in self.client.fetch_enterprise_audit_log(
-            self.enterprise_name, self.actions, self.actors, self.exclude_actors, self.lookback_period
+            self.enterprise_name,
+            self.actions,
+            self.actors,
+            self.exclude_actors,
+            self.lookback_period,
         ):
             audit["timestamp"] = audit.pop("@timestamp")
             yield audit
