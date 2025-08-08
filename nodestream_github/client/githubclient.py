@@ -401,7 +401,8 @@ class GithubRestApiClient:
         lookback_period: dict[str, int],
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """
-        Fetches enterprise-wide audit log data, making one API call per day in the lookback period
+        Fetches enterprise-wide audit log data, making one API call
+        per day in the lookback period
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
