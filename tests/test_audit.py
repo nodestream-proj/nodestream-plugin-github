@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 import pytest
 from dateutil.relativedelta import relativedelta
+from freezegun import freeze_time
 
 from nodestream_github import GithubAuditLogExtractor
 from nodestream_github.client.githubclient import build_search_phrase
@@ -97,20 +98,37 @@ async def test_get_audit_parameterized(
     assert all_records == GITHUB_EXPECTED_OUTPUT
 
 
+@freeze_time("2025-08-01")
 @pytest.mark.parametrize(
-    "lookback_period",
+    "lookback_period,expected_path",
     [
-        {"days": 7},
-        {"months": 2},
-        {"years": 1},
-        {"days": 15, "months": 1},
-        {"days": 10, "months": 1, "years": 1},
+        (
+            {"days": 7},
+            "action:protected_branch.create created:>=2025-07-25",
+        ),
+        (
+            {"months": 2},
+            "action:protected_branch.create created:>=2025-06-01",
+        ),
+        (
+            {"years": 1},
+            "action:protected_branch.create created:>=2024-08-01",
+        ),
+        (
+            {"days": 15, "months": 1},
+            "action:protected_branch.create created:>=2025-06-16",
+        ),
+        (
+            {"days": 10, "months": 1, "years": 1},
+            "action:protected_branch.create created:>=2024-06-21",
+        ),
     ],
 )
 @pytest.mark.asyncio
 async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
     lookback_period: dict[str, int] | None,
+    expected_path: str,
 ):
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
@@ -123,13 +141,9 @@ async def test_get_audit_lookback_periods(
         lookback_period=lookback_period,
     )
 
-    lookback_date = (datetime.now(tz=UTC) - relativedelta(**lookback_period)).strftime(
-        "%Y-%m-%d"
-    )
-    expected_search_phrase = f"action:protected_branch.create created:>={lookback_date}"
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,
-        search_phrase=expected_search_phrase,
+        search_phrase=expected_path,
         json=GITHUB_AUDIT,
     )
 
