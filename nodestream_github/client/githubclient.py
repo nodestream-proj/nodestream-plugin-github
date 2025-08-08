@@ -96,12 +96,12 @@ def build_search_phrase(
     # adding actor-based filtering
     actors_phrase = ""
     if actors:
-        actors_phrase = "".join(f"actor:{actor}" for actor in actors)
+        actors_phrase = "".join(f"actor:{actor} " for actor in actors)
 
     # adding exclude_actors based filtering
     exclude_actors_phrase = ""
     if exclude_actors:
-        exclude_actors_phrase = "".join(f"-actor:{actor}" for actor in exclude_actors)
+        exclude_actors_phrase = "".join(f"-actor:{actor} " for actor in exclude_actors)
     return " ".join(
         section
         for section in [
