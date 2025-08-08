@@ -27,7 +27,10 @@ from tests.mocks.githubrest import (
             None,
             None,
             None,
-            "action:protected_branch.create action:repo.download_zip action:team.add_member",
+            (
+                "action:protected_branch.create action:repo.download_zip "
+                "action:team.add_member"
+            ),
         ),
         # Single actor
         (None, ["octocat"], None, None, "actor:octocat"),
@@ -73,7 +76,10 @@ from tests.mocks.githubrest import (
             ["octocat"],
             ["exclude-user"],
             None,
-            "action:protected_branch.create action:repo.download_zip actor:octocat -actor:exclude-user",
+            (
+                "action:protected_branch.create action:repo.download_zip "
+                "actor:octocat -actor:exclude-user"
+            ),
         ),
         # Maximum complexity
         (
@@ -81,7 +87,11 @@ from tests.mocks.githubrest import (
             ["octocat", "monalisa", "admin-user"],
             ["bot-user1", "bot-user2", "exclude-admin"],
             None,
-            "action:org.create action:team.add_member action:repo.destroy actor:octocat actor:monalisa actor:admin-user -actor:bot-user1 -actor:bot-user2 -actor:exclude-admin",
+            (
+                "action:org.create action:team.add_member action:repo.destroy "
+                "actor:octocat actor:monalisa actor:admin-user "
+                "-actor:bot-user1 -actor:bot-user2 -actor:exclude-admin"
+            ),
         ),
         # All None values
         (None, None, None, None, ""),
