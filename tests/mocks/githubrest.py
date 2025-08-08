@@ -192,9 +192,9 @@ class GithubHttpxMock:
             **kwargs,
         )
 
-    def get_enterprise_audit_logs(self, **kwargs: Any):
+    def get_enterprise_audit_logs(self, *, search_phrase: str, **kwargs: Any):
         url = (
             f"{self.base_url}/enterprises/test-enterprise"
-            f"/audit-log?per_page=100&phrase=%20action%3Aprotected_branch.create+actor%3Atest-include-actor+-actor%3Atest-exclude-actor"
+            f"/audit-log?per_page=100&phrase={search_phrase}"
         )
         self.add_response(url=url, **kwargs)
