@@ -102,7 +102,7 @@ def build_search_phrase(
     # adding action-based filtering
     actions_phrase = ""
     if actions:
-        actions_phrase = "".join(f"action:{action}" for action in actions)
+        actions_phrase = " ".join(f"action:{action}" for action in actions)
 
     # adding lookback_period based filtering
     date_filter = ""
@@ -118,12 +118,12 @@ def build_search_phrase(
     # adding actor-based filtering
     actors_phrase = ""
     if actors:
-        actors_phrase = "".join(f"actor:{actor} " for actor in actors)
+        actors_phrase = " ".join(f"actor:{actor}" for actor in actors)
 
     # adding exclude_actors based filtering
     exclude_actors_phrase = ""
     if exclude_actors:
-        exclude_actors_phrase = "".join(f"-actor:{actor} " for actor in exclude_actors)
+        exclude_actors_phrase = " ".join(f"-actor:{actor}" for actor in exclude_actors)
     return " ".join(
         section
         for section in [
@@ -133,7 +133,7 @@ def build_search_phrase(
             exclude_actors_phrase,
         ]
         if section
-    )
+    ).strip()
 
 
 class GithubRestApiClient:

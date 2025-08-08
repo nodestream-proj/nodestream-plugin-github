@@ -12,37 +12,39 @@ from tests.mocks.githubrest import (
 
 
 @pytest.mark.parametrize(
-    ("actions", "actors", "exclude_actors", "lookback_period"),
+    ("actions", "actors", "exclude_actors", "lookback_period", "expected_path"),
     [
         # Basic single action
-        (["protected_branch.create"], None, None, None),
+        (["protected_branch.create"], None, None, None, "action:protected_branch.create"),
         # Multiple actions
         (
             ["protected_branch.create", "repo.download_zip", "team.add_member"],
             None,
             None,
             None,
+            "action:protected_branch.create action:repo.download_zip action:team.add_member",
         ),
         # Single actor
-        (None, ["octocat"], None, None),
+        (None, ["octocat"], None, None, "actor:octocat"),
         # Multiple actors
-        (None, ["octocat", "monalisa"], None, None),
+        (None, ["octocat", "monalisa"], None, None, "actor:octocat actor:monalisa"),
         # Single exclude actor
-        (None, None, ["exclude-user"], None),
+        (None, None, ["exclude-user"], None, "-actor:exclude-user"),
         # Multiple exclude actors
-        (None, None, ["exclude-user1", "exclude-user2"], None),
+        (None, None, ["exclude-user1", "exclude-user2"], None, "-actor:exclude-user1 -actor:exclude-user2"),
         # Actions + actors
-        (["org.create", "repo.destroy"], ["octocat"], None, None),
+        (["org.create", "repo.destroy"], ["octocat"], None, None, "action:org.create action:repo.destroy actor:octocat"),
         # Actions + exclude_actors
-        (["team.add_member"], None, ["bot-user"], None),
+        (["team.add_member"], None, ["bot-user"], None, "action:team.add_member -actor:bot-user"),
         # Actors + exclude_actors
-        (None, ["octocat", "monalisa"], ["bot-user"], None),
+        (None, ["octocat", "monalisa"], ["bot-user"], None, "actor:octocat actor:monalisa -actor:bot-user"),
         # All parameters combined
         (
             ["protected_branch.create", "repo.download_zip"],
             ["octocat"],
             ["exclude-user"],
             None,
+            "action:protected_branch.create action:repo.download_zip actor:octocat -actor:exclude-user",
         ),
         # Maximum complexity
         (
@@ -50,11 +52,12 @@ from tests.mocks.githubrest import (
             ["octocat", "monalisa", "admin-user"],
             ["bot-user1", "bot-user2", "exclude-admin"],
             None,
+            "action:org.create action:team.add_member action:repo.destroy actor:octocat actor:monalisa actor:admin-user -actor:bot-user1 -actor:bot-user2 -actor:exclude-admin",
         ),
         # All None values
-        (None, None, None, None),
+        (None, None, None, None, ""),
         # Empty lists
-        ([], [], [], None),
+        ([], [], [], None, ""),
     ],
 )
 @pytest.mark.asyncio
@@ -64,6 +67,7 @@ async def test_get_audit_parameterized(
     actors: list[str] | None,
     exclude_actors: list[str] | None,
     lookback_period: dict[str, int] | None,
+    expected_path: str,
 ):
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
@@ -78,16 +82,9 @@ async def test_get_audit_parameterized(
         lookback_period=lookback_period,
     )
 
-    expected_search_phrase = build_search_phrase(
-        actions=actions or [],
-        actors=actors or [],
-        exclude_actors=exclude_actors or [],
-        lookback_period={},
-    )
-
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,
-        search_phrase=expected_search_phrase,
+        search_phrase=expected_path,
         json=GITHUB_AUDIT,
     )
 
