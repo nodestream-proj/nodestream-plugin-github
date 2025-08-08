@@ -74,6 +74,68 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
 
+def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
+    """Sanitize the lookback period to only include valid keys."""
+
+    def validate_positive_int(value: int) -> int:
+        converted = int(value)
+        if converted <= 0:
+            negative_value_exception_msg = (
+                f"Lookback period values must be positive: {value}"
+            )
+            raise ValueError(negative_value_exception_msg)
+        return converted
+
+    try:
+        return {k: validate_positive_int(v) for k, v in lookback_period.items()}
+    except Exception as e:
+        exception_msg = "Formatting lookback period failed"
+        raise ValueError(exception_msg) from e
+
+
+def build_search_phrase(
+    actions: list[str],
+    actors: list[str],
+    exclude_actors: list[str],
+    lookback_period: dict[str, int],
+) -> str:
+    # adding action-based filtering
+    actions_phrase = ""
+    if actions:
+        actions_phrase = " ".join(f"action:{action}" for action in actions)
+
+    # adding lookback_period based filtering
+    date_filter = ""
+    if lookback_period:
+        lookback_period = validate_lookback_period(lookback_period)
+        date_filter = (
+            f"created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
+            .strftime('%Y-%m-%d')}"
+            if lookback_period
+            else ""
+        )
+
+    # adding actor-based filtering
+    actors_phrase = ""
+    if actors:
+        actors_phrase = " ".join(f"actor:{actor}" for actor in actors)
+
+    # adding exclude_actors based filtering
+    exclude_actors_phrase = ""
+    if exclude_actors:
+        exclude_actors_phrase = " ".join(f"-actor:{actor}" for actor in exclude_actors)
+    return " ".join(
+        section
+        for section in [
+            actions_phrase,
+            date_filter,
+            actors_phrase,
+            exclude_actors_phrase,
+        ]
+        if section
+    ).strip()
+
+
 class GithubRestApiClient:
     def __init__(
         self,
@@ -240,6 +302,13 @@ class GithubRestApiClient:
             query_params.update(params)
 
         while url is not None:
+            if "&page=100" in url:
+                logger.warning(
+                    "The GithubAPI has reached the maximum page size "
+                    "of 100. The returned data may be incomplete for request: %s",
+                    url,
+                )
+
             response = await self._get_retrying(
                 url, headers=headers, params=query_params
             )
@@ -331,23 +400,24 @@ class GithubRestApiClient:
             _fetch_problem("all organizations", e)
 
     async def fetch_enterprise_audit_log(
-        self, enterprise_name: str, actions: list[str], lookback_period: dict[str, int]
+        self,
+        enterprise_name: str,
+        actions: list[str],
+        actors: list[str],
+        exclude_actors: list[str],
+        lookback_period: dict[str, int],
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
 
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            # adding action-based filtering
-            actions_phrase = " ".join(f"action:{action}" for action in actions)
-            # adding lookback_period based filtering
-            date_filter = (
-                f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
-                .strftime('%Y-%m-%d')}"
-                if lookback_period
-                else ""
+            search_phrase = build_search_phrase(
+                actions=actions,
+                actors=actors,
+                exclude_actors=exclude_actors,
+                lookback_period=lookback_period,
             )
-            search_phrase = f"{actions_phrase}{date_filter}"
 
             params = {"phrase": search_phrase} if search_phrase else {}
 
