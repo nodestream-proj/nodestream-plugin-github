@@ -73,6 +73,18 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
+def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
+    """Sanitize the lookback period to only include valid keys."""
+    def validate_positive_int(value):
+        converted = int(value)
+        if converted <= 0:
+            raise ValueError(f"Lookback period values must be positive: {value}")
+        return converted
+
+    try:
+        return {k: validate_positive_int(v) for k, v in lookback_period.items()}
+    except Exception:
+        raise ValueError("Formatting lookback period failed")
 
 def build_search_phrase(
     actions: list[str],
@@ -86,12 +98,15 @@ def build_search_phrase(
         actions_phrase = "".join(f"action:{action}" for action in actions)
 
     # adding lookback_period based filtering
-    date_filter = (
-        f"created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
-        .strftime('%Y-%m-%d')}"
-        if lookback_period
-        else ""
-    )
+    date_filter = ""
+    if lookback_period:
+        lookback_period = validate_lookback_period(lookback_period)
+        date_filter = (
+            f"created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
+            .strftime('%Y-%m-%d')}"
+            if lookback_period
+            else ""
+        )
 
     # adding actor-based filtering
     actors_phrase = ""
