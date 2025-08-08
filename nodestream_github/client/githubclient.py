@@ -77,16 +77,20 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
 def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
     """Sanitize the lookback period to only include valid keys."""
 
-    def validate_positive_int(value):
+    def validate_positive_int(value) -> int:
         converted = int(value)
         if converted <= 0:
-            raise ValueError(f"Lookback period values must be positive: {value}")
+            negative_value_exception_msg = (
+                f"Lookback period values must be positive: {value}"
+            )
+            raise ValueError(negative_value_exception_msg)
         return converted
 
     try:
         return {k: validate_positive_int(v) for k, v in lookback_period.items()}
     except Exception:
-        raise ValueError("Formatting lookback period failed")
+        exception_msg = "Formatting lookback period failed"
+        raise ValueError(exception_msg)
 
 
 def build_search_phrase(
