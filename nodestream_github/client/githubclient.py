@@ -73,8 +73,10 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
+
 def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
     """Sanitize the lookback period to only include valid keys."""
+
     def validate_positive_int(value):
         converted = int(value)
         if converted <= 0:
@@ -85,6 +87,7 @@ def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
         return {k: validate_positive_int(v) for k, v in lookback_period.items()}
     except Exception:
         raise ValueError("Formatting lookback period failed")
+
 
 def build_search_phrase(
     actions: list[str],
