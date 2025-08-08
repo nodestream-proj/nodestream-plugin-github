@@ -1,7 +1,4 @@
-from datetime import UTC, datetime
-
 import pytest
-from dateutil.relativedelta import relativedelta
 
 from nodestream_github import GithubAuditLogExtractor
 from nodestream_github.client.githubclient import build_search_phrase

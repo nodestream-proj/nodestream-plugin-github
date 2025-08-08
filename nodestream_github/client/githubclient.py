@@ -75,7 +75,10 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
 
 
 def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
-    """Generate a list of date strings in YYYY-MM-DD format for the given lookback period."""
+    """
+    Generate a list of date strings in YYYY-MM-DD format for
+    the given lookback period.
+    """
     if not lookback_period:
         return []
 
