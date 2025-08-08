@@ -19,6 +19,8 @@ def audit_extractor() -> GithubAuditLogExtractor:
         per_page=DEFAULT_PER_PAGE,
         enterprise_name="test-enterprise",
         actions=["protected_branch.create"],
+        actors=["test-include-actor"],
+        exclude_actors=["test-exclude-actor"],
     )
 
 

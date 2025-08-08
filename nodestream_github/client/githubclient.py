@@ -342,6 +342,7 @@ class GithubRestApiClient:
             actions_phrase = ""
             if actions:
                 actions_phrase = "".join(f" action:{action}" for action in actions)
+
             # adding lookback_period based filtering
             date_filter = (
                 f" created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
@@ -354,6 +355,7 @@ class GithubRestApiClient:
             actors_phrase = ""
             if actors:
                 actors_phrase = "".join(f" actor:{actor}" for actor in actors)
+
             # adding exclude_actors based filtering
             exclude_actors_phrase = ""
             if exclude_actors:
