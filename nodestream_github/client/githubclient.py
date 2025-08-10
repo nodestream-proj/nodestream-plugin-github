@@ -424,7 +424,6 @@ class GithubRestApiClient:
             dates = generate_date_range(lookback_period) or [None]
 
             for target_date in dates:
-                print(target_date)
                 search_phrase = build_search_phrase(
                     actions=actions,
                     actors=actors,

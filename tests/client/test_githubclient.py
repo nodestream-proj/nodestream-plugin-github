@@ -6,7 +6,6 @@ from pytest_httpx import HTTPXMock
 from nodestream_github.client.githubclient import (
     GithubRestApiClient,
     RateLimitedError,
-    build_search_phrase,
     generate_date_range,
     validate_lookback_period,
 )

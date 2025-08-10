@@ -196,7 +196,8 @@ async def test_get_audit_lookback_periods(
                 json=GITHUB_AUDIT,
             )
 
-    # replacing generate_date_range with test dates so that we don't iterate through all dates
+    # replacing generate_date_range with test dates
+    # so that we don't iterate through all dates
     import nodestream_github.client.githubclient as client_module
 
     original_generate = client_module.generate_date_range
