@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nodestream-plugin-github"
-version = "0.14.1-beta.4"
+version = "0.14.1-beta.6"
 description = ""
 authors = [
     "Jon Bristow <jonthegm@yahoo.com>",

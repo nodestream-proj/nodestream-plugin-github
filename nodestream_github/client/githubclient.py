@@ -6,7 +6,7 @@ An async client for accessing GitHub.
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -92,28 +92,36 @@ def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
         exception_msg = "Formatting lookback period failed"
         raise ValueError(exception_msg) from e
 
+def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
+    """
+    Generate a list of date strings in YYYY-MM-DD format for
+    the given lookback period.
+    """
+    if not lookback_period:
+        return []
+
+    end_date = datetime.now(tz=UTC).date()
+    start_date = (datetime.now(tz=UTC) - relativedelta(**lookback_period)).date()
+
+    delta_days = (end_date - start_date).days + 1
+    return [
+        (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+        for i in range(delta_days)
+    ]
 
 def build_search_phrase(
     actions: list[str],
     actors: list[str],
     exclude_actors: list[str],
-    lookback_period: dict[str, int],
+    target_date: str | None = None,
 ) -> str:
     # adding action-based filtering
     actions_phrase = ""
     if actions:
         actions_phrase = " ".join(f"action:{action}" for action in actions)
 
-    # adding lookback_period based filtering
-    date_filter = ""
-    if lookback_period:
-        lookback_period = validate_lookback_period(lookback_period)
-        date_filter = (
-            f"created:>={(datetime.now(tz=UTC) - relativedelta(**lookback_period))
-            .strftime('%Y-%m-%d')}"
-            if lookback_period
-            else ""
-        )
+    # adding date-based filtering for a specific date
+    date_filter = f"created:{target_date}" if target_date else ""
 
     # adding actor-based filtering
     actors_phrase = ""
@@ -412,19 +420,20 @@ class GithubRestApiClient:
         https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            search_phrase = build_search_phrase(
-                actions=actions,
-                actors=actors,
-                exclude_actors=exclude_actors,
-                lookback_period=lookback_period,
-            )
+            dates = generate_date_range(lookback_period) or [None]
 
-            params = {"phrase": search_phrase} if search_phrase else {}
-
-            async for audit in self._get_paginated(
-                f"enterprises/{enterprise_name}/audit-log", params=params
-            ):
-                yield audit
+            for target_date in dates:
+                search_phrase = build_search_phrase(
+                    actions=actions,
+                    actors=actors,
+                    exclude_actors=exclude_actors,
+                    target_date=target_date,
+                )
+                params = {"phrase": search_phrase} if search_phrase else {}
+                async for audit in self._get_paginated(
+                    f"enterprises/{enterprise_name}/audit-log", params=params
+                ):
+                    yield audit
         except httpx.HTTPError as e:
             _fetch_problem("audit log", e)
 

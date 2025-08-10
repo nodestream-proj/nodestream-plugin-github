@@ -137,23 +137,23 @@ async def test_get_audit_parameterized(
     [
         (
             {"days": 7},
-            "action:protected_branch.create created:>=2025-07-25",
+            "action:protected_branch.create created:2025-07-25",
         ),
         (
             {"months": 2},
-            "action:protected_branch.create created:>=2025-06-01",
+            "action:protected_branch.create created:2025-06-01",
         ),
         (
             {"years": 1},
-            "action:protected_branch.create created:>=2024-08-01",
+            "action:protected_branch.create created:2024-08-01",
         ),
         (
             {"days": 15, "months": 1},
-            "action:protected_branch.create created:>=2025-06-16",
+            "action:protected_branch.create created:2025-06-16",
         ),
         (
             {"days": 10, "months": 1, "years": 1},
-            "action:protected_branch.create created:>=2024-06-21",
+            "action:protected_branch.create created:2024-06-21",
         ),
     ],
 )
@@ -163,6 +163,8 @@ async def test_get_audit_lookback_periods(
     lookback_period: dict[str, int] | None,
     expected_path: str,
 ):
+    from nodestream_github.client.githubclient import generate_date_range
+    
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -174,11 +176,34 @@ async def test_get_audit_lookback_periods(
         lookback_period=lookback_period,
     )
 
+    expected_dates = generate_date_range(lookback_period)
+    
+    # Mock the first date call with the expected_path
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,
         search_phrase=expected_path,
         json=GITHUB_AUDIT,
     )
+    
+    # Mock additional dates if there are more than one
+    test_dates = expected_dates[:3] if len(expected_dates) > 3 else expected_dates
+    if len(test_dates) > 1:
+        for date in test_dates[1:]:
+            search_phrase = f"action:protected_branch.create created:{date}"
+            gh_rest_mock.get_enterprise_audit_logs(
+                status_code=200,
+                search_phrase=search_phrase,
+                json=GITHUB_AUDIT,
+            )
 
-    all_records = [record async for record in extractor.extract_records()]
-    assert all_records == GITHUB_EXPECTED_OUTPUT
+    # replacing generate_date_range with test dates so that we don't iterate through all dates
+    import nodestream_github.client.githubclient as client_module
+    original_generate = client_module.generate_date_range
+    client_module.generate_date_range = lambda x: test_dates
+    
+    try:
+        all_records = [record async for record in extractor.extract_records()]
+        expected_output = GITHUB_EXPECTED_OUTPUT * len(test_dates)
+        assert all_records == expected_output
+    finally:
+        client_module.generate_date_range = original_generate
