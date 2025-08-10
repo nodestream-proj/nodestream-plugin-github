@@ -92,6 +92,7 @@ def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
         exception_msg = "Formatting lookback period failed"
         raise ValueError(exception_msg) from e
 
+
 def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
     """
     Generate a list of date strings in YYYY-MM-DD format for
@@ -105,9 +106,9 @@ def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
 
     delta_days = (end_date - start_date).days + 1
     return [
-        (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
-        for i in range(delta_days)
+        (start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta_days)
     ]
+
 
 def build_search_phrase(
     actions: list[str],
@@ -423,6 +424,7 @@ class GithubRestApiClient:
             dates = generate_date_range(lookback_period) or [None]
 
             for target_date in dates:
+                print(target_date)
                 search_phrase = build_search_phrase(
                     actions=actions,
                     actors=actors,

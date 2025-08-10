@@ -164,7 +164,7 @@ async def test_get_audit_lookback_periods(
     expected_path: str,
 ):
     from nodestream_github.client.githubclient import generate_date_range
-    
+
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -177,14 +177,14 @@ async def test_get_audit_lookback_periods(
     )
 
     expected_dates = generate_date_range(lookback_period)
-    
+
     # Mock the first date call with the expected_path
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,
         search_phrase=expected_path,
         json=GITHUB_AUDIT,
     )
-    
+
     # Mock additional dates if there are more than one
     test_dates = expected_dates[:3] if len(expected_dates) > 3 else expected_dates
     if len(test_dates) > 1:
@@ -198,9 +198,10 @@ async def test_get_audit_lookback_periods(
 
     # replacing generate_date_range with test dates so that we don't iterate through all dates
     import nodestream_github.client.githubclient as client_module
+
     original_generate = client_module.generate_date_range
     client_module.generate_date_range = lambda x: test_dates
-    
+
     try:
         all_records = [record async for record in extractor.extract_records()]
         expected_output = GITHUB_EXPECTED_OUTPUT * len(test_dates)

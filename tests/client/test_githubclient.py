@@ -135,11 +135,14 @@ def test_all_null_args():
     # noinspection PyTypeChecker
     assert GithubRestApiClient(auth_token=None, github_hostname=None)
 
+
 # Test generate_date_range
+
 
 def test_generate_date_range_empty_lookback_period():
     result = generate_date_range({})
     assert result == []
+
 
 @freeze_time("2025-08-01")
 def test_generate_date_range_days_only():
@@ -147,12 +150,14 @@ def test_generate_date_range_days_only():
     expected = ["2025-07-29", "2025-07-30", "2025-07-31", "2025-08-01"]
     assert result == expected
 
+
 @freeze_time("2025-08-01")
 def test_generate_date_range_zero_days():
     """Test with zero days (same day only)."""
     result = generate_date_range({"days": 0})
     expected = ["2025-08-01"]
     assert result == expected
+
 
 @freeze_time("2025-08-01")
 def test_generate_date_range_months_only():
@@ -162,6 +167,7 @@ def test_generate_date_range_months_only():
     assert result[0] == "2025-07-01"
     assert result[-1] == "2025-08-01"
 
+
 @freeze_time("2025-08-01")
 def test_generate_date_range_years_only():
     result = generate_date_range({"years": 1})
@@ -169,12 +175,14 @@ def test_generate_date_range_years_only():
     assert result[0] == "2024-08-01"
     assert result[-1] == "2025-08-01"
 
+
 @freeze_time("2025-08-01")
 def test_generate_date_range_combined_periods():
     """Test with combined periods."""
     result = generate_date_range({"months": 1, "days": 5})
     assert result[0] == "2025-06-26"
     assert result[-1] == "2025-08-01"
+
 
 @freeze_time("2025-08-01")
 def test_generate_date_range_complex_combination():
@@ -185,6 +193,7 @@ def test_generate_date_range_complex_combination():
 
 
 # Test validate_lookback_period
+
 
 def test_validate_lookback_period_valid_input():
     result = validate_lookback_period({"days": 7, "months": 2, "years": 1})
@@ -206,6 +215,7 @@ def test_validate_lookback_period_string_to_int_conversion():
     result = validate_lookback_period({"days": "7", "months": "2"})
     expected = {"days": 7, "months": 2}
     assert result == expected
+
 
 def test_validate_lookback_period_zero_value():
     with pytest.raises(ValueError, match="Formatting lookback period failed"):
