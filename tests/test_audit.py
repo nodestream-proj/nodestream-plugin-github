@@ -318,7 +318,7 @@ def test_validate_lookback_period_valid_cases(
 
 
 @pytest.mark.parametrize(
-    ("input_period",),
+    "input_period",
     [
         ({"days": 0},),
         ({"days": -5},),
