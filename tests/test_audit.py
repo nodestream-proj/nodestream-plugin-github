@@ -134,27 +134,32 @@ async def test_get_audit_parameterized(
 
 @freeze_time("2025-08-01")
 @pytest.mark.parametrize(
-    ("lookback_period", "expected_path"),
+    ("lookback_period", "expected_path", "expected_dates"),
     [
         (
             {"days": 7},
             "action:protected_branch.create created:2025-07-25",
+            ["2025-07-25", "2025-07-26", "2025-07-27", "2025-07-28", "2025-07-29", "2025-07-30", "2025-07-31", "2025-08-01"],
         ),
         (
             {"months": 2},
             "action:protected_branch.create created:2025-06-01",
+            ["2025-06-01", "2025-06-02", "2025-06-03"],
         ),
         (
             {"years": 1},
             "action:protected_branch.create created:2024-08-01",
+            ["2024-08-01", "2024-08-02", "2024-08-03"],
         ),
         (
             {"days": 15, "months": 1},
             "action:protected_branch.create created:2025-06-16",
+            ["2025-06-16", "2025-06-17", "2025-06-18"],
         ),
         (
             {"days": 10, "months": 1, "years": 1},
             "action:protected_branch.create created:2024-06-21",
+            ["2024-06-21", "2024-06-22", "2024-06-23"],
         ),
     ],
 )
@@ -163,9 +168,8 @@ async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
     lookback_period: dict[str, int] | None,
     expected_path: str,
+    expected_dates: list[str],
 ):
-    from nodestream_github.audit import generate_date_range
-
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -177,19 +181,14 @@ async def test_get_audit_lookback_periods(
         lookback_period=lookback_period,
     )
 
-    expected_dates = generate_date_range(lookback_period)
-
-    # Mock the first date call with the expected_path
     gh_rest_mock.get_enterprise_audit_logs(
         status_code=200,
         search_phrase=expected_path,
         json=GITHUB_AUDIT,
     )
 
-    # Mock additional dates if there are more than one
-    test_dates = expected_dates[:3] if len(expected_dates) > 3 else expected_dates
-    if len(test_dates) > 1:
-        for date in test_dates[1:]:
+    if len(expected_dates) > 1:
+        for date in expected_dates[1:]:
             search_phrase = f"action:protected_branch.create created:{date}"
             gh_rest_mock.get_enterprise_audit_logs(
                 status_code=200,
@@ -202,11 +201,11 @@ async def test_get_audit_lookback_periods(
     import nodestream_github.audit as client_module
 
     original_generate = client_module.generate_date_range
-    client_module.generate_date_range = lambda x: test_dates
+    client_module.generate_date_range = lambda x: expected_dates
 
     try:
         all_records = [record async for record in extractor.extract_records()]
-        expected_output = GITHUB_EXPECTED_OUTPUT * len(test_dates)
+        expected_output = GITHUB_EXPECTED_OUTPUT * len(expected_dates)
         assert all_records == expected_output
     finally:
         client_module.generate_date_range = original_generate
