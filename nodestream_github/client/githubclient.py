@@ -6,12 +6,10 @@ An async client for accessing GitHub.
 import json
 import logging
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
 import httpx
-from dateutil.relativedelta import relativedelta
 from limits import RateLimitItem, RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
@@ -72,77 +70,6 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
             )
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
-
-
-def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
-    """Sanitize the lookback period to only include valid keys."""
-
-    def validate_positive_int(value: int) -> int:
-        converted = int(value)
-        if converted <= 0:
-            negative_value_exception_msg = (
-                f"Lookback period values must be positive: {value}"
-            )
-            raise ValueError(negative_value_exception_msg)
-        return converted
-
-    try:
-        return {k: validate_positive_int(v) for k, v in lookback_period.items()}
-    except Exception as e:
-        exception_msg = "Formatting lookback period failed"
-        raise ValueError(exception_msg) from e
-
-
-def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
-    """
-    Generate a list of date strings in YYYY-MM-DD format for
-    the given lookback period.
-    """
-    if not lookback_period:
-        return []
-
-    end_date = datetime.now(tz=UTC).date()
-    start_date = (datetime.now(tz=UTC) - relativedelta(**lookback_period)).date()
-
-    delta_days = (end_date - start_date).days + 1
-    return [
-        (start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(delta_days)
-    ]
-
-
-def build_search_phrase(
-    actions: list[str],
-    actors: list[str],
-    exclude_actors: list[str],
-    target_date: str | None = None,
-) -> str:
-    # adding action-based filtering
-    actions_phrase = ""
-    if actions:
-        actions_phrase = " ".join(f"action:{action}" for action in actions)
-
-    # adding date-based filtering for a specific date
-    date_filter = f"created:{target_date}" if target_date else ""
-
-    # adding actor-based filtering
-    actors_phrase = ""
-    if actors:
-        actors_phrase = " ".join(f"actor:{actor}" for actor in actors)
-
-    # adding exclude_actors based filtering
-    exclude_actors_phrase = ""
-    if exclude_actors:
-        exclude_actors_phrase = " ".join(f"-actor:{actor}" for actor in exclude_actors)
-    return " ".join(
-        section
-        for section in [
-            actions_phrase,
-            date_filter,
-            actors_phrase,
-            exclude_actors_phrase,
-        ]
-        if section
-    ).strip()
 
 
 class GithubRestApiClient:
@@ -411,30 +338,17 @@ class GithubRestApiClient:
     async def fetch_enterprise_audit_log(
         self,
         enterprise_name: str,
-        actions: list[str],
-        actors: list[str],
-        exclude_actors: list[str],
-        lookback_period: dict[str, int],
+        search_phrase: str | None = None,
     ) -> AsyncGenerator[types.GithubAuditLog]:
         """Fetches enterprise-wide audit log data
-
-        https://docs.github.com/en/enterprise-cloud@latest/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
+        https://docs.github.com/en/enterprise-server@3.14/rest/enterprise-admin/audit-log?apiVersion=2022-11-28#get-the-audit-log-for-an-enterprise
         """
         try:
-            dates = generate_date_range(lookback_period) or [None]
-
-            for target_date in dates:
-                search_phrase = build_search_phrase(
-                    actions=actions,
-                    actors=actors,
-                    exclude_actors=exclude_actors,
-                    target_date=target_date,
-                )
-                params = {"phrase": search_phrase} if search_phrase else {}
-                async for audit in self._get_paginated(
-                    f"enterprises/{enterprise_name}/audit-log", params=params
-                ):
-                    yield audit
+            params = {"phrase": search_phrase} if search_phrase else {}
+            async for audit in self._get_paginated(
+                f"enterprises/{enterprise_name}/audit-log", params=params
+            ):
+                yield audit
         except httpx.HTTPError as e:
             _fetch_problem("audit log", e)
 
