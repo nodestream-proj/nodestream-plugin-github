@@ -1,7 +1,10 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from freezegun import freeze_time
 
 from nodestream_github import GithubAuditLogExtractor
+from nodestream_github.audit import generate_date_range, validate_lookback_period
 from tests.data.audit import GITHUB_AUDIT, GITHUB_EXPECTED_OUTPUT
 from tests.mocks.githubrest import (
     DEFAULT_HOSTNAME,
@@ -133,27 +136,37 @@ async def test_get_audit_parameterized(
 
 @freeze_time("2025-08-01")
 @pytest.mark.parametrize(
-    ("lookback_period", "expected_path"),
+    ("lookback_period", "expected_path", "expected_dates"),
     [
         (
             {"days": 7},
-            "action:protected_branch.create created:>=2025-07-25",
-        ),
-        (
-            {"months": 2},
-            "action:protected_branch.create created:>=2025-06-01",
-        ),
-        (
-            {"years": 1},
-            "action:protected_branch.create created:>=2024-08-01",
+            "action:protected_branch.create created:2025-07-25",
+            [
+                "2025-07-25",
+                "2025-07-26",
+                "2025-07-27",
+                "2025-07-28",
+                "2025-07-29",
+                "2025-07-30",
+                "2025-07-31",
+                "2025-08-01",
+            ],
         ),
         (
             {"days": 15, "months": 1},
-            "action:protected_branch.create created:>=2025-06-16",
-        ),
-        (
-            {"days": 10, "months": 1, "years": 1},
-            "action:protected_branch.create created:>=2024-06-21",
+            "action:protected_branch.create created:2025-06-16",
+            [
+                (
+                    datetime(2025, 6, 16, tzinfo=timezone.utc) + timedelta(days=i)
+                ).strftime("%Y-%m-%d")
+                for i in range(
+                    (
+                        datetime(2025, 8, 1, tzinfo=timezone.utc)
+                        - datetime(2025, 6, 16, tzinfo=timezone.utc)
+                    ).days
+                    + 1
+                )
+            ],
         ),
     ],
 )
@@ -162,6 +175,7 @@ async def test_get_audit_lookback_periods(
     gh_rest_mock: GithubHttpxMock,
     lookback_period: dict[str, int] | None,
     expected_path: str,
+    expected_dates: list[str],
 ):
     extractor = GithubAuditLogExtractor(
         auth_token="test-token",
@@ -180,5 +194,132 @@ async def test_get_audit_lookback_periods(
         json=GITHUB_AUDIT,
     )
 
+    if len(expected_dates) > 1:
+        for date in expected_dates[1:]:
+            search_phrase = f"action:protected_branch.create created:{date}"
+            gh_rest_mock.get_enterprise_audit_logs(
+                status_code=200,
+                search_phrase=search_phrase,
+                json=GITHUB_AUDIT,
+            )
+
     all_records = [record async for record in extractor.extract_records()]
-    assert all_records == GITHUB_EXPECTED_OUTPUT
+    expected_output = GITHUB_EXPECTED_OUTPUT * len(expected_dates)
+    assert all_records == expected_output
+
+
+# Test generate_date_range
+
+
+@pytest.mark.parametrize(
+    ("lookback_period", "expected_length", "expected_first", "expected_last"),
+    [
+        (
+            {},
+            0,
+            None,
+            None,
+        ),
+        (
+            {"days": 3},
+            4,
+            "2025-07-29",
+            "2025-08-01",
+        ),
+        (
+            {"days": 0},
+            1,
+            "2025-08-01",
+            "2025-08-01",
+        ),
+        (
+            {"months": 1},
+            32,
+            "2025-07-01",
+            "2025-08-01",
+        ),
+        (
+            {"years": 1},
+            366,
+            "2024-08-01",
+            "2025-08-01",
+        ),
+        (
+            {"months": 1, "days": 5},
+            37,
+            "2025-06-26",
+            "2025-08-01",
+        ),
+        (
+            {"years": 1, "months": 2, "days": 10},
+            437,
+            "2024-05-22",
+            "2025-08-01",
+        ),
+    ],
+)
+@freeze_time("2025-08-01")
+def test_generate_date_range_parameterized(
+    lookback_period: dict[str, int],
+    expected_length: int,
+    expected_first: str | None,
+    expected_last: str | None,
+):
+    result = generate_date_range(lookback_period)
+
+    assert len(result) == expected_length
+    if expected_length > 0:
+        assert result[0] == expected_first
+        assert result[-1] == expected_last
+
+
+# Test validate_lookback_period
+
+
+@pytest.mark.parametrize(
+    ("input_period", "expected_result"),
+    [
+        (
+            {"days": 7, "months": 2, "years": 1},
+            {"days": 7, "months": 2, "years": 1},
+        ),
+        (
+            {},
+            {},
+        ),
+        (
+            {"days": 30},
+            {"days": 30},
+        ),
+        (
+            {"days": "7", "months": "2"},
+            {"days": 7, "months": 2},
+        ),
+    ],
+)
+def test_validate_lookback_period_valid_cases(
+    input_period: dict[str, int | str],
+    expected_result: dict[str, int],
+):
+    result = validate_lookback_period(input_period)
+    assert result == expected_result
+
+
+@pytest.mark.parametrize(
+    "input_period",
+    [
+        ({"days": 0},),
+        ({"days": -5},),
+        ({"days": 7, "months": -1, "years": 2},),
+        ({"days": "0"},),
+        ({"months": "-10"},),
+        ({"days": "invalid"},),
+        ({"days": []},),
+        ({"days": None},),
+    ],
+)
+def test_validate_lookback_period_invalid_cases(
+    input_period: dict[str, int | str | list | None],
+):
+    with pytest.raises(ValueError, match="Formatting lookback period failed"):
+        validate_lookback_period(input_period)

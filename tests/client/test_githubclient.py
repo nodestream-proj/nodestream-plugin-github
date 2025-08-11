@@ -2,7 +2,10 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from nodestream_github.client.githubclient import GithubRestApiClient, RateLimitedError
+from nodestream_github.client.githubclient import (
+    GithubRestApiClient,
+    RateLimitedError,
+)
 from tests.mocks.githubrest import DEFAULT_BASE_URL, DEFAULT_HOSTNAME
 
 
