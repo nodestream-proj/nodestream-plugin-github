@@ -1,6 +1,5 @@
 import httpx
 import pytest
-from freezegun import freeze_time
 from pytest_httpx import HTTPXMock
 
 from nodestream_github.client.githubclient import (
