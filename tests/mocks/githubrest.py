@@ -198,3 +198,10 @@ class GithubHttpxMock:
         if search_phrase:
             url += f"&phrase={search_phrase}"
         self.add_response(url=url, **kwargs)
+
+    def get_teams_for_repo(self, *, owner_login, repo_name, **kwargs: Any):
+        path = f"/repos/{owner_login}/{repo_name}/teams?per_page={self.per_page}"
+        self.add_response(
+            url=f"{self.base_url}{path}",
+            **kwargs,
+        )

@@ -1,4 +1,5 @@
 import logging
+from abc import ABC
 from collections.abc import AsyncGenerator
 from typing import Any
 
@@ -13,7 +14,7 @@ from nodestream_github.types.enums import CollaboratorAffiliation
 logger = get_plugin_logger(__name__)
 
 
-class RepoToCollaboratorsTransformer(Transformer):
+class RepoFullNameTransformer(Transformer, ABC):
     def __init__(
         self,
         *,
@@ -37,6 +38,14 @@ class RepoToCollaboratorsTransformer(Transformer):
                 yield user
         else:
             logging.info("No full_name key found in record %s", record)
+
+    def _transform(self, full_name: str, simplified_repo: types.SimplifiedRepo):
+        raise NotImplementedError
+
+
+class RepoToUserCollaboratorsTransformer(RepoFullNameTransformer):
+    def __init__(self, *, full_name_key: str = "full_name", **kwargs: Any):
+        super().__init__(full_name_key=full_name_key, **kwargs)
 
     async def _transform(
         self,
@@ -65,4 +74,23 @@ class RepoToCollaboratorsTransformer(Transformer):
             yield collaborator | {
                 "repository": simplified_repo,
                 "affiliation": CollaboratorAffiliation.OUTSIDE,
+            }
+
+
+class RepoToTeamCollaboratorsTransformer(RepoFullNameTransformer):
+    async def _transform(
+        self,
+        full_name: str,
+        simplified_repo: types.SimplifiedRepo,
+    ) -> AsyncGenerator[types.GithubTeam]:
+        (repo_owner, repo_name) = full_name.split("/")
+
+        logging.debug("Transforming repo %s/%s", repo_owner, repo_name)
+
+        async for collaborator in self.client.fetch_teams_for_repo(
+            owner_login=repo_owner, repo_name=repo_name
+        ):
+            logging.debug("Found team %s", collaborator)
+            yield collaborator | {
+                "repository": simplified_repo,
             }

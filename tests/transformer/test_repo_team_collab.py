@@ -1,16 +1,31 @@
 import pytest
 
 from nodestream_github.interpretations.relationship.repository import simplify_repo
-from nodestream_github.transformer.repo import RepoToCollaboratorsTransformer
-from nodestream_github.types.enums import CollaboratorAffiliation
+from nodestream_github.transformer.repo import RepoToTeamCollaboratorsTransformer
 from tests.data.repos import HELLO_WORLD_REPO
-from tests.data.users import OCTOCAT_USER_SHORT, TURBO_USER_SHORT
+from tests.data.teams import JUSTICE_LEAGUE_TEAM_SUMMARY
 from tests.mocks.githubrest import DEFAULT_HOSTNAME, DEFAULT_PER_PAGE, GithubHttpxMock
+
+REPO_TEAM_SUMMARY = {
+    "id": 1,
+    "node_id": "MDQ6VGVhbTE=",
+    "url": "https://HOSTNAME/teams/1",
+    "html_url": "https://github.com/orgs/github/teams/justice-league",
+    "name": "Justice League",
+    "slug": "justice-league",
+    "description": "A great team.",
+    "privacy": "closed",
+    "notification_setting": "notifications_enabled",
+    "permission": "admin",
+    "members_url": "https://HOSTNAME/teams/1/members{/member}",
+    "repositories_url": "https://HOSTNAME/teams/1/repos",
+    "parent": None,
+}
 
 
 @pytest.mark.asyncio
 async def test_transform_records(gh_rest_mock: GithubHttpxMock):
-    transformer = RepoToCollaboratorsTransformer(
+    transformer = RepoToTeamCollaboratorsTransformer(
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
@@ -18,32 +33,21 @@ async def test_transform_records(gh_rest_mock: GithubHttpxMock):
         per_page=DEFAULT_PER_PAGE,
     )
 
-    gh_rest_mock.get_collaborators_for_repo(
+    gh_rest_mock.get_teams_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
-        affiliation=CollaboratorAffiliation.DIRECT,
-        json=[OCTOCAT_USER_SHORT],
+        json=[REPO_TEAM_SUMMARY],
     )
-    gh_rest_mock.get_collaborators_for_repo(
-        owner_login="octocat",
-        repo_name="Hello-World",
-        affiliation=CollaboratorAffiliation.OUTSIDE,
-        json=[TURBO_USER_SHORT],
-    )
-
     repo_summary = simplify_repo(HELLO_WORLD_REPO)
 
     response = [r async for r in transformer.transform_record(HELLO_WORLD_REPO)]
 
-    assert response == [
-        OCTOCAT_USER_SHORT | {"repository": repo_summary, "affiliation": "direct"},
-        TURBO_USER_SHORT | {"repository": repo_summary, "affiliation": "outside"},
-    ]
+    assert response == [JUSTICE_LEAGUE_TEAM_SUMMARY | {"repository": repo_summary}]
 
 
 @pytest.mark.asyncio
 async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
-    transformer = RepoToCollaboratorsTransformer(
+    transformer = RepoToTeamCollaboratorsTransformer(
         full_name_key="nameWithOwner",
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -52,17 +56,10 @@ async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
         per_page=DEFAULT_PER_PAGE,
     )
 
-    gh_rest_mock.get_collaborators_for_repo(
+    gh_rest_mock.get_teams_for_repo(
         owner_login="octocat",
         repo_name="Hello-World",
-        affiliation=CollaboratorAffiliation.DIRECT,
-        json=[OCTOCAT_USER_SHORT],
-    )
-    gh_rest_mock.get_collaborators_for_repo(
-        owner_login="octocat",
-        repo_name="Hello-World",
-        affiliation=CollaboratorAffiliation.OUTSIDE,
-        json=[TURBO_USER_SHORT],
+        json=[JUSTICE_LEAGUE_TEAM_SUMMARY],
     )
 
     modified_repo = HELLO_WORLD_REPO | {"nameWithOwner": "octocat/Hello-World"}
@@ -71,15 +68,12 @@ async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
 
     response = [r async for r in transformer.transform_record(modified_repo)]
 
-    assert response == [
-        OCTOCAT_USER_SHORT | {"repository": repo_summary, "affiliation": "direct"},
-        TURBO_USER_SHORT | {"repository": repo_summary, "affiliation": "outside"},
-    ]
+    assert response == [JUSTICE_LEAGUE_TEAM_SUMMARY | {"repository": repo_summary}]
 
 
 @pytest.mark.asyncio
 async def test_no_full_name_key():
-    transformer = RepoToCollaboratorsTransformer(
+    transformer = RepoToTeamCollaboratorsTransformer(
         full_name_key="full_name",
         auth_token="test-token",
         github_hostname=DEFAULT_HOSTNAME,
