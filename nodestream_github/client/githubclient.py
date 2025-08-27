@@ -599,3 +599,21 @@ class GithubRestApiClient:
         except httpx.HTTPError as e:
             _fetch_problem(f"full user info for {username}", e)
             return None
+
+    async def fetch_teams_for_repo(self, *, owner_login: str, repo_name: str):
+        """
+        Lists the teams that have access to the specified repository and that
+        are also visible to the authenticated user.
+
+        For a public repository, a team is listed only if that team added the
+        public repository explicitly.
+
+        https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repository-teams
+        """
+        try:
+            async for team in self._get_paginated(
+                f"repos/{owner_login}/{repo_name}/teams"
+            ):
+                yield team
+        except httpx.HTTPError as e:
+            _fetch_problem(f"teams for repo {owner_login}/{repo_name}", e)
