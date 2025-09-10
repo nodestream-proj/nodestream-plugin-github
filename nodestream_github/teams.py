@@ -65,7 +65,7 @@ class GithubTeamsExtractor(Extractor):
             simplify_user(member) async for member in self._fetch_members(team)
         ]
         team["repos"] = [
-            simplify_repo(repo, permission=team.get("permission"))
+            simplify_repo(repo)
             async for repo in self.client.fetch_repos_for_team(
                 org_login=login,
                 slug=team["slug"],

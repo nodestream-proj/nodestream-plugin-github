@@ -135,13 +135,13 @@ class GithubReposExtractor(Extractor):
             repo_name=repo["name"],
             affiliation=CollaboratorAffiliation.DIRECT,
         ):
-            collaborators.append(simplify_user(user, affiliation="direct"))
+            collaborators.append(simplify_user(user) | {"affiliation": "direct"})
         async for user in self.client.fetch_collaborators_for_repo(
             owner_login=owner["login"],
             repo_name=repo["name"],
             affiliation=CollaboratorAffiliation.OUTSIDE,
         ):
-            collaborators.append(simplify_user(user, affiliation="outside"))
+            collaborators.append(simplify_user(user) | {"affiliation": "outside"})
         return collaborators
 
     async def _add_webhooks(self, owner: GithubUser, repo: GithubRepo) -> list[Webhook]:

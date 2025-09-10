@@ -47,7 +47,13 @@ async def test_extract_records(
     gh_rest_mock.get_repos_for_team(
         org_login="github",
         slug="justice-league",
-        json=[HELLO_WORLD_REPO],
+        json=[
+            HELLO_WORLD_REPO
+            | {
+                "role_name": "read",
+                "permissions": {"admin": False, "push": False, "pull": True},
+            }
+        ],
     )
 
     assert [record async for record in teams_extractor.extract_records()] == [{
@@ -152,8 +158,9 @@ async def test_extract_records(
             "id": 1296269,
             "name": "Hello-World",
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-            "permission": "admin",
             "url": "https://HOSTNAME/repos/octocat/Hello-World",
+            "role_name": "read",
+            "permissions": {"admin": False, "push": False, "pull": True},
         }],
         "repos_count": 10,
         "repositories_url": "https://HOSTNAME/teams/1/repos",

@@ -18,18 +18,16 @@ _REPO_KEYS_TO_PRESERVE = [
     "url",
     "html_url",
     "permission",
+    "permissions",
+    "role_name",
 ]
 
 
-def simplify_repo(repo: GithubRepo, *, permission: str | None = None) -> SimplifiedRepo:
+def simplify_repo(repo: GithubRepo) -> SimplifiedRepo:
     """Simplify repo data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    output = {k: repo[k] for k in _REPO_KEYS_TO_PRESERVE if k in repo}
-
-    if permission:
-        output["permission"] = permission
-    return output
+    return {k: repo[k] for k in _REPO_KEYS_TO_PRESERVE if k in repo}
 
 
 class RepositoryRelationshipInterpretation(

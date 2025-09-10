@@ -88,9 +88,8 @@ class RepoToTeamCollaboratorsTransformer(RepoFullNameTransformer):
         logging.debug("Transforming repo %s/%s", repo_owner, repo_name)
 
         async for collaborator in self.client.fetch_teams_for_repo(
-            owner_login=repo_owner, repo_name=repo_name
+            owner_login=repo_owner,
+            repo_name=repo_name,
         ):
             logging.debug("Found team %s", collaborator)
-            yield collaborator | {
-                "repository": simplified_repo,
-            }
+            yield collaborator | {"repository": simplified_repo}

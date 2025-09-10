@@ -6,55 +6,60 @@
 - implementation: nodestream.interpreting:Interpreter
   arguments:
     interpretations:
-    - type: source_node
-      node_type: GithubTeam
-      key_normalization:
-        do_lowercase_strings: false
-      key:
-        node_id: !jmespath 'node_id'
-      additional_indexes:
-        - slug
-        - html_url
-    - type: properties
-      properties:
-        id: !jmespath 'id'
-        url: !jmespath 'url'
-        html_url: !jmespath 'html_url'
-        name: !jmespath 'name'
-        slug: !jmespath 'slug'
-        description: !jmespath 'description'
-        privacy: !jmespath 'privacy'
-        notification_setting: !jmespath 'notification_setting'
-        permission: !jmespath 'permission'
-        members_count: !jmespath 'members_count'
-        repos_count: !jmespath 'repos_count'
-        created_at: !jmespath 'created_at'
-        updated_at: !jmespath 'updated_at'
-        ldap_dn: !jmespath 'ldap_dn'
+      - type: source_node
+        node_type: GithubTeam
+        key_normalization:
+          do_lowercase_strings: false
+        key:
+          node_id: !jmespath 'node_id'
+        additional_indexes:
+          - slug
+          - html_url
+      - type: properties
+        properties:
+          id: !jmespath 'id'
+          url: !jmespath 'url'
+          html_url: !jmespath 'html_url'
+          name: !jmespath 'name'
+          slug: !jmespath 'slug'
+          description: !jmespath 'description'
+          privacy: !jmespath 'privacy'
+          notification_setting: !jmespath 'notification_setting'
+          permission: !jmespath 'permission'
+          members_count: !jmespath 'members_count'
+          repos_count: !jmespath 'repos_count'
+          created_at: !jmespath 'created_at'
+          updated_at: !jmespath 'updated_at'
+          ldap_dn: !jmespath 'ldap_dn'
 
-    - type: relationship
-      node_type: GithubOrg
-      relationship_type: IN_ORGANIZATION
-      key_normalization:
-        do_lowercase_strings: false
-      node_key:
-        node_id: !jmespath 'organization.node_id'
-      outbound: true
+      - type: relationship
+        node_type: GithubOrg
+        relationship_type: IN_ORGANIZATION
+        key_normalization:
+          do_lowercase_strings: false
+        node_key:
+          node_id: !jmespath 'organization.node_id'
+        outbound: true
 
-    - type: github-user-relationship
-      relationship_type: IS_MEMBER
-      iterate_on: !jmespath 'members[*]'
-      key_normalization:
-        do_lowercase_strings: false
-      outbound: false
-      relationship_properties:
-        role: !jmespath 'role'
+      - type: github-user-relationship
+        relationship_type: IS_MEMBER
+        iterate_on: !jmespath 'members[*]'
+        key_normalization:
+          do_lowercase_strings: false
+        outbound: false
+        relationship_properties:
+          role: !jmespath 'role'
 
-    - type: github-repo-relationship
-      relationship_type: IN_TEAM
-      iterate_on: !jmespath 'repos[*]'
-      key_normalization:
-        do_lowercase_strings: false
-      relationship_properties:
-        permission: !jmespath 'permission'
-      outbound: false
+      - type: github-repo-relationship
+        relationship_type: IN_TEAM
+        iterate_on: !jmespath 'repos[*]'
+        key_normalization:
+          do_lowercase_strings: false
+        relationship_properties:
+          role_name: !jmespath 'role_name'
+          permission_admin: !jmespath 'permissions.admin'
+          permission_maintain: !jmespath 'permissions.maintain'
+          permission_push: !jmespath 'permissions.push'
+          permission_triage: !jmespath 'permissions.triage'
+          permission_pull: !jmespath 'permissions.pull'
+        outbound: false
