@@ -31,11 +31,6 @@ def test_simplify_repo():
     assert simplify_repo(additional_keys) == _TEST_EXPECTATION
 
 
-def test_simplify_repo_set_perm():
-    expected = _TEST_EXPECTATION | {"permission": "test"}
-    assert simplify_repo(_TEST_EXPECTATION, permission="test") == expected
-
-
 def test_repo_relationship(context: ProviderContext):
     sample = RepositoryRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
     assert sample.node_type.single_value(context) == "GithubRepo"

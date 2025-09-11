@@ -55,9 +55,7 @@ class GithubOrganizationsExtractor(Extractor):
 
         if self.include_repositories:
             full_org["repositories"] = [
-                simplify_repo(
-                    repo, permission=full_org.get("default_repository_permission")
-                )
+                simplify_repo(repo)
                 async for repo in self.client.fetch_repos_for_org(org_login=login)
             ]
         else:
