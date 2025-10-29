@@ -1,5 +1,5 @@
 # noinspection PyProtectedMember
-from typing import Any, Optional
+from typing import Any
 
 from pytest_httpx import HTTPXMock
 
@@ -192,7 +192,7 @@ class GithubHttpxMock:
             **kwargs,
         )
 
-    def get_enterprise_audit_logs(self, *, search_phrase: Optional[str], **kwargs: Any):
+    def get_enterprise_audit_logs(self, *, search_phrase: str | None, **kwargs: Any):
         url = f"{self.base_url}/enterprises/test-enterprise/audit-log"
         url += f"?per_page={self.per_page}"
         if search_phrase:
