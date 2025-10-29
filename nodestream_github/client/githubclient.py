@@ -635,9 +635,20 @@ class GithubRestApiClient:
                 f"repos/{owner_login}/{repo_name}/branches/{branch}/protection"
             )
         except httpx.HTTPError as e:
-            _fetch_problem(
-                f"branch protection for branch {branch} on "
-                f"repo {owner_login}/{repo_name}",
-                e,
-            )
+            match e:
+                case httpx.HTTPStatusError(response=response) if (
+                    response.status_code == 404
+                ):
+                    logger.info(
+                        "Branch protection not found for branch %s on repo %s/%s",
+                        branch,
+                        owner_login,
+                        repo_name,
+                    )
+                case _:
+                    _fetch_problem(
+                        f"branch protection for branch {branch} on "
+                        f"repo {owner_login}/{repo_name}",
+                        e,
+                    )
             return None
