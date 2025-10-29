@@ -22,3 +22,5 @@ UserRecord: TypeAlias = JSONObject
 
 SimplifiedRepo: TypeAlias = JSONObject
 SimplifiedUser: TypeAlias = JSONObject
+
+BranchProtection: TypeAlias = JSONObject

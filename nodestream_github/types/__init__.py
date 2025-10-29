@@ -1,4 +1,5 @@
 from .github import (
+    BranchProtection,
     GithubAuditLog,
     GithubOrg,
     GithubOrgSummary,
@@ -19,6 +20,7 @@ from .github import (
 from .httpx import HeaderTypes, PrimitiveData, QueryParamTypes
 
 __all__ = [
+    "BranchProtection",
     "GithubAuditLog",
     "GithubOrg",
     "GithubOrgSummary",
