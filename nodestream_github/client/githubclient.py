@@ -617,3 +617,38 @@ class GithubRestApiClient:
                 yield team
         except httpx.HTTPError as e:
             _fetch_problem(f"teams for repo {owner_login}/{repo_name}", e)
+
+    async def fetch_branch_protection(
+        self,
+        *,
+        owner_login: str,
+        repo_name: str,
+        branch: str,
+    ) -> types.BranchProtection | None:
+        """Fetches the branch protection for a given branch.
+
+        https://docs.github.com/en/enterprise-server@3.12/rest/branches/branch-protection?apiVersion=2022-11-28#get-branch-protection
+        """
+
+        try:
+            return await self._get_item(
+                f"repos/{owner_login}/{repo_name}/branches/{branch}/protection"
+            )
+        except httpx.HTTPError as e:
+            match e:
+                case httpx.HTTPStatusError(response=response) if (
+                    response.status_code == 404
+                ):
+                    logger.info(
+                        "Branch protection not found for branch %s on repo %s/%s",
+                        branch,
+                        owner_login,
+                        repo_name,
+                    )
+                case _:
+                    _fetch_problem(
+                        f"branch protection for branch {branch} on "
+                        f"repo {owner_login}/{repo_name}",
+                        e,
+                    )
+            return None
