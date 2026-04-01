@@ -379,6 +379,7 @@ files = [
     {file = "confluent_kafka-2.12.1-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:1ca2519bf27ea71ca32feb01859a086183614c44f8d843a917fcc1c135c24706"},
     {file = "confluent_kafka-2.12.1-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:2b4bb9fefa85462aa0b1f5d96abadffad911d93033b470b3b6fc46d63f2a28e9"},
     {file = "confluent_kafka-2.12.1-cp39-cp39-win_amd64.whl", hash = "sha256:64a5798ec7fe5a101e055c2729c6ac6d6fd9d462a93a1fb3e314866a70ce804b"},
+    {file = "confluent_kafka-2.12.1.tar.gz", hash = "sha256:cfc4ceeb3071a678f7c93cfe1e76216442e1621ee6192584cdf704db1d619894"},
 ]
 
 [package.extras]
@@ -876,14 +877,14 @@ files = [
 
 [[package]]
 name = "nodestream"
-version = "0.14.17"
+version = "0.15.0"
 description = "A Fast, Declarative ETL for Graph Databases."
 optional = false
 python-versions = "<4.0,>=3.10"
 groups = ["main"]
 files = [
-    {file = "nodestream-0.14.17-py3-none-any.whl", hash = "sha256:4387486a4b7242c72f669b206e6c12db5ae88b133617800abd48794d4f76ed44"},
-    {file = "nodestream-0.14.17.tar.gz", hash = "sha256:36148e46f3a111f8868d80824559825ee987e3aa8fa3809461cce8b374aae038"},
+    {file = "nodestream-0.15.0-py3-none-any.whl", hash = "sha256:27cc0c3ac3037b79921032edfc844ff606e7aaacc1f3d5361f5f0d29ac4f548b"},
+    {file = "nodestream-0.15.0.tar.gz", hash = "sha256:742343e5af93ae43c657abc9624b780fe72ec395b9317cd44c440381fb79f3e2"},
 ]
 
 [package.dependencies]
@@ -1989,4 +1990,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "0ff638c9e026ee429e4f31b2344c3bdafb54a6c5640452c51c446e8d8c17dd06"
+content-hash = "4dbdbbd4638ba9eb6a0796b04cacb24d74d9b66d6e5daa1d4fb1b9b39ed7b1ab"
