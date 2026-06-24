@@ -11,6 +11,7 @@ packages = [
 ]
 readme = "README.md"
 
+
 [tool.poetry.dependencies]
 python = "^3.12"
 nodestream = "^0.16.0"
