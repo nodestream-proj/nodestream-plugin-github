@@ -36,7 +36,7 @@ def team(
     slug: str = "justice-league",
     **kwargs: Any,
 ) -> GithubTeam:
-    org = organization if organization else GITHUB_ORG
+    org = organization or GITHUB_ORG
     summary = team_summary(team_id=team_id, org_login=org["login"], slug=slug)
     return (
         summary

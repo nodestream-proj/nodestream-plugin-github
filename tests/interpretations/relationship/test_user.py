@@ -1,5 +1,5 @@
 import pytest
-from nodestream.model import DesiredIngestion
+from nodestream.model import DesiredIngestion, RelationshipCreationRule
 from nodestream.pipeline.value_providers import ProviderContext
 
 from nodestream_github.interpretations.relationship.user import (
@@ -37,3 +37,34 @@ def test_user_relationship(context: ProviderContext):
     sample = UserRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
     assert sample.node_type.single_value(context) == "GithubUser"
     assert sample.relationship_type.single_value(context) == "TEST_RELATIONSHIP_TYPE"
+
+
+def test_user_relationship_forwards_optional_kwargs():
+    sample = UserRelationshipInterpretation(
+        "TEST_RELATIONSHIP_TYPE",
+        key_normalization={"do_lowercase_strings": False},
+        properties_normalization={"do_lowercase_strings": True},
+        node_additional_types=["Extra"],
+    )
+    assert sample.key_normalization["do_lowercase_strings"] is False
+    assert sample.properties_normalization == {"do_lowercase_strings": True}
+    assert sample.node_additional_types == ("Extra",)
+
+
+def test_user_relationship_creation_rule_passthrough():
+    sample = UserRelationshipInterpretation(
+        "TEST_RELATIONSHIP_TYPE", relationship_creation_rule="CREATE"
+    )
+    assert sample.relationship_creation_rule == RelationshipCreationRule.CREATE
+
+
+def test_user_relationship_creation_rule_defaults_to_eager():
+    sample = UserRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
+    assert sample.relationship_creation_rule == RelationshipCreationRule.EAGER
+
+
+def test_user_relationship_creation_rule_invalid_raises():
+    with pytest.raises(ValueError, match="BOGUS"):
+        UserRelationshipInterpretation(
+            "TEST_RELATIONSHIP_TYPE", relationship_creation_rule="BOGUS"
+        )
