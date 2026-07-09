@@ -35,3 +35,15 @@ def test_repo_relationship(context: ProviderContext):
     sample = RepositoryRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
     assert sample.node_type.single_value(context) == "GithubRepo"
     assert sample.relationship_type.single_value(context) == "TEST_RELATIONSHIP_TYPE"
+
+
+def test_repo_relationship_forwards_optional_kwargs():
+    sample = RepositoryRelationshipInterpretation(
+        "TEST_RELATIONSHIP_TYPE",
+        key_normalization={"do_lowercase_strings": False},
+        properties_normalization={"do_lowercase_strings": True},
+        node_additional_types=["Extra"],
+    )
+    assert sample.key_normalization == {"do_lowercase_strings": False}
+    assert sample.properties_normalization == {"do_lowercase_strings": True}
+    assert sample.node_additional_types == ("Extra",)

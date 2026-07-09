@@ -37,3 +37,15 @@ def test_user_relationship(context: ProviderContext):
     sample = UserRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
     assert sample.node_type.single_value(context) == "GithubUser"
     assert sample.relationship_type.single_value(context) == "TEST_RELATIONSHIP_TYPE"
+
+
+def test_user_relationship_forwards_optional_kwargs():
+    sample = UserRelationshipInterpretation(
+        "TEST_RELATIONSHIP_TYPE",
+        key_normalization={"do_lowercase_strings": False},
+        properties_normalization={"do_lowercase_strings": True},
+        node_additional_types=["Extra"],
+    )
+    assert sample.key_normalization == {"do_lowercase_strings": False}
+    assert sample.properties_normalization == {"do_lowercase_strings": True}
+    assert sample.node_additional_types == ("Extra",)
