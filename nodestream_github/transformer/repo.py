@@ -52,7 +52,7 @@ class RepoToUserCollaboratorsTransformer(RepoFullNameTransformer):
         full_name: str,
         simplified_repo: types.SimplifiedRepo,
     ) -> AsyncGenerator[types.GithubUser]:
-        (repo_owner, repo_name) = full_name.split("/")
+        repo_owner, repo_name = full_name.split("/")
 
         logging.debug("Transforming repo %s/%s", repo_owner, repo_name)
 
@@ -83,7 +83,7 @@ class RepoToTeamCollaboratorsTransformer(RepoFullNameTransformer):
         full_name: str,
         simplified_repo: types.SimplifiedRepo,
     ) -> AsyncGenerator[types.GithubTeam]:
-        (repo_owner, repo_name) = full_name.split("/")
+        repo_owner, repo_name = full_name.split("/")
 
         logging.debug("Transforming repo %s/%s", repo_owner, repo_name)
 

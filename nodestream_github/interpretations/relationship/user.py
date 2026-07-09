@@ -46,23 +46,27 @@ class UserRelationshipInterpretation(
         key_normalization: dict[str, Any] | None = None,
         properties_normalization: dict[str, Any] | None = None,
         node_additional_types: Iterable[str] | None = None,
+        relationship_creation_rule: str | None = None,
     ):
         super().__init__(
-            "GithubUser",
-            relationship_type,
-            {"node_id": JmespathValueProvider.from_string_expression("node_id")},
-            {
+            node_type="GithubUser",
+            relationship_type=relationship_type,
+            node_key={
+                "node_id": JmespathValueProvider.from_string_expression("node_id")
+            },
+            node_properties={
                 "id": JmespathValueProvider.from_string_expression("id"),
                 "login": JmespathValueProvider.from_string_expression("login"),
             },
-            relationship_key,
-            relationship_properties,
-            outbound,
-            find_many,
-            iterate_on,
-            cardinality,
-            node_creation_rule,
-            key_normalization,
-            properties_normalization,
-            node_additional_types,
+            relationship_key=relationship_key,
+            relationship_properties=relationship_properties,
+            outbound=outbound,
+            find_many=find_many,
+            iterate_on=iterate_on,
+            cardinality=cardinality,
+            node_creation_rule=node_creation_rule,
+            relationship_creation_rule=relationship_creation_rule,
+            key_normalization=key_normalization,
+            properties_normalization=properties_normalization,
+            node_additional_types=node_additional_types,
         )
