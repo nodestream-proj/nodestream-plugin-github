@@ -1,7 +1,7 @@
 ---
 title: "fix: Forward relationship interpretation args by keyword for nodestream 0.16"
 type: fix
-status: active
+status: completed
 date: 2026-07-09
 ---
 
