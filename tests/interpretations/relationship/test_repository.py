@@ -1,5 +1,5 @@
 import pytest
-from nodestream.model import DesiredIngestion
+from nodestream.model import DesiredIngestion, RelationshipCreationRule
 from nodestream.pipeline.value_providers import ProviderContext
 
 from nodestream_github.interpretations.relationship.repository import (
@@ -47,3 +47,22 @@ def test_repo_relationship_forwards_optional_kwargs():
     assert sample.key_normalization == {"do_lowercase_strings": False}
     assert sample.properties_normalization == {"do_lowercase_strings": True}
     assert sample.node_additional_types == ("Extra",)
+
+
+def test_repo_relationship_creation_rule_passthrough():
+    sample = RepositoryRelationshipInterpretation(
+        "TEST_RELATIONSHIP_TYPE", relationship_creation_rule="CREATE"
+    )
+    assert sample.relationship_creation_rule == RelationshipCreationRule.CREATE
+
+
+def test_repo_relationship_creation_rule_defaults_to_eager():
+    sample = RepositoryRelationshipInterpretation("TEST_RELATIONSHIP_TYPE")
+    assert sample.relationship_creation_rule == RelationshipCreationRule.EAGER
+
+
+def test_repo_relationship_creation_rule_invalid_raises():
+    with pytest.raises(ValueError, match="BOGUS"):
+        RepositoryRelationshipInterpretation(
+            "TEST_RELATIONSHIP_TYPE", relationship_creation_rule="BOGUS"
+        )
