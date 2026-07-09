@@ -43,10 +43,10 @@ class RepositoryRelationshipInterpretation(
         iterate_on: ValueProvider | None = None,
         cardinality: str = "SINGLE",
         node_creation_rule: str | None = None,
-        relationship_creation_rule: str | None = None,
         key_normalization: dict[str, Any] | None = None,
         properties_normalization: dict[str, Any] | None = None,
         node_additional_types: Iterable[str] | None = None,
+        relationship_creation_rule: str | None = None,
     ):
         super().__init__(
             node_type="GithubRepo",

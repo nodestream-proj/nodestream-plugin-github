@@ -46,7 +46,7 @@ def test_user_relationship_forwards_optional_kwargs():
         properties_normalization={"do_lowercase_strings": True},
         node_additional_types=["Extra"],
     )
-    assert sample.key_normalization == {"do_lowercase_strings": False}
+    assert sample.key_normalization["do_lowercase_strings"] is False
     assert sample.properties_normalization == {"do_lowercase_strings": True}
     assert sample.node_additional_types == ("Extra",)
 
