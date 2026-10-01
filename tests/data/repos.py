@@ -25,7 +25,6 @@ def repo(
     ))
 
     owner_login = repo_owner["login"]
-    log.info("%s", owner_login)
     sec: SecurityAndAnalysis = {
         "advanced_security": {
             "status": SecurityAndAnalysisAdvancedSecurityStatus.enabled

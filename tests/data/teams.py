@@ -46,16 +46,11 @@ def team(
 ) -> TeamFull:
     _org = TeamOrganization(**(org or GITHUB_ORG))  # ty: ignore[invalid-key]
 
-    log.info("_org is: %s", _org)
-    log.info("org is: %s", org is not None and "login" in org)
-    log.info("GHO is: %s", "login" in GITHUB_ORG)
-    log.info("_org[login] is: %s", _org.get("login"))
     summary = team_summary(
         team_id=team_id,
         org_login=_org["login"],
         slug=kwargs.get("slug", "justice-league"),
     )
-    log.info("summary is: %s", summary)
     _summary = {**summary}
     output = TeamFull(**_summary)
     output.update({
