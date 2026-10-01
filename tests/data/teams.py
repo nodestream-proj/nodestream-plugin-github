@@ -1,4 +1,3 @@
-import logging
 from typing import Unpack
 
 from nodestream_github.types.gh_model import (
@@ -33,9 +32,6 @@ def team_summary(
         "repositories_url": f"https://HOSTNAME/teams/{team_id}/repos",
         "parent": None,
     } | kwargs
-
-
-log = logging.getLogger(__name__)
 
 
 def team(

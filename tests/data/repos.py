@@ -1,4 +1,3 @@
-import logging
 from typing import Unpack
 
 from nodestream_github.types.gh_model import (
@@ -9,8 +8,6 @@ from nodestream_github.types.gh_model import (
 )
 from tests.data.users import OCTOCAT_USER_SHORT, user_short
 from tests.data.util import encode_as_node_id
-
-log = logging.getLogger(__name__)
 
 
 def repo(
