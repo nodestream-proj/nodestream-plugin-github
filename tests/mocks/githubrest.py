@@ -1,6 +1,6 @@
 from typing import Any
 
-from pytest_httpx import HTTPXMock
+from pytest_httpx2 import HTTPXMock
 
 from nodestream_github.types import HeaderTypes
 from nodestream_github.types.enums import (

@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 
-import httpx
+import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
@@ -28,7 +28,7 @@ class UserClient:
             async for user in self.client.get_paginated("users"):
                 if user["type"] == "User":
                     yield NullableSimpleUser(**user)
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem("all users", e)
 
     async def fetch_user(self, *, username: str) -> PrivateUser | None:
@@ -39,7 +39,7 @@ class UserClient:
         """
         try:
             return PrivateUser(**await self.client.get_item(f"users/{username}"))
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"full user info for {username}", e)
             return None
 
@@ -64,5 +64,5 @@ class UserClient:
             ):
                 yield MinimalRepository(**repo)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"repos for user {user_login}", e)

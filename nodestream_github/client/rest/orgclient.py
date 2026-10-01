@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 
-import httpx
+import httpx2
 
 from nodestream_github.client.rest import GithubRestApiClient, log_fetch_problem
 from nodestream_github.logging import get_plugin_logger
@@ -46,7 +46,7 @@ class OrgClient:
             ):
                 yield MinimalRepository(**response)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"repos for org {org_login}", e)
 
     async def fetch_members_for_org(
@@ -73,7 +73,7 @@ class OrgClient:
             ):
                 yield NullableSimpleUser(**member)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"members for org {org_login}", e)
 
     async def fetch_all_organizations(self) -> AsyncGenerator[OrganizationSimple]:
@@ -84,7 +84,7 @@ class OrgClient:
         try:
             async for org in self.client.get_paginated("organizations"):
                 yield OrganizationSimple(**org)
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem("all organizations", e)
 
     async def fetch_full_org(self, org_login: str) -> OrganizationFull | None:
@@ -101,6 +101,6 @@ class OrgClient:
             logger.debug("fetching full org=%s", org_login)
             item = await self.client.get_item(f"orgs/{org_login}")
             return OrganizationFull(**item)
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"full organization info for {org_login}", e)
             return None

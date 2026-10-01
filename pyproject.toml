@@ -12,9 +12,9 @@ dependencies = [
     "nodestream>=0.16.0,<0.17.0",
     "limits>=5.5.0,<6.0.0",
     "tenacity>=9.1.4,<10.0.0",
-    "httpx>=0.27,<0.28",
     "python-dateutil (>=2.9.0.post0,<3.0.0)",
     "typing-extensions (>=4.16.0,<5.0.0)",
+    "httpx2 (>=2.13.1,<3.0.0)",
 ]
 
 [project.entry-points."nodestream.plugins"]
@@ -26,17 +26,17 @@ dev = [
     "black>=26.5.1,<27.0.0",
     "freezegun>=1.5.5,<2.0.0",
     "isort (<9)",
-    "pytest>=8.4.1,<9.0.0",
+    "pytest (>=9.1.1,<10.0.0)",
     "pytest-asyncio>=1.2.0,<2.0.0",
     "pytest-cov>=7.0.0,<8.0.0",
     "pytest-github-actions-annotate-failures (>=0.4.2,<0.5.0)",
-    "pytest-httpx>=0.34.0,<0.35.0",
     "pytest-mock>=3.15.1,<4.0.0",
     "ruff (>=0.16.9,<0.17.0)",
     "nodestream (>=0.16.2,<0.17.0)",
     "types-python-dateutil (>=2.9.0.20260807,<3.0.0.0)",
     "ty (>=0.0.84,<0.0.85)",
     "datamodel-code-generator (>=0.83.0,<0.84.0)",
+    "httpx2-pytest (>=2.0.0,<3.0.0)",
 ]
 
 [build-system]
@@ -62,7 +62,12 @@ profile = "black"
 log_cli = true
 log_cli_level = "DEBUG"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github --junit-xml=pytest.xml"
+addopts = [
+    "--cov-report=term",
+    "--cov-report=xml",
+    "--cov=nodestream_github",
+    "--junit-xml=pytest.xml -p pytest_httpx2"
+]
 
 [tool.ruff.lint]
 select = ["A",

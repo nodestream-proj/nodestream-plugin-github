@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 from typing import Any
 
-import httpx
+import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
@@ -27,5 +27,5 @@ class EnterpriseClient:
                 f"enterprises/{enterprise_name}/audit-log", params=params
             ):
                 yield audit
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem("audit log", e)

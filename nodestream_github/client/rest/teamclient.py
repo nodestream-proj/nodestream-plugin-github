@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 
-import httpx
+import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
@@ -40,7 +40,7 @@ class TeamClient:
             ):
                 yield Team(**team_summary)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"teams for org {org_login}", e)
 
     async def fetch_team(self, *, org_login: str, slug: str) -> TeamFull | None:
@@ -52,7 +52,7 @@ class TeamClient:
             return TeamFull(
                 **await self.client.get_item(f"orgs/{org_login}/teams/{slug}")
             )
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"full team info for {org_login}/{slug}", e)
             return None
 
@@ -81,7 +81,7 @@ class TeamClient:
                 f"teams/{team_id}/members", params=params
             ):
                 yield NullableSimpleUser(**member)
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"members for team {team_id}", e)
 
     async def fetch_repos_for_team(
@@ -102,5 +102,5 @@ class TeamClient:
                 f"orgs/{org_login}/teams/{slug}/repos"
             ):
                 yield MinimalRepository(**repo)
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"repos for team {org_login}/{slug}", e)

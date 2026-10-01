@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 import pytest
 
 from nodestream_github import GithubOrganizationsExtractor
@@ -102,7 +102,7 @@ async def test_orgs_continue_through_org_detail_status_fail(
     org_extractor: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
-    gh_rest_mock.get_org(org_name="github", status_code=httpx.codes.NOT_FOUND)
+    gh_rest_mock.get_org(org_name="github", status_code=httpx2.codes.NOT_FOUND)
     gh_rest_mock.get_org(org_name="example", json=EXAMPLE_ORG)
 
     gh_rest_mock.get_members_for_org(
@@ -131,7 +131,7 @@ async def test_orgs_continue_through_org_member_status_fail(
         org_name="github",
         json=[],
         role=OrgMembershipRole.admin,
-        status_code=httpx.codes.NOT_FOUND,
+        status_code=httpx2.codes.NOT_FOUND,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
@@ -177,7 +177,7 @@ async def test_orgs_continue_through_org_member_status_fail_second(
         org_name="github",
         json=[],
         role=OrgMembershipRole.member,
-        status_code=httpx.codes.NOT_FOUND,
+        status_code=httpx2.codes.NOT_FOUND,
     )
     gh_rest_mock.get_repos_for_org(org_name="github", json=[])
 
@@ -215,7 +215,7 @@ async def test_orgs_continue_through_org_repo_status_fail(
     gh_rest_mock.get_repos_for_org(
         org_name="github",
         json=[],
-        status_code=httpx.codes.NOT_FOUND,
+        status_code=httpx2.codes.NOT_FOUND,
     )
 
     assert [record async for record in org_extractor.extract_records()] == [
@@ -238,7 +238,7 @@ async def test_orgs_continue_through_org_detail_connection_fail(
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
     gh_rest_mock.add_exception(
-        exception=httpx.ReadTimeout("Mock Timeout Exception"),
+        exception=httpx2.ReadTimeout("Mock Timeout Exception"),
         url=f"{DEFAULT_BASE_URL}/orgs/github",
         is_reusable=True,
     )

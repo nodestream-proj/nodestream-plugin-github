@@ -1,4 +1,4 @@
-import httpx
+import httpx2
 import pytest
 
 from nodestream_github import GithubUserExtractor
@@ -75,7 +75,7 @@ async def test_github_user_extractor_repo_fail(
     gh_rest_mock.get_repos_for_user(
         user_login="octocat",
         type_param=UserRepoType.OWNER,
-        status_code=httpx.codes.SERVICE_UNAVAILABLE,
+        status_code=httpx2.codes.SERVICE_UNAVAILABLE,
     )
     actual = [user async for user in user_extractor.extract_records()]
 

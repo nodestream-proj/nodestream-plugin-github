@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 from typing import cast
 
-import httpx
+import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
@@ -43,7 +43,7 @@ class RepoClient:
             if lang_resp:
                 return cast("dict[str, int]", lang_resp)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"languages for repo {owner_login}/{repo_name}", e)
         return {}
 
@@ -65,7 +65,7 @@ class RepoClient:
             ):
                 yield Hook(**hook)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"webhooks for repo {owner_login}/{repo_name}", e)
 
     async def fetch_collaborators_for_repo(
@@ -101,7 +101,7 @@ class RepoClient:
             ):
                 yield Collaborator(**collab_resp)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"collaborators for repo {owner_login}/{repo_name}", e)
 
     async def fetch_all_public_repos(self) -> AsyncGenerator[MinimalRepository]:
@@ -123,7 +123,7 @@ class RepoClient:
             async for repo in self.client.get_paginated("repositories"):
                 yield MinimalRepository(**repo)
 
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem("all public repositories", e)
 
     async def fetch_teams_for_repo(self, *, owner_login: str, repo_name: str):
@@ -141,7 +141,7 @@ class RepoClient:
                 f"repos/{owner_login}/{repo_name}/teams"
             ):
                 yield team
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             log_fetch_problem(f"teams for repo {owner_login}/{repo_name}", e)
 
     async def fetch_branch_protection(
@@ -161,9 +161,9 @@ class RepoClient:
                 f"repos/{owner_login}/{repo_name}/branches/{branch}/protection"
             )
             return BranchProtection(**item) if item else None
-        except httpx.HTTPError as e:
+        except httpx2.HTTPError as e:
             match e:
-                case httpx.HTTPStatusError(response=response) if (
+                case httpx2.HTTPStatusError(response=response) if (
                     response.status_code == 404
                 ):
                     logger.info(

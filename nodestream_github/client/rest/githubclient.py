@@ -9,7 +9,8 @@ from collections.abc import AsyncGenerator, Mapping
 from enum import Enum
 from typing import Any, NotRequired, TypedDict
 
-import httpx
+import httpx2
+from httpx2 import URL, Headers, QueryParams
 from limits import RateLimitItem, RateLimitItemPerMinute
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
@@ -22,8 +23,8 @@ from tenacity import (
     wait_random_exponential,
 )
 
-import nodestream_github.types as types
 from nodestream_github.logging import get_plugin_logger
+from nodestream_github.types import HeaderTypes, QueryParamTypes
 
 DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE = int(13000 / 60)
 DEFAULT_MAX_RETRIES = 20
@@ -40,11 +41,11 @@ class AllowedAuditActionsPhrases(Enum):
 
 
 class RateLimitedError(Exception):
-    def __init__(self, url: str | httpx.URL):
+    def __init__(self, url: str | httpx2.URL):
         super().__init__(f"Rate limited when calling {url}")
 
 
-def _safe_get_json_error_message(response: httpx.Response) -> str:
+def _safe_get_json_error_message(response: httpx2.Response) -> str:
     try:
         return response.json().get("message")
     except AttributeError:
@@ -55,9 +56,9 @@ def _safe_get_json_error_message(response: httpx.Response) -> str:
         return response.text
 
 
-def log_fetch_problem(title: str, e: httpx.HTTPError):
+def log_fetch_problem(title: str, e: httpx2.HTTPError):
     match e:
-        case httpx.HTTPStatusError(response=response):
+        case httpx2.HTTPStatusError(response=response):
             error_message = _safe_get_json_error_message(response)
             logger.warning(
                 "%s %s - %s%s",
@@ -116,7 +117,7 @@ class GithubRestApiClient:
 
         self._per_page = per_page
         self._limit_storage = MemoryStorage()
-        self._default_headers = httpx.Headers({
+        self._default_headers = Headers({
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         })
@@ -139,7 +140,7 @@ class GithubRestApiClient:
         )
         logger.info("GitHub REST RateLimit set to %s", self._rate_limit)
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
-        self._session = httpx.AsyncClient()
+        self._session = httpx2.AsyncClient()
 
         max_retry_wait_seconds = (
             DEFAULT_MAX_RETRY_WAIT_SECONDS
@@ -149,7 +150,7 @@ class GithubRestApiClient:
         self._retryer = AsyncRetrying(
             wait=wait_random_exponential(max=max_retry_wait_seconds),
             stop=stop_after_attempt(self.max_retries),
-            retry=retry_if_exception_type((RateLimitedError, httpx.TransportError)),
+            retry=retry_if_exception_type((RateLimitedError, httpx2.TransportError)),
             before_sleep=before_sleep_log(logger, logging.WARNING),
             after=after_log(logger, logging.WARNING),
             reraise=True,
@@ -160,7 +161,7 @@ class GithubRestApiClient:
         return self._retryer
 
     @property
-    def session(self) -> httpx.AsyncClient:
+    def session(self) -> httpx2.AsyncClient:
         return self._session
 
     @property
@@ -180,7 +181,7 @@ class GithubRestApiClient:
         return self._limit_storage
 
     @property
-    def default_headers(self) -> httpx.Headers:
+    def default_headers(self) -> HeaderTypes:
         return self._default_headers
 
     @property
@@ -202,9 +203,9 @@ class GithubRestApiClient:
     async def _get(
         self,
         url: str,
-        params: types.QueryParamTypes | None,
-        headers: types.HeaderTypes | None,
-    ) -> httpx.Response:
+        params: QueryParamTypes,
+        headers: HeaderTypes,
+    ) -> httpx2.Response:
         """
         Perform a GET request.
 
@@ -217,7 +218,7 @@ class GithubRestApiClient:
         if not can_hit:
             raise RateLimitedError(url)
 
-        merged_headers = httpx.Headers(self.default_headers)
+        merged_headers = Headers(self.default_headers)
         merged_headers.update(headers)
         response = await self.session.get(
             url,
@@ -229,25 +230,32 @@ class GithubRestApiClient:
 
     async def _get_retrying(
         self,
-        url: str | httpx.URL,
-        params: types.QueryParamTypes | None = None,
-        headers: types.HeaderTypes | None = None,
-    ) -> httpx.Response | None:
+        url: str | httpx2.URL,
+        params: QueryParamTypes | None = None,
+        headers: HeaderTypes | None = None,
+    ) -> httpx2.Response | None:
         return await self.retryer(self._get, url, params, headers)
 
     async def get_paginated(
         self,
         path: str,
-        params: Mapping | None = None,
-        headers: types.HeaderTypes | None = None,
+        params: QueryParamTypes | None = None,
+        headers: HeaderTypes | None = None,
     ) -> AsyncGenerator[dict[str, Any]]:
-        url: str | None = f"{self.base_url}/{path}"
+        url: str = f"{self.base_url}/{path}"
+        _url = URL(url)
         query_params = {"per_page": self.per_page}
-        if params:
-            query_params.update(params)
 
-        while url is not None:
-            if "&page=100" in url:
+        if params and isinstance(params, Mapping):
+            query_params = {**query_params, **params}
+        elif params and isinstance(params, QueryParams):
+            query_params.update(*params.items())
+        elif params:
+            query_params.update(*params)
+
+        while _url is not None:
+            query_params.update(_url.params)
+            if query_params.get("page") == "100":
                 logger.warning(
                     "The GithubAPI has reached the maximum page size "
                     "of 100. The returned data may be incomplete for request: %s",
@@ -262,13 +270,14 @@ class GithubRestApiClient:
             for tag in response.json():
                 yield tag
 
-            url = response.links.get("next", {}).get("url")
+            next_url = response.links.get("next", {}).get("url")
+            _url = URL(next_url) if next_url else None
 
     async def get_item(
         self,
-        path: str | httpx.URL,
-        headers: types.HeaderTypes | None = None,
-        params: types.QueryParamTypes | None = None,
+        path: str | httpx2.URL,
+        headers: HeaderTypes | None = None,
+        params: QueryParamTypes | None = None,
     ) -> dict[str, Any]:
         url = f"{self.base_url}/{path}"
         response = await self._get_retrying(url, headers=headers, params=params)

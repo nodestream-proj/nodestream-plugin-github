@@ -1,8 +1,8 @@
 import logging
 
-import httpx
+import httpx2
 import pytest
-from pytest_httpx import HTTPXMock
+from pytest_httpx2 import HTTPXMock
 
 from nodestream_github.client import GithubRestApiClient
 from nodestream_github.client.rest.repoclient import RepoClient
@@ -11,11 +11,11 @@ from tests.mocks.githubrest import DEFAULT_BASE_URL
 
 @pytest.mark.asyncio
 async def test_fetch_branch_protection(
-    httpx_mock: HTTPXMock, core_client: GithubRestApiClient
+    httpx2_mock: HTTPXMock, core_client: GithubRestApiClient
 ):
     client = RepoClient(core_client)
 
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/repos/octocat/Hello-World/branches/main/protection",
         json={"enabled": True},
     )
@@ -31,15 +31,15 @@ async def test_fetch_branch_protection(
 
 @pytest.mark.asyncio
 async def test_fetch_branch_protection_404(
-    httpx_mock: HTTPXMock,
+    httpx2_mock: HTTPXMock,
     caplog: pytest.LogCaptureFixture,
     core_client: GithubRestApiClient,
 ):
     client = RepoClient(core_client)
 
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/repos/octocat/Hello-World/branches/main/protection",
-        status_code=httpx.codes.NOT_FOUND,
+        status_code=httpx2.codes.NOT_FOUND,
         json={
             "documentation_url": "https://docs.github.com/enterprise-server@3.14/rest",
             "message": "Not Found",
@@ -62,15 +62,15 @@ async def test_fetch_branch_protection_404(
 
 @pytest.mark.asyncio
 async def test_fetch_branch_protection_503(
-    httpx_mock: HTTPXMock,
+    httpx2_mock: HTTPXMock,
     caplog: pytest.LogCaptureFixture,
     core_client: GithubRestApiClient,
 ):
     client = RepoClient(core_client)
 
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/repos/octocat/Hello-World/branches/main/protection",
-        status_code=httpx.codes.SERVICE_UNAVAILABLE,
+        status_code=httpx2.codes.SERVICE_UNAVAILABLE,
     )
 
     with caplog.at_level(logging.WARNING):
