@@ -6,20 +6,66 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
-from datetime import UTC, datetime, timedelta
-from typing import Any
+from datetime import UTC, date, datetime, timedelta
+from typing import Any, NotRequired, TypedDict
 
 from dateutil.relativedelta import relativedelta
 from nodestream.pipeline import Extractor
 
 from .client import GithubRestApiClient
+from .client.rest import EnterpriseClient
 from .logging import get_plugin_logger
-from .types import GithubAuditLog
 
 logger = get_plugin_logger(__name__)
 
+_allowed_lb_keys = [
+    "years",
+    "months",
+    "days",
+    "leapdays",
+    "weeks",
+    "hours",
+    "minutes",
+    "seconds",
+    "microseconds",
+    "year",
+    "month",
+    "day",
+    "weekday",
+    "yearday",
+    "nlyearday",
+    "hour",
+    "minute",
+    "second",
+    "microsecond",
+]
 
-def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
+
+class LookbackPeriod(TypedDict):
+    dt1: NotRequired[date]
+    dt2: NotRequired[date]
+    years: NotRequired[int]
+    months: NotRequired[int]
+    days: NotRequired[int]
+    leapdays: NotRequired[int]
+    weeks: NotRequired[int]
+    hours: NotRequired[int]
+    minutes: NotRequired[int]
+    seconds: NotRequired[int]
+    microseconds: NotRequired[int]
+    year: NotRequired[int]
+    month: NotRequired[int]
+    day: NotRequired[int]
+    weekday: NotRequired[int]
+    yearday: NotRequired[int]
+    nlyearday: NotRequired[int]
+    hour: NotRequired[int]
+    minute: NotRequired[int]
+    second: NotRequired[int]
+    microsecond: NotRequired[int]
+
+
+def generate_date_range(lookback_period: LookbackPeriod) -> list[str]:
     """
     Generate a list of date strings in YYYY-MM-DD format for
     the given lookback period.
@@ -37,9 +83,9 @@ def generate_date_range(lookback_period: dict[str, int]) -> list[str]:
 
 
 def build_search_phrase(
-    actions: list[str],
-    actors: list[str],
-    exclude_actors: list[str],
+    actions: list[str] | None,
+    actors: list[str] | None,
+    exclude_actors: list[str] | None,
     target_date: str | None = None,
 ) -> str:
     # adding action-based filtering
@@ -71,10 +117,10 @@ def build_search_phrase(
     ).strip()
 
 
-def validate_lookback_period(lookback_period: dict[str, int]) -> dict[str, int]:
+def validate_lookback_period(lookback_period: dict[str, str | int]) -> dict[str, int]:
     """Sanitize the lookback period to only include valid keys."""
 
-    def validate_positive_int(value: int) -> int:
+    def validate_positive_int(value: str | int) -> int:
         converted = int(value)
         if converted <= 0:
             negative_value_exception_msg = (
@@ -112,14 +158,17 @@ class GithubAuditLogExtractor(Extractor):
         **github_client_kwargs: Any | None,
     ):
         self.enterprise_name = enterprise_name
-        self.client = GithubRestApiClient(**github_client_kwargs)
-        self.lookback_period = lookback_period
+        self.core_client = GithubRestApiClient(**github_client_kwargs)
+        self.client = EnterpriseClient(self.core_client)
+        self.lookback_period = {
+            k: v for k, v in (lookback_period or {}).items() if k in _allowed_lb_keys
+        }
         self.actions = actions
         self.actors = actors
         self.exclude_actors = exclude_actors
 
-    async def extract_records(self) -> AsyncGenerator[GithubAuditLog]:
-        dates = generate_date_range(self.lookback_period) or [None]
+    async def extract_records(self) -> AsyncGenerator[dict[str, Any]]:
+        dates = generate_date_range(LookbackPeriod(**self.lookback_period)) or [None]
         for target_date in dates:
             search_phrase = build_search_phrase(
                 actions=self.actions,

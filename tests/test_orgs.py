@@ -1,8 +1,8 @@
-import httpx
+import httpx2
 import pytest
 
 from nodestream_github import GithubOrganizationsExtractor
-from nodestream_github.types.enums import OrgMemberRole
+from nodestream_github.types.gh_model import OrganizationFull, OrgMembershipRole
 from tests.data.orgs import (
     EXAMPLE_ORG,
     EXAMPLE_ORG_SUMMARY,
@@ -18,7 +18,7 @@ from tests.mocks.githubrest import (
     GithubHttpxMock,
 )
 
-BASE_EXPECTED_GITHUB_ORG = {
+BASE_EXPECTED_GITHUB_ORG: OrganizationFull = {
     "advanced_security_enabled_for_new_repositories": False,
     "avatar_url": "https://github.com/images/error/octocat_happy.gif",
     "billing_email": "mona@github.com",
@@ -70,7 +70,6 @@ BASE_EXPECTED_GITHUB_ORG = {
     "public_members_url": "https://HOSTNAME/orgs/github/public_members{/member}",
     "public_repos": 2,
     "repos_url": "https://HOSTNAME/orgs/github/repos",
-    "repositories": [],
     "secret_scanning_enabled_for_new_repositories": False,
     "secret_scanning_push_protection_custom_link": (
         "https://github.com/octo-org/octo-repo/blob/main/im-blocked.md"
@@ -103,18 +102,18 @@ async def test_orgs_continue_through_org_detail_status_fail(
     org_extractor: GithubOrganizationsExtractor, gh_rest_mock: GithubHttpxMock
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
-    gh_rest_mock.get_org(org_name="github", status_code=httpx.codes.NOT_FOUND)
+    gh_rest_mock.get_org(org_name="github", status_code=httpx2.codes.NOT_FOUND)
     gh_rest_mock.get_org(org_name="example", json=EXAMPLE_ORG)
 
     gh_rest_mock.get_members_for_org(
         org_name="example",
         json=[],
-        role=OrgMemberRole.ADMIN,
+        role=OrgMembershipRole.admin,
     )
     gh_rest_mock.get_members_for_org(
         org_name="example",
         json=[],
-        role=OrgMemberRole.MEMBER,
+        role=OrgMembershipRole.member,
     )
     gh_rest_mock.get_repos_for_org(org_name="example", json=[])
 
@@ -131,12 +130,12 @@ async def test_orgs_continue_through_org_member_status_fail(
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[],
-        role=OrgMemberRole.ADMIN,
-        status_code=httpx.codes.NOT_FOUND,
+        role=OrgMembershipRole.admin,
+        status_code=httpx2.codes.NOT_FOUND,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
-        role=OrgMemberRole.MEMBER,
+        role=OrgMembershipRole.member,
         json=[TURBO_USER_SHORT],
     )
     gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
@@ -172,13 +171,13 @@ async def test_orgs_continue_through_org_member_status_fail_second(
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[OCTOCAT_USER_SHORT],
-        role=OrgMemberRole.ADMIN,
+        role=OrgMembershipRole.admin,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[],
-        role=OrgMemberRole.MEMBER,
-        status_code=httpx.codes.NOT_FOUND,
+        role=OrgMembershipRole.member,
+        status_code=httpx2.codes.NOT_FOUND,
     )
     gh_rest_mock.get_repos_for_org(org_name="github", json=[])
 
@@ -191,6 +190,7 @@ async def test_orgs_continue_through_org_member_status_fail_second(
                 "node_id": "MDQ6VXNlcjE=",
                 "role": "admin",
             }],
+            "repositories": [],
         }
     ]
 
@@ -205,17 +205,17 @@ async def test_orgs_continue_through_org_repo_status_fail(
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[OCTOCAT_USER_SHORT],
-        role=OrgMemberRole.ADMIN,
+        role=OrgMembershipRole.admin,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[],
-        role=OrgMemberRole.MEMBER,
+        role=OrgMembershipRole.member,
     )
     gh_rest_mock.get_repos_for_org(
         org_name="github",
         json=[],
-        status_code=httpx.codes.NOT_FOUND,
+        status_code=httpx2.codes.NOT_FOUND,
     )
 
     assert [record async for record in org_extractor.extract_records()] == [
@@ -227,6 +227,7 @@ async def test_orgs_continue_through_org_repo_status_fail(
                 "node_id": "MDQ6VXNlcjE=",
                 "role": "admin",
             }],
+            "repositories": [],
         }
     ]
 
@@ -237,7 +238,7 @@ async def test_orgs_continue_through_org_detail_connection_fail(
 ):
     gh_rest_mock.all_orgs(json=[GITHUB_ORG_SUMMARY, EXAMPLE_ORG_SUMMARY])
     gh_rest_mock.add_exception(
-        exception=httpx.ReadTimeout("Mock Timeout Exception"),
+        exception=httpx2.ReadTimeout("Mock Timeout Exception"),
         url=f"{DEFAULT_BASE_URL}/orgs/github",
         is_reusable=True,
     )
@@ -245,12 +246,12 @@ async def test_orgs_continue_through_org_detail_connection_fail(
     gh_rest_mock.get_members_for_org(
         org_name="example",
         json=[],
-        role=OrgMemberRole.ADMIN,
+        role=OrgMembershipRole.admin,
     )
     gh_rest_mock.get_members_for_org(
         org_name="example",
         json=[],
-        role=OrgMemberRole.MEMBER,
+        role=OrgMembershipRole.member,
     )
     gh_rest_mock.get_repos_for_org(org_name="example", json=[])
 
@@ -266,12 +267,12 @@ async def test_get_orgs(
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[OCTOCAT_USER_SHORT],
-        role=OrgMemberRole.ADMIN,
+        role=OrgMembershipRole.admin,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[TURBO_USER_SHORT],
-        role=OrgMemberRole.MEMBER,
+        role=OrgMembershipRole.member,
     )
     gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
 
@@ -355,12 +356,12 @@ async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[OCTOCAT_USER_SHORT],
-        role=OrgMemberRole.ADMIN,
+        role=OrgMembershipRole.admin,
     )
     gh_rest_mock.get_members_for_org(
         org_name="github",
         json=[TURBO_USER_SHORT],
-        role=OrgMemberRole.MEMBER,
+        role=OrgMembershipRole.member,
     )
 
     all_records = [record async for record in org_extractor.extract_records()]
@@ -381,6 +382,5 @@ async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
                     "role": "member",
                 },
             ],
-            "repositories": [],
         }
     ]

@@ -1,8 +1,8 @@
-import httpx
+import httpx2
 import pytest
-from pytest_httpx import HTTPXMock
+from pytest_httpx2 import HTTPXMock
 
-from nodestream_github.client.githubclient import (
+from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
     RateLimitedError,
 )
@@ -12,17 +12,17 @@ from tests.mocks.githubrest import DEFAULT_BASE_URL, DEFAULT_HOSTNAME
 @pytest.mark.parametrize(
     "status_code",
     [
-        httpx.codes.BAD_REQUEST,
-        httpx.codes.UNAUTHORIZED,
+        httpx2.codes.BAD_REQUEST,
+        httpx2.codes.UNAUTHORIZED,
         420,
-        httpx.codes.INTERNAL_SERVER_ERROR,
-        httpx.codes.BAD_GATEWAY,
-        httpx.codes.SERVICE_UNAVAILABLE,
-        httpx.codes.GATEWAY_TIMEOUT,
+        httpx2.codes.INTERNAL_SERVER_ERROR,
+        httpx2.codes.BAD_GATEWAY,
+        httpx2.codes.SERVICE_UNAVAILABLE,
+        httpx2.codes.GATEWAY_TIMEOUT,
     ],
 )
 @pytest.mark.asyncio
-async def test_retry_bad_status(httpx_mock: HTTPXMock, status_code: int):
+async def test_retry_bad_status(httpx2_mock: HTTPXMock, status_code: int):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -31,18 +31,18 @@ async def test_retry_bad_status(httpx_mock: HTTPXMock, status_code: int):
         max_retry_wait_seconds=0,
     )
 
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/example?per_page=100",
         status_code=status_code,
         is_reusable=False,
     )
 
-    with pytest.raises(httpx.HTTPStatusError):
-        _ignore = [item async for item in client._get_paginated("example")]
+    with pytest.raises(httpx2.HTTPStatusError):
+        _ignore = [item async for item in client.get_paginated("example")]
 
 
 @pytest.mark.asyncio
-async def test_retry_ratelimited(httpx_mock: HTTPXMock):
+async def test_retry_ratelimited(httpx2_mock: HTTPXMock):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -51,17 +51,17 @@ async def test_retry_ratelimited(httpx_mock: HTTPXMock):
         rate_limit_per_minute=1,
     )
 
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/example?per_page=100", json=["a", "b"]
     )
 
-    _ignored = [item async for item in client._get_paginated("example")]
+    _ignored = [item async for item in client.get_paginated("example")]
     with pytest.raises(RateLimitedError):
-        _ignored = [item async for item in client._get_paginated("example")]
+        _ignored = [item async for item in client.get_paginated("example")]
 
 
 @pytest.mark.asyncio
-async def test_pagination(httpx_mock: HTTPXMock):
+async def test_pagination(httpx2_mock: HTTPXMock):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
         github_hostname=DEFAULT_HOSTNAME,
@@ -69,28 +69,27 @@ async def test_pagination(httpx_mock: HTTPXMock):
         max_retries=0,
         per_page=2,
     )
-
     next_page = f'<{DEFAULT_BASE_URL}/example?per_page=2&page=1>; rel="next"'
     first_page = f'<${DEFAULT_BASE_URL}/example?per_page=2&page=0>; rel="first"'
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/example?per_page=2",
         json=["a", "b"],
         is_reusable=False,
         headers={"link": f"{next_page}, {first_page}"},
     )
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/example?per_page=2&page=1",
         json=["c", "d"],
         is_reusable=False,
     )
 
-    items = [item async for item in client._get_paginated("example")]
+    items = [item async for item in client.get_paginated("example")]
     assert items == ["a", "b", "c", "d"]
 
 
 @pytest.mark.asyncio
 async def test_pagination_truncate_warning(
-    httpx_mock: HTTPXMock, caplog: pytest.LogCaptureFixture
+    httpx2_mock: HTTPXMock, caplog: pytest.LogCaptureFixture
 ):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
@@ -102,20 +101,20 @@ async def test_pagination_truncate_warning(
 
     next_page = f'<{DEFAULT_BASE_URL}/example?per_page=2&page=100>; rel="next"'
     first_page = f'<${DEFAULT_BASE_URL}/example?per_page=2&page=99>; rel="first"'
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/example?per_page=2",
         json=["a", "b"],
         is_reusable=False,
         headers={"link": f"{next_page}, {first_page}"},
     )
-    httpx_mock.add_response(
+    httpx2_mock.add_response(
         url=f"{DEFAULT_BASE_URL}/example?per_page=2&page=100",
         json=["c", "d"],
         is_reusable=False,
     )
 
-    with caplog.at_level("WARNING"):
-        items = [item async for item in client._get_paginated("example")]
+    with caplog.at_level("INFO"):
+        items = [item async for item in client.get_paginated("example")]
 
     assert items == ["a", "b", "c", "d"]
 

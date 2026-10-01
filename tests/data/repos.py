@@ -1,22 +1,39 @@
-from typing import Any
+from typing import Unpack
 
-from nodestream_github.types import GithubRepo
-from tests.data.users import OCTOCAT_USER_SHORT
+from nodestream_github.types.gh_model import (
+    MinimalRepository,
+    NullableSimpleUser,
+    SecurityAndAnalysis,
+    SecurityAndAnalysisAdvancedSecurityStatus,
+)
+from tests.data.users import OCTOCAT_USER_SHORT, user_short
 from tests.data.util import encode_as_node_id
 
 
 def repo(
     *,
-    owner: dict[str, Any] | None = None,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
-    **kwargs: Any,
-) -> GithubRepo:
+    **kwargs: Unpack[MinimalRepository],
+) -> MinimalRepository:
 
-    repo_owner = OCTOCAT_USER_SHORT if owner is None else owner
+    repo_owner = NullableSimpleUser(**(
+        {**OCTOCAT_USER_SHORT} if kwargs.get("owner") is None else {**kwargs["owner"]}
+    ))
+
     owner_login = repo_owner["login"]
-
-    return {
+    sec: SecurityAndAnalysis = {
+        "advanced_security": {
+            "status": SecurityAndAnalysisAdvancedSecurityStatus.enabled
+        },
+        "secret_scanning": {
+            "status": SecurityAndAnalysisAdvancedSecurityStatus.enabled
+        },
+        "secret_scanning_push_protection": {
+            "status": SecurityAndAnalysisAdvancedSecurityStatus.disabled
+        },
+    }
+    output: MinimalRepository = {
         "id": repo_id,
         "node_id": encode_as_node_id(f"010:Repository{repo_id}"),
         "name": repo_name,
@@ -144,12 +161,9 @@ def repo(
         "pushed_at": "2011-01-26T19:06:43Z",
         "created_at": "2011-01-26T19:01:12Z",
         "updated_at": "2011-01-26T19:14:43Z",
-        "security_and_analysis": {
-            "advanced_security": {"status": "enabled"},
-            "secret_scanning": {"status": "enabled"},
-            "secret_scanning_push_protection": {"status": "disabled"},
-        },
-    } | kwargs
+        "security_and_analysis": sec,
+    }
+    return output | kwargs
 
 
-HELLO_WORLD_REPO = repo(owner=OCTOCAT_USER_SHORT, repo_name="Hello-World")
+HELLO_WORLD_REPO = repo(owner=user_short(user_login="octocat"), repo_name="Hello-World")

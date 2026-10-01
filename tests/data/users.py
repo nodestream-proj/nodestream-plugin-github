@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Unpack
 
-from nodestream_github.types import GithubUser
+from nodestream_github.types.gh_model import NullableSimpleUser, PrivateUser
 from tests.data.util import encode_as_node_id
 
 
@@ -8,8 +8,8 @@ def user_short(
     *,
     user_login: str = "octocat",
     user_id: int = 1,
-    **kwargs: Any,
-) -> GithubUser:
+    **kwargs: Unpack[NullableSimpleUser],
+) -> NullableSimpleUser:
 
     return {
         "login": f"{user_login}",
@@ -41,11 +41,13 @@ def user(
     *,
     user_login: str = "octocat",
     user_id: int = 1,
-    **kwargs: Any,
-) -> GithubUser:
-
+    **kwargs: Unpack["PrivateUser"],
+) -> PrivateUser:
+    short_user = user_short(user_login=user_login, user_id=user_id)
     return (
-        user_short(user_login=user_login, user_id=user_id)
+        PrivateUser(
+            **{k: v for k, v in short_user.items() if k in PrivateUser.__annotations__}
+        )
         | {
             "name": "monalisa octocat",
             "company": "GitHub",
