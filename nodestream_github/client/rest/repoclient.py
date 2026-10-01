@@ -104,7 +104,7 @@ class RepoClient:
         except httpx.HTTPError as e:
             log_fetch_problem(f"collaborators for repo {owner_login}/{repo_name}", e)
 
-    async def fetch_all_public_repos(self) -> AsyncGenerator[MinimalRepository, None]:
+    async def fetch_all_public_repos(self) -> AsyncGenerator[MinimalRepository]:
         """
         Returns all public repositories in the order that they were created.
 
