@@ -1,155 +1,179 @@
+import logging
 from typing import Any
 
-from nodestream_github.types import GithubRepo
-from tests.data.users import OCTOCAT_USER_SHORT
+from nodestream_github.types.gh_model import (
+    MinimalRepository,
+    NullableSimpleUser,
+    SecurityAndAnalysis,
+    SecurityAndAnalysisAdvancedSecurity,
+    SecurityAndAnalysisAdvancedSecurityStatus,
+)
+from tests.data.users import OCTOCAT_USER_SHORT, user_short
 from tests.data.util import encode_as_node_id
+
+log = logging.getLogger(__name__)
 
 
 def repo(
     *,
-    owner: dict[str, Any] | None = None,
+    owner: NullableSimpleUser | None = None,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
     **kwargs: Any,
-) -> GithubRepo:
+) -> MinimalRepository:
 
-    repo_owner = OCTOCAT_USER_SHORT if owner is None else owner
+    log.info("\n******\n%s\n%s\n%s\n******", owner, repo_name, repo_id)
+    repo_owner = NullableSimpleUser(
+        **({**OCTOCAT_USER_SHORT} if owner is None else {**owner})
+    )
+
     owner_login = repo_owner["login"]
+    log.info("%s", owner_login)
 
-    return {
-        "id": repo_id,
-        "node_id": encode_as_node_id(f"010:Repository{repo_id}"),
-        "name": repo_name,
-        "full_name": f"{owner_login}/{repo_name}",
-        "owner": repo_owner,
-        "private": False,
-        "html_url": f"https://github.com/{owner_login}/{repo_name}",
-        "description": "This your first repo!",
-        "fork": False,
-        "url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}",
-        "archive_url": (
+    return MinimalRepository(
+        id=repo_id,
+        node_id=encode_as_node_id(f"010:Repository{repo_id}"),
+        name=repo_name,
+        full_name=f"{owner_login}/{repo_name}",
+        owner=repo_owner,
+        private=False,
+        html_url=f"https://github.com/{owner_login}/{repo_name}",
+        description="This your first repo!",
+        fork=False,
+        url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}",
+        archive_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/{{archive_format}}{{/ref}}"
         ),
-        "assignees_url": (
+        assignees_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/assignees{{/user}}"
         ),
-        "blobs_url": (
+        blobs_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/git/blobs{{/sha}}"
         ),
-        "branches_url": (
+        branches_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/branches{{/branch}}"
         ),
-        "collaborators_url": (
+        collaborators_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/collaborators{{/collaborator}}"
         ),
-        "comments_url": (
+        comments_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/comments{{/number}}"
         ),
-        "commits_url": (
+        commits_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/commits{{/sha}}"
         ),
-        "compare_url": (
+        compare_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/compare/{{base}}...{{head}}"
         ),
-        "contents_url": (
+        contents_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/contents/{{+path}}"
         ),
-        "contributors_url": (
+        contributors_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/contributors"
         ),
-        "deployments_url": (
+        deployments_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/deployments"
         ),
-        "downloads_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/downloads",
-        "events_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/events",
-        "forks_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/forks",
-        "git_commits_url": (
+        downloads_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/downloads",
+        events_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/events",
+        forks_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/forks",
+        git_commits_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/git/commits{{/sha}}"
         ),
-        "git_refs_url": (
+        git_refs_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/git/refs{{/sha}}"
         ),
-        "git_tags_url": (
+        git_tags_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/git/tags{{/sha}}"
         ),
-        "git_url": f"git:github.com/{owner_login}/{repo_name}.git",
-        "issue_comment_url": (
+        git_url=f"git:github.com/{owner_login}/{repo_name}.git",
+        issue_comment_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/issues/comments{{/number}}"
         ),
-        "issue_events_url": (
+        issue_events_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/issues/events{{/number}}"
         ),
-        "issues_url": (
+        issues_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/issues{{/number}}"
         ),
-        "keys_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/keys{{/key_id}}",
-        "labels_url": (
+        keys_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/keys{{/key_id}}",
+        labels_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/labels{{/name}}"
         ),
-        "languages_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/languages",
-        "merges_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/merges",
-        "milestones_url": (
+        languages_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/languages",
+        merges_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/merges",
+        milestones_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/milestones{{/number}}"
         ),
-        "notifications_url": (
+        notifications_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/notifications{{?since,all,participating}}"
         ),
-        "pulls_url": (
+        pulls_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/pulls{{/number}}"
         ),
-        "releases_url": (
+        releases_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/releases{{/id}}"
         ),
-        "ssh_url": f"git@github.com:{owner_login}/{repo_name}.git",
-        "stargazers_url": (
-            f"https://HOSTNAME/repos/{owner_login}/{repo_name}/stargazers"
-        ),
-        "statuses_url": (
+        ssh_url=f"git@github.com:{owner_login}/{repo_name}.git",
+        stargazers_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/stargazers",
+        statuses_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/statuses/{{sha}}"
         ),
-        "subscribers_url": (
+        subscribers_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/subscribers"
         ),
-        "subscription_url": (
+        subscription_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/subscription"
         ),
-        "tags_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/tags",
-        "teams_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/teams",
-        "trees_url": (
+        tags_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/tags",
+        teams_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/teams",
+        trees_url=(
             f"https://HOSTNAME/repos/{owner_login}/{repo_name}/git/trees{{/sha}}"
         ),
-        "clone_url": f"https://github.com/{owner_login}/{repo_name}.git",
-        "mirror_url": f"git:git.example.com/{owner_login}/{repo_name}",
-        "hooks_url": f"https://HOSTNAME/repos/{owner_login}/{repo_name}/hooks",
-        "svn_url": f"https://svn.github.com/{owner_login}/{repo_name}",
-        "homepage": "https://github.com",
-        "language": None,
-        "forks_count": 9,
-        "stargazers_count": 80,
-        "watchers_count": 80,
-        "size": 108,
-        "default_branch": "master",
-        "open_issues_count": 0,
-        "is_template": False,
-        "topics": ["octocat", "atom", "electron", "api"],
-        "has_issues": True,
-        "has_projects": True,
-        "has_wiki": True,
-        "has_pages": False,
-        "has_downloads": True,
-        "has_discussions": False,
-        "archived": False,
-        "disabled": False,
-        "visibility": "public",
-        "pushed_at": "2011-01-26T19:06:43Z",
-        "created_at": "2011-01-26T19:01:12Z",
-        "updated_at": "2011-01-26T19:14:43Z",
-        "security_and_analysis": {
-            "advanced_security": {"status": "enabled"},
-            "secret_scanning": {"status": "enabled"},
-            "secret_scanning_push_protection": {"status": "disabled"},
-        },
-    } | kwargs
+        clone_url=f"https://github.com/{owner_login}/{repo_name}.git",
+        mirror_url=f"git:git.example.com/{owner_login}/{repo_name}",
+        hooks_url=f"https://HOSTNAME/repos/{owner_login}/{repo_name}/hooks",
+        svn_url=f"https://svn.github.com/{owner_login}/{repo_name}",
+        homepage="https://github.com",
+        language=None,
+        forks_count=9,
+        stargazers_count=80,
+        watchers_count=80,
+        size=108,
+        default_branch="master",
+        open_issues_count=0,
+        is_template=False,
+        topics=["octocat", "atom", "electron", "api"],
+        has_issues=True,
+        has_projects=True,
+        has_wiki=True,
+        has_pages=False,
+        has_downloads=True,
+        has_discussions=False,
+        archived=False,
+        disabled=False,
+        visibility="public",
+        pushed_at="2011-01-26T19:06:43Z",
+        created_at="2011-01-26T19:01:12Z",
+        updated_at="2011-01-26T19:14:43Z",
+        security_and_analysis=SecurityAndAnalysis(
+            advanced_security=SecurityAndAnalysisAdvancedSecurity(
+                status=SecurityAndAnalysisAdvancedSecurityStatus.enabled
+            ),
+            secret_scanning=SecurityAndAnalysisAdvancedSecurity(
+                status=SecurityAndAnalysisAdvancedSecurityStatus.enabled
+            ),
+            secret_scanning_push_protection=SecurityAndAnalysisAdvancedSecurity(
+                status=SecurityAndAnalysisAdvancedSecurityStatus.disabled
+            ),
+        ),
+        subscribers_count=0,
+        network_count=0,
+        forks=0,
+        open_issues=0,
+        watchers=0,
+        **kwargs,
+    )
 
 
-HELLO_WORLD_REPO = repo(owner=OCTOCAT_USER_SHORT, repo_name="Hello-World")
+HELLO_WORLD_REPO = repo(owner=user_short(user_login="octocat"), repo_name="Hello-World")

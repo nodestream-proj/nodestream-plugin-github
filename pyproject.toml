@@ -1,51 +1,61 @@
-[tool.poetry]
+[project]
 name = "nodestream-plugin-github"
 version = "0.16.1"
 description = ""
-authors = [
-    "Jon Bristow <jonthegm@yahoo.com>",
-    "Rohith Reddy <rohithkreddy@yahoo.com>"
-]
-packages = [
-    { include = "nodestream_github" }
-]
 readme = "README.md"
+authors = [
+    { name = "Jon Bristow", email = "jonthegm@yahoo.com" },
+    { name = "Rohith Reddy", email = "rohithkreddy@yahoo.com" },
+]
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "nodestream>=0.16.0,<0.17.0",
+    "limits>=5.5.0,<6.0.0",
+    "tenacity>=9.1.4,<10.0.0",
+    "httpx>=0.27,<0.28",
+    "pydantic[email] (>=2.13.5,<3.0.0)",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12"
-nodestream = "^0.16.0"
-limits = "^5.5.0"
-tenacity = "^9.1.4"
-httpx = ">=0.27,<0.28"
+[project.entry-points."nodestream.plugins"]
+projects = "nodestream_github.plugin"
+interpretations = "nodestream_github.interpretations"
 
-[tool.poetry.group.dev.dependencies]
-black = "^26.5.1"
-freezegun = "^1.5.5"
-isort = "^8.0.1"
-pytest = "^8.4.1"
-pytest-asyncio = "^1.2.0"
-pytest-cov = "^7.0.0"
-pytest-github-actions-annotate-failures = "^0.3.0"
-pytest-httpx = "^0.34.0"
-pytest-mock = "^3.15.1"
-ruff = "^0.15.21"
+[dependency-groups]
+dev = [
+    "black>=26.5.1,<27.0.0",
+    "freezegun>=1.5.5,<2.0.0",
+    "isort (<9)",
+    "pytest>=8.4.1,<9.0.0",
+    "pytest-asyncio>=1.2.0,<2.0.0",
+    "pytest-cov>=7.0.0,<8.0.0",
+    "pytest-github-actions-annotate-failures (>=0.4.2,<0.5.0)",
+    "pytest-httpx>=0.34.0,<0.35.0",
+    "pytest-mock>=3.15.1,<4.0.0",
+    "ruff (>=0.16.9,<0.17.0)",
+    "nodestream (>=0.16.2,<0.17.0)",
+    "types-python-dateutil (>=2.9.0.20260807,<3.0.0.0)",
+    "ty (>=0.0.84,<0.0.85)",
+    "datamodel-code-generator (>=0.83.0,<0.84.0)",
+]
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{ include = "nodestream_github" }]
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"
 
 [tool.black]
 line-length = 88
-target-version = ['py313']
+target-version = ['py312']
 preview = true
-enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "wrap_long_dict_values_in_parens"]
+enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "wrap_comprehension_in", "wrap_long_dict_values_in_parens"]
 
 [tool.isort]
 profile = "black"
-
-[tool.poetry.plugins."nodestream.plugins"]
-projects = "nodestream_github.plugin"
-interpretations = "nodestream_github.interpretations"
 
 [tool.pytest.ini_options]
 log_cli = true
@@ -54,7 +64,36 @@ asyncio_default_fixture_loop_scope = "function"
 addopts = "--cov-report=term --cov-report=xml --cov=nodestream_github --junit-xml=pytest.xml"
 
 [tool.ruff.lint]
-select = ["A", "ANN", "ARG", "ASYNC", "B", "C4", "DTZ", "E", "EM", "ERA", "F", "FBT", "FURB", "G", "I", "INP", "N", "PIE", "PT", "RET", "RUF", "S", "SIM", "T20", "TC", "UP", ]
+select = ["A",
+    "ANN",
+    "ARG",
+    "ASYNC",
+    "B",
+    "C4",
+    "DTZ",
+    "E",
+    "EM",
+    "ERA",
+    "F",
+    "FBT",
+    "FURB",
+    "G",
+    "I",
+    "INP",
+    "N",
+    "PERF",
+    "PIE",
+    "PT",
+    "RET",
+    "RUF",
+    "S",
+    "SLF",
+    "SIM",
+    "T20",
+    "TC",
+    "TRY",
+    "UP"
+]
 ignore = []
 unfixable = ["B"]
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
@@ -63,8 +102,13 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 "tests/*" = ["S101", "S106"]
 "nodestream_github/logging/__init__.py" = ["A005"]
 "nodestream_github/types/__init__.py" = ["A005"]
+"nodestream_github/types/gh_model.py" = ["E501", "S105", "N815"]
 
 [tool.ruff.lint.flake8-annotations]
 mypy-init-return = true
 suppress-none-returning = true
 allow-star-arg-any = true
+
+[[tool.mypy.overrides]]
+module = ["nodestream.*"]
+follow_untyped_imports = true

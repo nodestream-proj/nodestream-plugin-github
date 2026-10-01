@@ -1,10 +1,14 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from freezegun import freeze_time
 
 from nodestream_github import GithubAuditLogExtractor
-from nodestream_github.audit import generate_date_range, validate_lookback_period
+from nodestream_github.audit import (
+    LookbackPeriod,
+    generate_date_range,
+    validate_lookback_period,
+)
 from tests.data.audit import GITHUB_AUDIT, GITHUB_EXPECTED_OUTPUT
 from tests.mocks.githubrest import (
     DEFAULT_HOSTNAME,
@@ -156,13 +160,13 @@ async def test_get_audit_parameterized(
             {"days": 15, "months": 1},
             "action:protected_branch.create created:2025-06-16",
             [
-                (
-                    datetime(2025, 6, 16, tzinfo=timezone.utc) + timedelta(days=i)
-                ).strftime("%Y-%m-%d")
+                (datetime(2025, 6, 16, tzinfo=UTC) + timedelta(days=i)).strftime(
+                    "%Y-%m-%d"
+                )
                 for i in range(
                     (
-                        datetime(2025, 8, 1, tzinfo=timezone.utc)
-                        - datetime(2025, 6, 16, tzinfo=timezone.utc)
+                        datetime(2025, 8, 1, tzinfo=UTC)
+                        - datetime(2025, 6, 16, tzinfo=UTC)
                     ).days
                     + 1
                 )
@@ -265,7 +269,7 @@ def test_generate_date_range_parameterized(
     expected_first: str | None,
     expected_last: str | None,
 ):
-    result = generate_date_range(lookback_period)
+    result = generate_date_range(LookbackPeriod(**lookback_period))
 
     assert len(result) == expected_length
     if expected_length > 0:
@@ -322,4 +326,4 @@ def test_validate_lookback_period_invalid_cases(
     input_period: dict[str, int | str | list | None],
 ):
     with pytest.raises(ValueError, match="Formatting lookback period failed"):
-        validate_lookback_period(input_period)
+        validate_lookback_period(input_period)  # ty: ignore[invalid-argument-type]

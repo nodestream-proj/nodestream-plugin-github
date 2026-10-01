@@ -8,7 +8,7 @@ from nodestream.pipeline.value_providers import (
     ValueProvider,
 )
 
-from nodestream_github.types import GithubUser, SimplifiedUser
+from nodestream_github.types.gh_model import Collaborator, NullableSimpleUser
 
 _USER_KEYS_TO_PRESERVE = [
     "id",
@@ -22,12 +22,13 @@ _USER_KEYS_TO_PRESERVE = [
 
 
 def simplify_user(
-    user: GithubUser,
-) -> SimplifiedUser:
+    user: NullableSimpleUser | Collaborator,
+) -> dict[str, Any]:
     """Simplify user data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    return {k: user[k] for k in _USER_KEYS_TO_PRESERVE if k in user}
+    dumped = {**user}
+    return {k: dumped[k] for k in _USER_KEYS_TO_PRESERVE if k in dumped}
 
 
 class UserRelationshipInterpretation(
@@ -36,8 +37,8 @@ class UserRelationshipInterpretation(
     def __init__(
         self,
         relationship_type: StaticValueOrValueProvider,
-        relationship_key: None | dict[str, StaticValueOrValueProvider] = None,
-        relationship_properties: None | dict[str, StaticValueOrValueProvider] = None,
+        relationship_key: dict[str, StaticValueOrValueProvider] | None = None,
+        relationship_properties: dict[str, StaticValueOrValueProvider] | None = None,
         outbound: bool = True,  # noqa: FBT001, FBT002
         find_many: bool = False,  # noqa: FBT001, FBT002
         iterate_on: ValueProvider | None = None,

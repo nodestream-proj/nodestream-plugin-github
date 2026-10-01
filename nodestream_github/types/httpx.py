@@ -1,19 +1,19 @@
 from collections.abc import Mapping, Sequence
 
-from httpx import Headers, QueryParams
+import httpx
 
 PrimitiveData = str | int | float | bool | None
 
-QueryParamTypes = (
-    QueryParams
+type QueryParamTypes = (
+    httpx.QueryParams
     | Mapping[str, PrimitiveData | Sequence[PrimitiveData]]
     | list[tuple[str, PrimitiveData]]
     | tuple[tuple[str, PrimitiveData], ...]
     | str
     | bytes
 )
-HeaderTypes = (
-    Headers
+type HeaderTypes = (
+    httpx.Headers
     | Mapping[str, str]
     | Mapping[bytes, bytes]
     | Sequence[tuple[str, str]]

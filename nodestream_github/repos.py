@@ -7,21 +7,21 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Self
 
 from nodestream.pipeline import Extractor
 
+from nodestream_github.types.gh_model import (
+    FullRepository,
+    Hook,
+    MinimalRepository,
+    NullableSimpleUser,
+)
+
 from .client import GithubRestApiClient
+from .client.rest import OrgClient, RepoClient, UserClient
 from .interpretations.relationship.user import simplify_user
 from .logging import get_plugin_logger
-from .types import (
-    GithubRepo,
-    GithubUser,
-    JSONType,
-    RepositoryRecord,
-    SimplifiedUser,
-    Webhook,
-)
 from .types.enums import CollaboratorAffiliation, OrgRepoType, UserRepoType
 
 logger = get_plugin_logger(__name__)
@@ -53,12 +53,12 @@ class CollectWhichRepos:
     def user_any(self) -> bool:
         return self.user_public or self.user_private
 
-    @staticmethod
-    def from_dict(raw_dict: dict[str, Any]) -> "CollectWhichRepos":
+    @classmethod
+    def from_dict(cls, raw_dict: dict[str, Any]) -> Self:
         org_all = _dict_val_to_bool(raw_dict, "org_all")
         user_all = _dict_val_to_bool(raw_dict, "user_all")
 
-        return CollectWhichRepos(
+        return cls(
             all_public=_dict_val_to_bool(raw_dict, "all_public"),
             org_public=org_all or _dict_val_to_bool(raw_dict, "org_public"),
             org_private=org_all or _dict_val_to_bool(raw_dict, "org_private"),
@@ -88,7 +88,10 @@ class GithubReposExtractor(Extractor):
         self.include_webhooks = include_webhooks is True
         self.include_collaborators = include_collaborators is True
 
-        self.client = GithubRestApiClient(**kwargs)
+        self.core_client = GithubRestApiClient(**kwargs)
+        self.repo_client = RepoClient(self.core_client)
+        self.org_client = OrgClient(self.core_client)
+        self.user_client = UserClient(self.core_client)
         logger.info(
             "%s, %s, %s",
             self.include_collaborators,
@@ -96,9 +99,9 @@ class GithubReposExtractor(Extractor):
             self.include_languages,
         )
 
-    async def extract_records(self) -> AsyncGenerator[RepositoryRecord]:
+    async def extract_records(self) -> AsyncGenerator[dict[str, Any]]:
         if self.collecting.all_public:
-            async for repo in self.client.fetch_all_public_repos():
+            async for repo in self.repo_client.fetch_all_public_repos():
                 yield await self._extract_repo(repo)
 
         if self.collecting.org_any:
@@ -109,75 +112,92 @@ class GithubReposExtractor(Extractor):
             async for repo in self._fetch_repos_by_user():
                 yield await self._extract_repo(repo)
 
-    async def _extract_repo(self, repo: GithubRepo) -> RepositoryRecord:
-        owner = repo.pop("owner", {})
-        if owner.get("type") == "User":
-            repo["user_owner"] = owner
+    async def _extract_repo(
+        self,
+        repo: FullRepository | MinimalRepository,
+    ) -> dict[str, Any]:
+        output = {**repo}
+        owner = repo["owner"]
+        del output["owner"]
+        if owner["type"] == "User":
+            output["user_owner"] = owner
         elif owner:
-            repo["org_owner"] = owner
+            output["org_owner"] = owner
 
         if self.include_languages:
-            repo["languages"] = await self._add_languages(owner, repo)
+            output["languages"] = await self._add_languages(owner, repo)
         if self.include_webhooks:
-            repo["webhooks"] = await self._add_webhooks(owner, repo)
+            output["webhooks"] = await self._add_webhooks(owner, repo)
         if self.include_collaborators:
-            repo["collaborators"] = await self._add_collaborators(owner, repo)
+            output["collaborators"] = await self._add_collaborators(owner, repo)
 
         logger.debug("yielded GithubRepo{full_name=%s}", repo["full_name"])
-        return repo
+        return output
 
     async def _add_collaborators(
-        self, owner: GithubUser, repo: GithubRepo
-    ) -> list[SimplifiedUser]:
-        collaborators = []
-        async for user in self.client.fetch_collaborators_for_repo(
-            owner_login=owner["login"],
-            repo_name=repo["name"],
-            affiliation=CollaboratorAffiliation.DIRECT,
-        ):
-            collaborators.append(simplify_user(user) | {"affiliation": "direct"})
-        async for user in self.client.fetch_collaborators_for_repo(
-            owner_login=owner["login"],
-            repo_name=repo["name"],
-            affiliation=CollaboratorAffiliation.OUTSIDE,
-        ):
-            collaborators.append(simplify_user(user) | {"affiliation": "outside"})
+        self,
+        owner: NullableSimpleUser,
+        repo: FullRepository | MinimalRepository,
+    ) -> list[dict[str, Any]]:
+        collaborators = [
+            simplify_user(user) | {"affiliation": "direct"}
+            async for user in self.repo_client.fetch_collaborators_for_repo(
+                owner_login=owner["login"],
+                repo_name=repo["name"],
+                affiliation=CollaboratorAffiliation.DIRECT,
+            )
+        ]
+        collaborators.extend([
+            simplify_user(user) | {"affiliation": "outside"}
+            async for user in self.repo_client.fetch_collaborators_for_repo(
+                owner_login=owner["login"],
+                repo_name=repo["name"],
+                affiliation=CollaboratorAffiliation.OUTSIDE,
+            )
+        ])
+
         return collaborators
 
-    async def _add_webhooks(self, owner: GithubUser, repo: GithubRepo) -> list[Webhook]:
+    async def _add_webhooks(
+        self,
+        owner: NullableSimpleUser,
+        repo: FullRepository | MinimalRepository,
+    ) -> list[Hook]:
         return [
             hook
-            async for hook in self.client.fetch_webhooks_for_repo(
+            async for hook in self.repo_client.fetch_webhooks_for_repo(
                 owner_login=owner["login"],
                 repo_name=repo["name"],
             )
         ]
 
-    async def _add_languages(self, owner: GithubUser, repo: GithubRepo) -> JSONType:
-        return [
-            {"name": lang}
-            async for lang in self.client.fetch_languages_for_repo(
-                owner_login=owner["login"],
-                repo_name=repo["name"],
-            )
-        ]
+    async def _add_languages(
+        self,
+        owner: NullableSimpleUser,
+        repo: FullRepository | MinimalRepository,
+    ) -> list[dict[str, str]]:
+        languages = await self.repo_client.fetch_languages_for_repo(
+            owner_login=owner["login"],
+            repo_name=repo["name"],
+        )
+        return [{"name": lang} for lang in languages]
 
-    async def _fetch_repos_by_org(self) -> AsyncGenerator[GithubRepo]:
-        async for org in self.client.fetch_all_organizations():
+    async def _fetch_repos_by_org(self) -> AsyncGenerator[MinimalRepository]:
+        async for org in self.org_client.fetch_all_organizations():
             if self.collecting.org_public:
-                async for repo in self.client.fetch_repos_for_org(
+                async for repo in self.org_client.fetch_repos_for_org(
                     org_login=org["login"],
                     repo_type=OrgRepoType.PUBLIC,
                 ):
                     yield repo
             if self.collecting.org_private:
-                async for repo in self.client.fetch_repos_for_org(
+                async for repo in self.org_client.fetch_repos_for_org(
                     org_login=org["login"],
                     repo_type=OrgRepoType.PRIVATE,
                 ):
                     yield repo
 
-    async def _fetch_repos_by_user(self) -> AsyncGenerator[GithubRepo]:
+    async def _fetch_repos_by_user(self) -> AsyncGenerator[MinimalRepository]:
         """Fetches repositories for the specified user.
 
         https://docs.github.com/en/enterprise-server@3.12/rest/repos/repos?apiVersion=2022-11-28#list-repositories-for-a-user
@@ -185,8 +205,8 @@ class GithubReposExtractor(Extractor):
         If using a fine-grained access token, the token must have the "Metadata"
         repository permissions (read)
         """
-        async for user in self.client.fetch_all_users():
-            async for repo in self.client.fetch_repos_for_user(
+        async for user in self.user_client.fetch_all_users():
+            async for repo in self.user_client.fetch_repos_for_user(
                 user_login=user["login"],
                 repo_type=UserRepoType.OWNER,
             ):

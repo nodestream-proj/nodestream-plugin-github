@@ -2,7 +2,7 @@ import httpx
 import pytest
 from pytest_httpx import HTTPXMock
 
-from nodestream_github.client.githubclient import (
+from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
     RateLimitedError,
 )
@@ -38,7 +38,7 @@ async def test_retry_bad_status(httpx_mock: HTTPXMock, status_code: int):
     )
 
     with pytest.raises(httpx.HTTPStatusError):
-        _ignore = [item async for item in client._get_paginated("example")]
+        _ignore = [item async for item in client.get_paginated("example")]
 
 
 @pytest.mark.asyncio
@@ -55,9 +55,9 @@ async def test_retry_ratelimited(httpx_mock: HTTPXMock):
         url=f"{DEFAULT_BASE_URL}/example?per_page=100", json=["a", "b"]
     )
 
-    _ignored = [item async for item in client._get_paginated("example")]
+    _ignored = [item async for item in client.get_paginated("example")]
     with pytest.raises(RateLimitedError):
-        _ignored = [item async for item in client._get_paginated("example")]
+        _ignored = [item async for item in client.get_paginated("example")]
 
 
 @pytest.mark.asyncio
@@ -84,7 +84,7 @@ async def test_pagination(httpx_mock: HTTPXMock):
         is_reusable=False,
     )
 
-    items = [item async for item in client._get_paginated("example")]
+    items = [item async for item in client.get_paginated("example")]
     assert items == ["a", "b", "c", "d"]
 
 
@@ -115,7 +115,7 @@ async def test_pagination_truncate_warning(
     )
 
     with caplog.at_level("WARNING"):
-        items = [item async for item in client._get_paginated("example")]
+        items = [item async for item in client.get_paginated("example")]
 
     assert items == ["a", "b", "c", "d"]
 

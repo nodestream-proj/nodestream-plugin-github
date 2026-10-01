@@ -1,5 +1,3 @@
-from collections.abc import AsyncGenerator
-
 import httpx
 import pytest
 
@@ -20,13 +18,6 @@ def user_extractor() -> GithubUserExtractor:
     )
 
 
-async def to_list(async_generator: AsyncGenerator) -> list:
-    output = []
-    async for item in async_generator:
-        output.append(item)
-    return output
-
-
 @pytest.mark.asyncio
 async def test_github_user_extractor(
     user_extractor: GithubUserExtractor,
@@ -43,19 +34,17 @@ async def test_github_user_extractor(
 
     actual = [record async for record in user_extractor.extract_records()]
 
-    assert actual == [
-        OCTOCAT_USER
-        | {
-            "repositories": [{
-                "full_name": "octocat/Hello-World",
-                "html_url": "https://github.com/octocat/Hello-World",
-                "id": 1296269,
-                "name": "Hello-World",
-                "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
-                "url": "https://HOSTNAME/repos/octocat/Hello-World",
-            }]
-        }
-    ]
+    assert actual == [{
+        **OCTOCAT_USER,
+        "repositories": [{
+            "full_name": "octocat/Hello-World",
+            "html_url": "https://github.com/octocat/Hello-World",
+            "id": 1296269,
+            "name": "Hello-World",
+            "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
+            "url": "https://HOSTNAME/repos/octocat/Hello-World",
+        }],
+    }]
 
 
 @pytest.mark.asyncio
@@ -90,4 +79,4 @@ async def test_github_user_extractor_repo_fail(
     )
     actual = [user async for user in user_extractor.extract_records()]
 
-    assert actual == [OCTOCAT_USER | {"repositories": []}]
+    assert actual == [{**OCTOCAT_USER, "repositories": []}]

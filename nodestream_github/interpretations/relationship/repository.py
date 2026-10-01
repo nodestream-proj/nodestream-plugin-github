@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import Any
 
 from nodestream.interpreting.interpretations import RelationshipInterpretation
@@ -7,8 +7,9 @@ from nodestream.pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
+from pydantic import BaseModel
 
-from nodestream_github.types import GithubRepo, SimplifiedRepo
+from nodestream_github.types.gh_model import FullRepository, MinimalRepository
 
 _REPO_KEYS_TO_PRESERVE = [
     "id",
@@ -23,11 +24,16 @@ _REPO_KEYS_TO_PRESERVE = [
 ]
 
 
-def simplify_repo(repo: GithubRepo) -> SimplifiedRepo:
+def simplify_repo(
+    repo: MinimalRepository | FullRepository | Mapping,
+) -> dict[str, Any]:
     """Simplify repo data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    return {k: repo[k] for k in _REPO_KEYS_TO_PRESERVE if k in repo}
+    dumped: dict = (
+        repo.model_dump(mode="json") if isinstance(repo, BaseModel) else {**repo}
+    )
+    return {k: dumped[k] for k in _REPO_KEYS_TO_PRESERVE if k in dumped}
 
 
 class RepositoryRelationshipInterpretation(
@@ -36,8 +42,8 @@ class RepositoryRelationshipInterpretation(
     def __init__(
         self,
         relationship_type: StaticValueOrValueProvider,
-        relationship_key: None | dict[str, StaticValueOrValueProvider] = None,
-        relationship_properties: None | dict[str, StaticValueOrValueProvider] = None,
+        relationship_key: dict[str, StaticValueOrValueProvider] | None = None,
+        relationship_properties: dict[str, StaticValueOrValueProvider] | None = None,
         outbound: bool = True,  # noqa: FBT001, FBT002
         find_many: bool = False,  # noqa: FBT001, FBT002
         iterate_on: ValueProvider | None = None,
