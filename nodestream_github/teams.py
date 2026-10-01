@@ -6,10 +6,11 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator, Mapping
-from typing import Any
+from typing import Any, Unpack
 
 from nodestream.pipeline import Extractor
 
+from nodestream_github.client.rest.githubclient import GithubRestApiClientParams
 from nodestream_github.interpretations.relationship.user import simplify_user
 
 from .client import GithubRestApiClient
@@ -22,7 +23,7 @@ logger = get_plugin_logger(__name__)
 
 
 class GithubTeamsExtractor(Extractor):
-    def __init__(self, **github_client_kwargs: Any):
+    def __init__(self, **github_client_kwargs: Unpack[GithubRestApiClientParams]):
         self.core_client = GithubRestApiClient(**github_client_kwargs)
         self.team_client = TeamClient(self.core_client)
         self.org_client = OrgClient(self.core_client)

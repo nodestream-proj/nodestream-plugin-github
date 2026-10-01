@@ -6,9 +6,11 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, Unpack
 
 from nodestream.pipeline import Extractor
+
+from nodestream_github.client.rest.githubclient import GithubRestApiClientParams
 
 from .client import GithubRestApiClient
 from .client.rest import UserClient
@@ -20,7 +22,12 @@ logger = get_plugin_logger(__name__)
 
 
 class GithubUserExtractor(Extractor):
-    def __init__(self, *, include_repos: bool = True, **github_client_kwargs: Any):
+    def __init__(
+        self,
+        *,
+        include_repos: bool = True,
+        **github_client_kwargs: Unpack[GithubRestApiClientParams],
+    ):
         self.include_repos = include_repos is True  # handle None
         self.core_client = GithubRestApiClient(**github_client_kwargs)
         self.client = UserClient(self.core_client)

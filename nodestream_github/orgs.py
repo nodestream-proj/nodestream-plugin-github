@@ -6,9 +6,11 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 """
 
 from collections.abc import AsyncGenerator
-from typing import Any
+from typing import Any, Unpack
 
 from nodestream.pipeline import Extractor
+
+from nodestream_github.client.rest.githubclient import GithubRestApiClientParams
 
 from .client import GithubRestApiClient
 from .client.rest import OrgClient
@@ -26,7 +28,7 @@ class GithubOrganizationsExtractor(Extractor[dict, dict]):
         *,
         include_members: bool | None = True,
         include_repositories: bool | None = True,
-        **kwargs: Any,
+        **kwargs: Unpack[GithubRestApiClientParams],
     ):
 
         self.include_members = include_members is True

@@ -237,7 +237,6 @@ async def test_extract_records(
             "downloads_url": "https://HOSTNAME/repos/octocat/Hello-World/downloads",
             "events_url": "https://HOSTNAME/repos/octocat/Hello-World/events",
             "fork": False,
-            "forks": 0,
             "forks_count": 9,
             "forks_url": "https://HOSTNAME/repos/octocat/Hello-World/forks",
             "full_name": "octocat/Hello-World",
@@ -276,12 +275,10 @@ async def test_extract_records(
             ),
             "mirror_url": "git:git.example.com/octocat/Hello-World",
             "name": "Hello-World",
-            "network_count": 0,
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
             "notifications_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/notifications{?since,all,participating}"
             ),
-            "open_issues": 0,
             "open_issues_count": 0,
             "private": False,
             "pulls_url": "https://HOSTNAME/repos/octocat/Hello-World/pulls{/number}",
@@ -297,7 +294,6 @@ async def test_extract_records(
             "stargazers_count": 80,
             "stargazers_url": "https://HOSTNAME/repos/octocat/Hello-World/stargazers",
             "statuses_url": "https://HOSTNAME/repos/octocat/Hello-World/statuses/{sha}",
-            "subscribers_count": 0,
             "subscribers_url": "https://HOSTNAME/repos/octocat/Hello-World/subscribers",
             "subscription_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/subscription"
@@ -317,7 +313,7 @@ async def test_extract_records(
                     "https://HOSTNAME/users/octocat/following{/other_user}"
                 ),
                 "gists_url": "https://HOSTNAME/users/octocat/gists{/gist_id}",
-                "gravatar_id": "xxx",
+                "gravatar_id": "",
                 "html_url": "https://github.com/octocat",
                 "id": 1,
                 "login": "octocat",
@@ -332,7 +328,6 @@ async def test_extract_records(
                 "url": "https://HOSTNAME/users/octocat",
             },
             "visibility": "public",
-            "watchers": 0,
             "watchers_count": 80,
             "webhooks": [{
                 "active": True,
@@ -413,7 +408,6 @@ async def test_extract_records(
             "downloads_url": "https://HOSTNAME/repos/github/Hello-Moon/downloads",
             "events_url": "https://HOSTNAME/repos/github/Hello-Moon/events",
             "fork": False,
-            "forks": 0,
             "forks_count": 9,
             "forks_url": "https://HOSTNAME/repos/github/Hello-Moon/forks",
             "full_name": "github/Hello-Moon",
@@ -452,12 +446,10 @@ async def test_extract_records(
             ),
             "mirror_url": "git:git.example.com/github/Hello-Moon",
             "name": "Hello-Moon",
-            "network_count": 0,
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
             "notifications_url": (
                 "https://HOSTNAME/repos/github/Hello-Moon/notifications{?since,all,participating}"
             ),
-            "open_issues": 0,
             "open_issues_count": 0,
             "org_owner": {
                 "avatar_url": "https://github.com/images/error/octocat_happy.gif",
@@ -467,7 +459,7 @@ async def test_extract_records(
                     "https://HOSTNAME/users/octocat/following{/other_user}"
                 ),
                 "gists_url": "https://HOSTNAME/users/octocat/gists{/gist_id}",
-                "gravatar_id": "xxx",
+                "gravatar_id": "",
                 "html_url": "https://github.com/octocat",
                 "id": 1,
                 "login": "github",
@@ -495,7 +487,6 @@ async def test_extract_records(
             "stargazers_count": 80,
             "stargazers_url": "https://HOSTNAME/repos/github/Hello-Moon/stargazers",
             "statuses_url": "https://HOSTNAME/repos/github/Hello-Moon/statuses/{sha}",
-            "subscribers_count": 0,
             "subscribers_url": "https://HOSTNAME/repos/github/Hello-Moon/subscribers",
             "subscription_url": "https://HOSTNAME/repos/github/Hello-Moon/subscription",
             "svn_url": "https://svn.github.com/github/Hello-Moon",
@@ -506,7 +497,6 @@ async def test_extract_records(
             "updated_at": "2011-01-26T19:14:43Z",
             "url": "https://HOSTNAME/repos/github/Hello-Moon",
             "visibility": "public",
-            "watchers": 0,
             "watchers_count": 80,
             "webhooks": [{
                 "active": True,
@@ -595,7 +585,6 @@ async def test_extract_records_no_additional_data(
             "downloads_url": "https://HOSTNAME/repos/octocat/Hello-World/downloads",
             "events_url": "https://HOSTNAME/repos/octocat/Hello-World/events",
             "fork": False,
-            "forks": 0,
             "forks_count": 9,
             "forks_url": "https://HOSTNAME/repos/octocat/Hello-World/forks",
             "full_name": "octocat/Hello-World",
@@ -633,12 +622,10 @@ async def test_extract_records_no_additional_data(
             ),
             "mirror_url": "git:git.example.com/octocat/Hello-World",
             "name": "Hello-World",
-            "network_count": 0,
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
             "notifications_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/notifications{?since,all,participating}"
             ),
-            "open_issues": 0,
             "open_issues_count": 0,
             "private": False,
             "pulls_url": "https://HOSTNAME/repos/octocat/Hello-World/pulls{/number}",
@@ -654,7 +641,6 @@ async def test_extract_records_no_additional_data(
             "stargazers_count": 80,
             "stargazers_url": "https://HOSTNAME/repos/octocat/Hello-World/stargazers",
             "statuses_url": "https://HOSTNAME/repos/octocat/Hello-World/statuses/{sha}",
-            "subscribers_count": 0,
             "subscribers_url": "https://HOSTNAME/repos/octocat/Hello-World/subscribers",
             "subscription_url": (
                 "https://HOSTNAME/repos/octocat/Hello-World/subscription"
@@ -674,7 +660,7 @@ async def test_extract_records_no_additional_data(
                     "https://HOSTNAME/users/octocat/following{/other_user}"
                 ),
                 "gists_url": "https://HOSTNAME/users/octocat/gists{/gist_id}",
-                "gravatar_id": "xxx",
+                "gravatar_id": "",
                 "html_url": "https://github.com/octocat",
                 "id": 1,
                 "login": "octocat",
@@ -689,7 +675,6 @@ async def test_extract_records_no_additional_data(
                 "url": "https://HOSTNAME/users/octocat",
             },
             "visibility": "public",
-            "watchers": 0,
             "watchers_count": 80,
         },
         {
@@ -725,7 +710,6 @@ async def test_extract_records_no_additional_data(
             "downloads_url": "https://HOSTNAME/repos/github/Hello-Moon/downloads",
             "events_url": "https://HOSTNAME/repos/github/Hello-Moon/events",
             "fork": False,
-            "forks": 0,
             "forks_count": 9,
             "forks_url": "https://HOSTNAME/repos/github/Hello-Moon/forks",
             "full_name": "github/Hello-Moon",
@@ -763,12 +747,10 @@ async def test_extract_records_no_additional_data(
             ),
             "mirror_url": "git:git.example.com/github/Hello-Moon",
             "name": "Hello-Moon",
-            "network_count": 0,
             "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
             "notifications_url": (
                 "https://HOSTNAME/repos/github/Hello-Moon/notifications{?since,all,participating}"
             ),
-            "open_issues": 0,
             "open_issues_count": 0,
             "org_owner": {
                 "avatar_url": "https://github.com/images/error/octocat_happy.gif",
@@ -779,7 +761,7 @@ async def test_extract_records_no_additional_data(
                     "https://HOSTNAME/users/octocat/following{/other_user}"
                 ),
                 "gists_url": "https://HOSTNAME/users/octocat/gists{/gist_id}",
-                "gravatar_id": "xxx",
+                "gravatar_id": "",
                 "hooks_url": "https://HOSTNAME/orgs/github/hooks",
                 "html_url": "https://github.com/octocat",
                 "id": 1,
@@ -813,7 +795,6 @@ async def test_extract_records_no_additional_data(
             "stargazers_count": 80,
             "stargazers_url": "https://HOSTNAME/repos/github/Hello-Moon/stargazers",
             "statuses_url": "https://HOSTNAME/repos/github/Hello-Moon/statuses/{sha}",
-            "subscribers_count": 0,
             "subscribers_url": "https://HOSTNAME/repos/github/Hello-Moon/subscribers",
             "subscription_url": "https://HOSTNAME/repos/github/Hello-Moon/subscription",
             "svn_url": "https://svn.github.com/github/Hello-Moon",
@@ -824,7 +805,6 @@ async def test_extract_records_no_additional_data(
             "updated_at": "2011-01-26T19:14:43Z",
             "url": "https://HOSTNAME/repos/github/Hello-Moon",
             "visibility": "public",
-            "watchers": 0,
             "watchers_count": 80,
         },
     ]

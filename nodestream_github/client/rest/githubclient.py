@@ -7,7 +7,7 @@ import json
 import logging
 from collections.abc import AsyncGenerator, Mapping
 from enum import Enum
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 import httpx
 from limits import RateLimitItem, RateLimitItemPerMinute
@@ -69,6 +69,16 @@ def log_fetch_problem(title: str, e: httpx.HTTPError):
             )
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
+
+
+class GithubRestApiClientParams(TypedDict):
+    auth_token: NotRequired[str | None]
+    github_hostname: NotRequired[str | None]
+    user_agent: NotRequired[str | None]
+    per_page: NotRequired[int | None]
+    max_retries: NotRequired[int | None]
+    rate_limit_per_minute: NotRequired[int | None]
+    max_retry_wait_seconds: NotRequired[int | None]
 
 
 class GithubRestApiClient:

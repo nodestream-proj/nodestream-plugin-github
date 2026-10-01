@@ -7,10 +7,11 @@ https://docs.github.com/en/enterprise-server@3.12/rest?apiVersion=2022-11-28
 
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
-from typing import Any, Self
+from typing import Any, Self, Unpack
 
 from nodestream.pipeline import Extractor
 
+from nodestream_github.client.rest.githubclient import GithubRestApiClientParams
 from nodestream_github.types.gh_model import (
     FullRepository,
     Hook,
@@ -75,7 +76,7 @@ class GithubReposExtractor(Extractor):
         include_languages: bool | None = True,
         include_webhooks: bool | None = True,
         include_collaborators: bool | None = True,
-        **kwargs: Any,
+        **kwargs: Unpack[GithubRestApiClientParams],
     ):
         if isinstance(collecting, CollectWhichRepos):
             self.collecting = collecting
