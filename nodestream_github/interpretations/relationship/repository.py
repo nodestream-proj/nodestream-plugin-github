@@ -7,7 +7,6 @@ from nodestream.pipeline.value_providers import (
     StaticValueOrValueProvider,
     ValueProvider,
 )
-from pydantic import BaseModel
 
 from nodestream_github.types.gh_model import FullRepository, MinimalRepository
 
@@ -30,9 +29,7 @@ def simplify_repo(
     """Simplify repo data.
 
     Allows us to only keep a consistent minimum for relationship data."""
-    dumped: dict = (
-        repo.model_dump(mode="json") if isinstance(repo, BaseModel) else {**repo}
-    )
+    dumped = {**repo}
     return {k: dumped[k] for k in _REPO_KEYS_TO_PRESERVE if k in dumped}
 
 
