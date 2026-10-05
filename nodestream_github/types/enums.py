@@ -21,15 +21,3 @@ class UserRepoType(StrEnum):
     ALL = "all"
     OWNER = "owner"
     MEMBER = "member"
-
-
-class OrgMemberRole(StrEnum):
-    ALL = "all"
-    ADMIN = "admin"
-    MEMBER = "member"
-
-
-class TeamMemberRole(StrEnum):
-    ALL = "all"
-    MAINTAINER = "maintainer"
-    MEMBER = "member"

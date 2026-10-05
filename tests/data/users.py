@@ -1,6 +1,5 @@
 from typing import Any
 
-from nodestream_github.types import GithubUser
 from tests.data.util import encode_as_node_id
 
 
@@ -9,9 +8,9 @@ def user_short(
     user_login: str = "octocat",
     user_id: int = 1,
     **kwargs: Any,
-) -> GithubUser:
+) -> dict[str, Any]:
 
-    return {
+    output = {
         "login": f"{user_login}",
         "id": user_id,
         "node_id": encode_as_node_id(f"04:User{user_id}"),
@@ -34,7 +33,8 @@ def user_short(
         "received_events_url": f"https://HOSTNAME/users/{user_login}/received_events",
         "type": "User",
         "site_admin": False,
-    } | kwargs
+    }
+    return output | kwargs
 
 
 def user(
@@ -42,10 +42,10 @@ def user(
     user_login: str = "octocat",
     user_id: int = 1,
     **kwargs: Any,
-) -> GithubUser:
-
+) -> dict[str, Any]:
+    short_user = user_short(user_login=user_login, user_id=user_id)
     return (
-        user_short(user_login=user_login, user_id=user_id)
+        short_user
         | {
             "name": "monalisa octocat",
             "company": "GitHub",

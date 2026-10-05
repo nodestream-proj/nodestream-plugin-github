@@ -1,13 +1,19 @@
-from typing import Any
+from typing import Unpack
 
-from nodestream_github.types import GithubOrg, GithubOrgSummary
+from nodestream_github.types.gh_model import (
+    OrganizationFull,
+    OrganizationSimple,
+)
 from tests.data.util import encode_as_node_id
 
 
 def org_summary(
-    *, org_login: str = "github", org_id: int = 1, **kwargs: Any
-) -> GithubOrgSummary:
-    return {
+    *,
+    org_login: str = "github",
+    org_id: int = 1,
+    **kwargs: Unpack[OrganizationSimple],
+) -> OrganizationSimple:
+    output: OrganizationSimple = {
         "login": org_login,
         "id": org_id,
         "node_id": encode_as_node_id(f"012:Organization{org_id}"),
@@ -22,14 +28,24 @@ def org_summary(
         ),
         "avatar_url": "https://github.com/images/error/octocat_happy.gif",
         "description": "A great organization",
-    } | kwargs
+    }
+    output.update(kwargs)
+    return output
 
 
-def org(*, org_login: str = "github", org_id: int = 1, **kwargs: Any) -> GithubOrg:
+def org(
+    *,
+    org_login: str = "github",
+    org_id: int = 1,
+    **kwargs: Unpack[OrganizationFull],
+) -> OrganizationFull:
+    full_ks = OrganizationFull.__annotations__.keys()
     summary = org_summary(org_login=org_login, org_id=org_id)
+    output = {k: v for k, v in summary.items() if k in full_ks}
+
     login = summary["login"]
     return (
-        summary
+        OrganizationFull(**output)
         | {
             "name": login,
             "company": login,

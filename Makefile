@@ -23,6 +23,7 @@ fmt:
 .PHONY: lint
 lint: fmt
 	poetry run ruff check nodestream_github tests --fix
+	poetry run ty check nodestream_github tests --fix
 	
 .PHONY: test
 test:
