@@ -1,8 +1,10 @@
 from collections.abc import AsyncGenerator
+from typing import cast
 
 import httpx2
 
 from nodestream_github.client.rest import GithubRestApiClient, log_fetch_problem
+from nodestream_github.client.rest.githubclient import has_required_keys
 from nodestream_github.logging import get_plugin_logger
 from nodestream_github.types.enums import OrgRepoType
 from nodestream_github.types.gh_model import (
@@ -44,7 +46,8 @@ class OrgClient:
             async for response in self.client.get_paginated(
                 f"orgs/{org_login}/repos", params=params
             ):
-                yield MinimalRepository(**response)
+                if has_required_keys("repo", response, MinimalRepository):
+                    yield cast("MinimalRepository", response)
 
         except httpx2.HTTPError as e:
             log_fetch_problem(f"repos for org {org_login}", e)
@@ -71,7 +74,8 @@ class OrgClient:
             async for member in self.client.get_paginated(
                 f"orgs/{org_login}/members", params=params
             ):
-                yield NullableSimpleUser(**member)
+                if has_required_keys("member", member, NullableSimpleUser):
+                    yield cast("NullableSimpleUser", member)
 
         except httpx2.HTTPError as e:
             log_fetch_problem(f"members for org {org_login}", e)

@@ -1,4 +1,4 @@
-from typing import Unpack
+from typing import Any, cast
 
 from nodestream_github.types.gh_model import (
     MinimalRepository,
@@ -14,12 +14,13 @@ def repo(
     *,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
-    **kwargs: Unpack[MinimalRepository],
+    **kwargs: Any,
 ) -> MinimalRepository:
 
-    repo_owner = NullableSimpleUser(**(
-        {**OCTOCAT_USER_SHORT} if kwargs.get("owner") is None else {**kwargs["owner"]}
-    ))
+    repo_owner = cast(
+        "NullableSimpleUser",
+        {**OCTOCAT_USER_SHORT} if kwargs.get("owner") is None else {**kwargs["owner"]},
+    )
 
     owner_login = repo_owner["login"]
     sec: SecurityAndAnalysis = {
@@ -163,7 +164,7 @@ def repo(
         "updated_at": "2011-01-26T19:14:43Z",
         "security_and_analysis": sec,
     }
-    return output | kwargs
+    return cast("MinimalRepository", output | kwargs)
 
 
 HELLO_WORLD_REPO = repo(owner=user_short(user_login="octocat"), repo_name="Hello-World")

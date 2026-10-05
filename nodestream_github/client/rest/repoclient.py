@@ -5,6 +5,7 @@ import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
+    has_required_keys,
     log_fetch_problem,
 )
 from nodestream_github.logging import get_plugin_logger
@@ -121,7 +122,8 @@ class RepoClient:
         """
         try:
             async for repo in self.client.get_paginated("repositories"):
-                yield MinimalRepository(**repo)
+                if has_required_keys("repo", repo, MinimalRepository):
+                    yield cast("MinimalRepository", repo)
 
         except httpx2.HTTPError as e:
             log_fetch_problem("all public repositories", e)

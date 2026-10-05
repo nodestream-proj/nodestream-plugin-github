@@ -1,9 +1,11 @@
 from collections.abc import AsyncGenerator
+from typing import cast
 
 import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
+    has_required_keys,
     log_fetch_problem,
 )
 from nodestream_github.logging import get_plugin_logger
@@ -80,7 +82,8 @@ class TeamClient:
             async for member in self.client.get_paginated(
                 f"teams/{team_id}/members", params=params
             ):
-                yield NullableSimpleUser(**member)
+                if has_required_keys("member", member, NullableSimpleUser):
+                    yield cast("NullableSimpleUser", member)
         except httpx2.HTTPError as e:
             log_fetch_problem(f"members for team {team_id}", e)
 
@@ -101,6 +104,7 @@ class TeamClient:
             async for repo in self.client.get_paginated(
                 f"orgs/{org_login}/teams/{slug}/repos"
             ):
-                yield MinimalRepository(**repo)
+                if has_required_keys("repo", repo, MinimalRepository):
+                    yield cast("MinimalRepository", repo)
         except httpx2.HTTPError as e:
             log_fetch_problem(f"repos for team {org_login}/{slug}", e)

@@ -87,7 +87,7 @@ async def test_no_full_name_key():
         max_retries=0,
         per_page=DEFAULT_PER_PAGE,
     )
-    modified_repo = HELLO_WORLD_REPO.copy()
+    modified_repo: dict = dict(HELLO_WORLD_REPO)
     del modified_repo["full_name"]
 
     response = [r async for r in transformer.transform_record(modified_repo)]

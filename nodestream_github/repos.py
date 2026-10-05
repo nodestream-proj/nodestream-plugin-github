@@ -122,7 +122,7 @@ class GithubReposExtractor(Extractor):
         del output["owner"]
         if owner["type"] == "User":
             output["user_owner"] = owner
-        elif owner:
+        else:
             output["org_owner"] = owner
 
         if self.include_languages:

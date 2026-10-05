@@ -1,9 +1,11 @@
 from collections.abc import AsyncGenerator
+from typing import cast
 
 import httpx2
 
 from nodestream_github.client.rest.githubclient import (
     GithubRestApiClient,
+    has_required_keys,
     log_fetch_problem,
 )
 from nodestream_github.types import enums
@@ -26,8 +28,11 @@ class UserClient:
         """
         try:
             async for user in self.client.get_paginated("users"):
-                if user["type"] == "User":
-                    yield NullableSimpleUser(**user)
+                if (
+                    has_required_keys("user", user, NullableSimpleUser)
+                    and user["type"] == "User"
+                ):
+                    yield cast("NullableSimpleUser", user)
         except httpx2.HTTPError as e:
             log_fetch_problem("all users", e)
 
@@ -62,7 +67,8 @@ class UserClient:
             async for repo in self.client.get_paginated(
                 f"users/{user_login}/repos", params=params
             ):
-                yield MinimalRepository(**repo)
+                if has_required_keys("repo", repo, MinimalRepository):
+                    yield cast("MinimalRepository", repo)
 
         except httpx2.HTTPError as e:
             log_fetch_problem(f"repos for user {user_login}", e)

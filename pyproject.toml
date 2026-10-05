@@ -66,7 +66,9 @@ addopts = [
     "--cov-report=term",
     "--cov-report=xml",
     "--cov=nodestream_github",
-    "--junit-xml=pytest.xml -p pytest_httpx2"
+    "--junit-xml=pytest.xml",
+    "-p",
+    "pytest_httpx2",
 ]
 
 [tool.ruff.lint]

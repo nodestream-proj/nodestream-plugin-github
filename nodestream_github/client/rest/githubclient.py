@@ -3,8 +3,10 @@
 An async client for accessing GitHub.
 """
 
+import functools
 import json
 import logging
+import typing
 from collections.abc import AsyncGenerator, Mapping
 from enum import Enum
 from typing import Any, NotRequired, TypedDict
@@ -70,6 +72,27 @@ def log_fetch_problem(title: str, e: httpx2.HTTPError):
             )
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
+
+
+@functools.lru_cache
+def _required_keys(typed_dict: type) -> frozenset[str]:
+    hints = typing.get_type_hints(typed_dict, include_extras=True)
+    return frozenset(
+        key for key, hint in hints.items() if typing.get_origin(hint) is not NotRequired
+    )
+
+
+def has_required_keys(title: str, record: Mapping[str, Any], typed_dict: type) -> bool:
+    missing = [key for key in _required_keys(typed_dict) if key not in record]
+    if missing:
+        logger.warning(
+            "Skipping malformed %s, missing keys %s: %s",
+            title,
+            missing,
+            record,
+            stacklevel=2,
+        )
+    return not missing
 
 
 class GithubRestApiClientParams(TypedDict):

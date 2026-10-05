@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from enum import Enum, StrEnum
-from typing import TYPE_CHECKING, Any, Literal, NotRequired
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, Required
 
 from typing_extensions import ReadOnly, TypedDict
 
@@ -233,7 +233,7 @@ class PreReceiveHook(TypedDict):
 class NullableSimpleUser(TypedDict):
     name: NotRequired[str | None]
     email: NotRequired[str | None]
-    login: NotRequired[str]
+    login: Required[str]
     id: NotRequired[int]
     node_id: NotRequired[str]
     avatar_url: NotRequired[str]
@@ -249,7 +249,7 @@ class NullableSimpleUser(TypedDict):
     repos_url: NotRequired[str]
     events_url: NotRequired[str]
     received_events_url: NotRequired[str]
-    type: NotRequired[str]
+    type: Required[str]
     site_admin: NotRequired[bool]
     starred_at: NotRequired[str]
     user_view_type: NotRequired[str]
@@ -3237,7 +3237,7 @@ class MinimalRepository(TypedDict):
     forks: NotRequired[int]
     forks_count: NotRequired[int]
     forks_url: NotRequired[str]
-    full_name: NotRequired[str]
+    full_name: Required[str]
     git_commits_url: NotRequired[str]
     git_refs_url: NotRequired[str]
     git_tags_url: NotRequired[str]
@@ -3265,13 +3265,13 @@ class MinimalRepository(TypedDict):
     merges_url: NotRequired[str]
     milestones_url: NotRequired[str]
     mirror_url: NotRequired[str | None]
-    name: NotRequired[str]
+    name: Required[str]
     network_count: NotRequired[int]
     node_id: NotRequired[str]
     notifications_url: NotRequired[str]
     open_issues: NotRequired[int]
     open_issues_count: NotRequired[int]
-    owner: NotRequired[NullableSimpleUser]
+    owner: Required[NullableSimpleUser]
     permissions: NotRequired[MinimalRepositoryPermissions]
     private: NotRequired[bool]
     pull_request_creation_policy: NotRequired[RepositoryPullRequestCreationPolicy]
@@ -4338,9 +4338,9 @@ class CodeOfConductSimple(TypedDict):
 class FullRepository(TypedDict):
     id: NotRequired[int]
     node_id: NotRequired[str]
-    name: NotRequired[str]
-    full_name: NotRequired[str]
-    owner: NotRequired[NullableSimpleUser]
+    name: Required[str]
+    full_name: Required[str]
+    owner: Required[NullableSimpleUser]
     private: NotRequired[bool]
     html_url: NotRequired[str]
     description: NotRequired[str | None]

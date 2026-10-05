@@ -55,7 +55,7 @@ class GithubHttpxMock:
         json: Any = None,  # noqa ANN401
         **matchers: Any,
     ):
-        _headers = headers if headers is None else {}
+        _headers = {} if headers is None else dict(headers)
         self.httpx_mock.add_response(
             status_code=status_code,
             http_version=http_version,
