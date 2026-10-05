@@ -1,8 +1,6 @@
-from typing import Any, cast
+from typing import Any
 
 from nodestream_github.types.gh_model import (
-    MinimalRepository,
-    NullableSimpleUser,
     SecurityAndAnalysis,
     SecurityAndAnalysisAdvancedSecurityStatus,
 )
@@ -14,11 +12,11 @@ def repo(
     *,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
-    owner: NullableSimpleUser | None = None,
+    owner: dict[str, Any] | None = None,
     **kwargs: Any,
-) -> MinimalRepository:
+) -> dict[str, Any]:
 
-    repo_owner = NullableSimpleUser( **OCTOCAT_USER_SHORT if owner is None else owner )
+    repo_owner = OCTOCAT_USER_SHORT if owner is None else owner
 
     owner_login = repo_owner["login"]
     sec: SecurityAndAnalysis = {
@@ -32,7 +30,7 @@ def repo(
             "status": SecurityAndAnalysisAdvancedSecurityStatus.disabled
         },
     }
-    output: MinimalRepository = {
+    output = {
         "id": repo_id,
         "node_id": encode_as_node_id(f"010:Repository{repo_id}"),
         "name": repo_name,
@@ -162,7 +160,7 @@ def repo(
         "updated_at": "2011-01-26T19:14:43Z",
         "security_and_analysis": sec,
     }
-    return cast("MinimalRepository", output | kwargs)
+    return output | kwargs
 
 
 HELLO_WORLD_REPO = repo(owner=user_short(user_login="octocat"), repo_name="Hello-World")
