@@ -1,5 +1,6 @@
 from typing import Any
 
+from httpx2 import Headers
 from pytest_httpx2 import HTTPXMock
 
 from nodestream_github.types import HeaderTypes
@@ -55,7 +56,7 @@ class GithubHttpxMock:
         json: Any = None,  # noqa ANN401
         **matchers: Any,
     ):
-        _headers = {} if headers is None else dict(headers)
+        _headers = Headers() if headers is None else Headers(headers)
         self.httpx_mock.add_response(
             status_code=status_code,
             http_version=http_version,

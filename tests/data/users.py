@@ -1,4 +1,4 @@
-from typing import Any, cast
+from typing import Any, cast, Unpack
 
 from nodestream_github.types.gh_model import NullableSimpleUser, PrivateUser
 from tests.data.util import encode_as_node_id
@@ -8,12 +8,10 @@ def user_short(
     *,
     user_login: str = "octocat",
     user_id: int = 1,
-    **kwargs: Any,
+    **kwargs: Unpack[NullableSimpleUser],
 ) -> NullableSimpleUser:
 
-    return cast(
-        "NullableSimpleUser",
-        {
+    output = {
             "login": f"{user_login}",
             "id": user_id,
             "node_id": encode_as_node_id(f"04:User{user_id}"),
@@ -39,8 +37,7 @@ def user_short(
             "type": "User",
             "site_admin": False,
         }
-        | kwargs,
-    )
+    return output | kwargs
 
 
 def user(

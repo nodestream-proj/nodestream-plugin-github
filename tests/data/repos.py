@@ -14,13 +14,11 @@ def repo(
     *,
     repo_name: str = "Hello-World",
     repo_id: int = 1296269,
+    owner: NullableSimpleUser | None = None,
     **kwargs: Any,
 ) -> MinimalRepository:
 
-    repo_owner = cast(
-        "NullableSimpleUser",
-        {**OCTOCAT_USER_SHORT} if kwargs.get("owner") is None else {**kwargs["owner"]},
-    )
+    repo_owner = NullableSimpleUser( **OCTOCAT_USER_SHORT if owner is None else owner )
 
     owner_login = repo_owner["login"]
     sec: SecurityAndAnalysis = {
