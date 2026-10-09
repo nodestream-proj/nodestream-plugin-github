@@ -91,3 +91,22 @@ async def test_github_user_extractor_repo_fail(
     actual = [user async for user in user_extractor.extract_records()]
 
     assert actual == [OCTOCAT_USER | {"repositories": []}]
+
+
+@pytest.mark.asyncio
+async def test_github_user_extractor_repo_rate_limited(gh_rest_mock: GithubHttpxMock):
+    # A limit of 2 lets the user list and the user call pass, so the repos call blocks.
+    user_extractor = GithubUserExtractor(
+        auth_token="test-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-agent",
+        max_retries=2,
+        max_retry_wait_seconds=0,
+        rate_limit_per_minute=2,
+    )
+    gh_rest_mock.all_users(json=[OCTOCAT_USER_SHORT])
+    gh_rest_mock.get_user(username="octocat", json=OCTOCAT_USER)
+
+    actual = [user async for user in user_extractor.extract_records()]
+
+    assert actual == [OCTOCAT_USER | {"repositories": []}]

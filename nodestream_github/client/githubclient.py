@@ -40,7 +40,7 @@ class AllowedAuditActionsPhrases(Enum):
     BRANCH_PROTECTION = "protected_branch"
 
 
-class RateLimitedError(Exception):
+class RateLimitedError(httpx.HTTPError):
     def __init__(self, url: str | httpx.URL):
         super().__init__(f"Rate limited when calling {url}")
 
@@ -68,6 +68,8 @@ def _fetch_problem(title: str, e: httpx.HTTPError):
                 f" - {error_message}" if error_message else "",
                 stacklevel=2,
             )
+        case RateLimitedError():
+            logger.warning("Gave up fetching %s: %s", title, e, stacklevel=2)
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 

@@ -61,6 +61,32 @@ async def test_retry_ratelimited(httpx_mock: HTTPXMock):
 
 
 @pytest.mark.asyncio
+async def test_exhausted_limiter_is_logged_and_skipped(
+    httpx_mock: HTTPXMock, caplog: pytest.LogCaptureFixture
+):
+    client = GithubRestApiClient(
+        auth_token="test-auth-token",
+        github_hostname=DEFAULT_HOSTNAME,
+        user_agent="test-user-agent",
+        max_retries=2,
+        max_retry_wait_seconds=0,
+        rate_limit_per_minute=1,
+    )
+    url = f"{DEFAULT_BASE_URL}/users/octocat"
+    httpx_mock.add_response(url=url, json={"login": "octocat"})
+
+    assert await client.fetch_user(username="octocat") == {"login": "octocat"}
+    with caplog.at_level("WARNING"):
+        assert await client.fetch_user(username="octocat") is None
+
+    # The retry library logs its own warnings on the same logger. Count only ours.
+    gave_up = [r for r in caplog.records if r.getMessage().startswith("Gave up")]
+    assert len(gave_up) == 1
+    assert url in gave_up[0].getMessage()
+    assert gave_up[0].exc_info is None
+
+
+@pytest.mark.asyncio
 async def test_pagination(httpx_mock: HTTPXMock):
     client = GithubRestApiClient(
         auth_token="test-auth-token",
