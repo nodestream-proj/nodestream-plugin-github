@@ -54,6 +54,18 @@ targets:
 2. Verify nodestream has loaded the pipelines: `poetry run nodestream show`
 3. Use nodestream to run the pipelines: `poetry run nodestream run <pipeline-name> --target my-db`
 
+# Rate limiting
+
+The client keeps its request rate at or below 90% of the limit that the server advertises for your token. It reads the `x-ratelimit-*` headers on each response. It slows down when the remaining budget would run out before the reset. The pace never drops below one request per minute. A `rate_limit_per_minute` that you set stays an upper bound.
+
+The client meters the pace in whole-second windows, so it does not send a whole minute of requests at once. A pace of 75 requests per minute is 5 requests per 4 seconds. A slow pace uses a longer window. A request that finds the window full waits and retries.
+
+If a request is still rate limited, the client waits for the reset time or the `retry-after` time that the server states. It then retries. When the server states no time, the client waits at least one minute. A permission failure is not retried.
+
+The setting `max_retry_wait_seconds` caps only the exponential backoff. It does not cap the wait for a server rate limit. If retries run out, the client logs a warning and skips that data. The run continues.
+
+A GitHub Enterprise Server instance leaves rate limits off by default. Such a server sends no limit headers, so the client keeps its fixed pace. The default is 216 requests per minute, or 7 requests per 2 seconds.
+
 # Using make
 
 1. Install make (ie. `brew install make`)
