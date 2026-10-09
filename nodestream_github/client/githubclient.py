@@ -8,10 +8,10 @@ import logging
 import time
 from collections.abc import AsyncGenerator, Callable
 from enum import Enum
-from typing import Any
+from typing import Any, NamedTuple
 
 import httpx
-from limits import RateLimitItem, RateLimitItemPerMinute
+from limits import RateLimitItem, RateLimitItemPerSecond
 from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
 from tenacity import (
@@ -37,6 +37,9 @@ DEFAULT_GITHUB_HOST = "api.github.com"
 RATE_LIMIT_FLOOR_SECONDS = 60  # GitHub advises waiting at least a minute
 MAX_STATED_WAIT_SECONDS = 3900  # one hourly window plus margin
 STATED_WAIT_JITTER_SECONDS = 30
+PACE_FRACTION = 0.9  # stay at or under 90% of the limit the server advertises
+MAX_WINDOW_SECONDS = 60
+WINDOW_TOLERANCE = 0.05  # a window may admit up to 5% fewer requests than the pace
 
 
 logger = get_plugin_logger(__name__)
@@ -97,16 +100,76 @@ def _is_rate_limit(response: httpx.Response) -> bool:
     return "rate limit" in message.lower()
 
 
-def _stated_wait_seconds(response: httpx.Response) -> int | None:
+def _bounded_wait(seconds: float | None) -> float | None:
+    """Drop a stated wait that is missing or too long to be believed."""
+    if seconds is None or seconds > MAX_STATED_WAIT_SECONDS:
+        return None
+    return max(seconds, 0)
+
+
+def _stated_wait_seconds(response: httpx.Response) -> float | None:
     """The wait the server states, or None when it states none we can use."""
     wait = _header_int(response, "retry-after")
     if wait is None and _header_int(response, "x-ratelimit-remaining") == 0:
         reset = _header_int(response, "x-ratelimit-reset")
         if reset is not None:
             wait = reset - int(time.time())
-    if wait is None or wait > MAX_STATED_WAIT_SECONDS:
+    return _bounded_wait(wait)
+
+
+class _RateLimitState(NamedTuple):
+    limit: int
+    remaining: int
+    reset: int
+
+
+def _read_rate_limit_state(response: httpx.Response) -> _RateLimitState | None:
+    """Read the server's limit numbers. Skip other buckets and unusable values."""
+    if response.headers.get("x-ratelimit-resource", "core") != "core":
         return None
-    return max(wait, 0)
+    limit = _header_int(response, "x-ratelimit-limit")
+    remaining = _header_int(response, "x-ratelimit-remaining")
+    reset = _header_int(response, "x-ratelimit-reset")
+    if limit is None or limit <= 0 or remaining is None or reset is None:
+        return None
+    return _RateLimitState(limit, remaining, reset)
+
+
+def _pace_per_minute(
+    user_cap: int | None, state: _RateLimitState | None, now: float
+) -> float:
+    """Return the pace in requests per minute.
+
+    The ceiling is 90% of the rate the server advertises. A cap the user set stays
+    an upper bound. The pace slows below the ceiling when the remaining budget
+    would run out before the reset. A stale reset time leaves the pace at the
+    ceiling. Without limit numbers, the pace is the user cap or the default.
+    """
+    if user_cap is not None and user_cap <= 0:
+        return 0.0
+    if state is None:
+        return DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE if user_cap is None else user_cap
+    ceiling = max(int(PACE_FRACTION * state.limit / 60), 1)
+    cap = ceiling if user_cap is None else min(user_cap, ceiling)
+    pace = cap
+    if state.reset > now:
+        minutes_left = max((state.reset - now) / 60, 1)
+        pace = min(cap, PACE_FRACTION * state.remaining / minutes_left)
+    return max(pace, 1)
+
+
+def _meter_window(pace_per_minute: float) -> tuple[int, int]:
+    """Return (requests, seconds) for the whole-second window that meters a pace.
+
+    A window holds whole requests, so a slow pace needs a longer window. This is
+    the shortest window that holds at least one request and whose capacity, rounded
+    down, is within 5% of the pace. The capacity never exceeds the pace.
+    """
+    for seconds in range(1, MAX_WINDOW_SECONDS + 1):
+        exact = pace_per_minute * seconds / 60
+        if int(exact) >= 1 and int(exact) >= (1 - WINDOW_TOLERANCE) * exact:
+            return int(exact), seconds
+    return int(pace_per_minute), MAX_WINDOW_SECONDS
 
 
 def _wait_for_rate_limit(
@@ -125,6 +188,21 @@ def _wait_for_rate_limit(
         return max(backoff(retry_state), RATE_LIMIT_FLOOR_SECONDS)
 
     return wait
+
+
+def _retry_log_level(retry_state: RetryCallState) -> int:
+    """Warn about retries the server caused. Log the client's own pacing at debug."""
+    error = retry_state.outcome.exception() if retry_state.outcome else None
+    own_limiter = isinstance(error, RateLimitedError) and not error.from_server
+    return logging.DEBUG if own_limiter else logging.WARNING
+
+
+def _log_before_sleep(retry_state: RetryCallState) -> None:
+    before_sleep_log(logger, _retry_log_level(retry_state))(retry_state)
+
+
+def _log_after_attempt(retry_state: RetryCallState) -> None:
+    after_log(logger, _retry_log_level(retry_state))(retry_state)
 
 
 def _fetch_problem(title: str, e: httpx.HTTPError):
@@ -191,15 +269,11 @@ class GithubRestApiClient:
             self._default_headers["User-Agent"] = user_agent
         self._max_retries = max_retries
 
-        self._rate_limit = RateLimitItemPerMinute(
-            (
-                DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE
-                if rate_limit_per_minute is None
-                else rate_limit_per_minute
-            ),
-            1,
-        )
-        logger.info("GitHub REST RateLimit set to %s", self._rate_limit)
+        self._user_cap = rate_limit_per_minute
+        self._rate_limit_state: _RateLimitState | None = None
+        pace = _pace_per_minute(self._user_cap, None, 0)
+        self._rate_limit = RateLimitItemPerSecond(*_meter_window(pace))
+        logger.info("GitHub REST rate limit set to %s requests per minute", pace)
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self._session = httpx.AsyncClient()
 
@@ -212,8 +286,8 @@ class GithubRestApiClient:
             wait=_wait_for_rate_limit(max_retry_wait_seconds),
             stop=stop_after_attempt(self.max_retries),
             retry=retry_if_exception_type((RateLimitedError, httpx.TransportError)),
-            before_sleep=before_sleep_log(logger, logging.WARNING),
-            after=after_log(logger, logging.WARNING),
+            before_sleep=_log_before_sleep,
+            after=_log_after_attempt,
             reraise=True,
         )
 
@@ -231,6 +305,7 @@ class GithubRestApiClient:
 
     @property
     def rate_limit(self) -> RateLimitItem:
+        """The limit item in use. Its window follows the current pace."""
         return self._rate_limit
 
     @property
@@ -272,6 +347,14 @@ class GithubRestApiClient:
 
         DO NOT CALL THIS DIRECTLY. ONLY USE _get_retrying
         """
+        now = time.time()
+        state = self._rate_limit_state
+        if state is not None and state.remaining == 0 and state.reset > now:
+            raise RateLimitedError(
+                url, wait_seconds=_bounded_wait(state.reset - now), from_server=True
+            )
+        pace = _pace_per_minute(self._user_cap, state, now)
+        self._rate_limit = RateLimitItemPerSecond(*_meter_window(pace))
         can_try_hit: bool = await self.rate_limiter.test(self.rate_limit)
         if not can_try_hit:
             raise RateLimitedError(url)
@@ -286,6 +369,8 @@ class GithubRestApiClient:
             params=params,
             headers=merged_headers,
         )
+        if (new_state := _read_rate_limit_state(response)) is not None:
+            self._rate_limit_state = new_state
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
