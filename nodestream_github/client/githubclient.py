@@ -5,7 +5,8 @@ An async client for accessing GitHub.
 
 import json
 import logging
-from collections.abc import AsyncGenerator
+import time
+from collections.abc import AsyncGenerator, Callable
 from enum import Enum
 from typing import Any
 
@@ -15,10 +16,12 @@ from limits.aio.storage import MemoryStorage
 from limits.aio.strategies import MovingWindowRateLimiter, RateLimiter
 from tenacity import (
     AsyncRetrying,
+    RetryCallState,
     after_log,
     before_sleep_log,
     retry_if_exception_type,
     stop_after_attempt,
+    wait_random,
     wait_random_exponential,
 )
 
@@ -31,6 +34,9 @@ DEFAULT_MAX_RETRIES = 20
 DEFAULT_PAGE_SIZE = 100
 DEFAULT_MAX_RETRY_WAIT_SECONDS = 300  # 5 minutes
 DEFAULT_GITHUB_HOST = "api.github.com"
+RATE_LIMIT_FLOOR_SECONDS = 60  # GitHub advises waiting at least a minute
+MAX_STATED_WAIT_SECONDS = 3900  # one hourly window plus margin
+STATED_WAIT_JITTER_SECONDS = 30
 
 
 logger = get_plugin_logger(__name__)
@@ -41,11 +47,25 @@ class AllowedAuditActionsPhrases(Enum):
 
 
 class RateLimitedError(httpx.HTTPError):
-    def __init__(self, url: str | httpx.URL):
+    """A request was blocked by the client's own limiter or by the server.
+
+    `from_server` marks a limit the server reported. `wait_seconds` is the wait
+    the server stated, when it stated one.
+    """
+
+    def __init__(
+        self,
+        url: str | httpx.URL,
+        *,
+        wait_seconds: float | None = None,
+        from_server: bool = False,
+    ):
         super().__init__(f"Rate limited when calling {url}")
+        self.wait_seconds = wait_seconds
+        self.from_server = from_server
 
 
-def _safe_get_json_error_message(response: httpx.Response) -> str:
+def _safe_get_json_error_message(response: httpx.Response) -> str | None:
     try:
         return response.json().get("message")
     except AttributeError:
@@ -54,6 +74,57 @@ def _safe_get_json_error_message(response: httpx.Response) -> str:
     except ValueError:
         # ignore if no json
         return response.text
+
+
+def _header_int(response: httpx.Response, name: str) -> int | None:
+    try:
+        return int(response.headers[name])
+    except (KeyError, ValueError):
+        return None
+
+
+def _is_rate_limit(response: httpx.Response) -> bool:
+    """Tell a rate-limit response from a permission failure."""
+    if response.status_code == httpx.codes.TOO_MANY_REQUESTS:
+        return True
+    if response.status_code != httpx.codes.FORBIDDEN:
+        return False
+    if "retry-after" in response.headers:
+        return True
+    if _header_int(response, "x-ratelimit-remaining") == 0:
+        return True
+    message = str(_safe_get_json_error_message(response) or "")
+    return "rate limit" in message.lower()
+
+
+def _stated_wait_seconds(response: httpx.Response) -> int | None:
+    """The wait the server states, or None when it states none we can use."""
+    wait = _header_int(response, "retry-after")
+    if wait is None and _header_int(response, "x-ratelimit-remaining") == 0:
+        reset = _header_int(response, "x-ratelimit-reset")
+        if reset is not None:
+            wait = reset - int(time.time())
+    if wait is None or wait > MAX_STATED_WAIT_SECONDS:
+        return None
+    return max(wait, 0)
+
+
+def _wait_for_rate_limit(
+    max_retry_wait_seconds: float,
+) -> Callable[[RetryCallState], float]:
+    """Wait the stated time plus jitter, else back off. Floor server limits."""
+    backoff = wait_random_exponential(max=max_retry_wait_seconds)
+    jitter = wait_random(0, STATED_WAIT_JITTER_SECONDS)
+
+    def wait(retry_state: RetryCallState) -> float:
+        error = retry_state.outcome.exception() if retry_state.outcome else None
+        if not isinstance(error, RateLimitedError) or not error.from_server:
+            return backoff(retry_state)
+        if error.wait_seconds is not None:
+            return error.wait_seconds + jitter(retry_state)
+        return max(backoff(retry_state), RATE_LIMIT_FLOOR_SECONDS)
+
+    return wait
 
 
 def _fetch_problem(title: str, e: httpx.HTTPError):
@@ -138,9 +209,7 @@ class GithubRestApiClient:
             else max_retry_wait_seconds
         )
         self._retryer = AsyncRetrying(
-            wait=wait_random_exponential(
-                max=max_retry_wait_seconds,
-            ),
+            wait=_wait_for_rate_limit(max_retry_wait_seconds),
             stop=stop_after_attempt(self.max_retries),
             retry=retry_if_exception_type((RateLimitedError, httpx.TransportError)),
             before_sleep=before_sleep_log(logger, logging.WARNING),
@@ -217,7 +286,14 @@ class GithubRestApiClient:
             params=params,
             headers=merged_headers,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if _is_rate_limit(response):
+                raise RateLimitedError(
+                    url, wait_seconds=_stated_wait_seconds(response), from_server=True
+                ) from e
+            raise
         return response
 
     async def _get_retrying(
