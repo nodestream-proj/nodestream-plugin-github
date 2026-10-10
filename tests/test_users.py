@@ -15,6 +15,7 @@ def user_extractor() -> GithubUserExtractor:
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
     )
 
 
@@ -54,6 +55,7 @@ async def test_github_user_extractor_no_repos(gh_rest_mock: GithubHttpxMock):
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         include_repos=False,
     )
     gh_rest_mock.all_users(json=[OCTOCAT_USER])

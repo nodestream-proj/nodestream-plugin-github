@@ -38,8 +38,6 @@ RATE_LIMIT_FLOOR_SECONDS = 60  # GitHub advises waiting at least a minute
 MAX_STATED_WAIT_SECONDS = 3900  # one hourly window plus margin
 STATED_WAIT_JITTER_SECONDS = 30
 PACE_FRACTION = 0.9  # stay at or under 90% of the limit the server advertises
-MAX_WINDOW_SECONDS = 60
-WINDOW_TOLERANCE = 0.05  # a window may admit up to 5% fewer requests than the pace
 
 
 logger = get_plugin_logger(__name__)
@@ -158,18 +156,16 @@ def _pace_per_minute(
     return max(pace, 1)
 
 
-def _meter_window(pace_per_minute: float) -> tuple[int, int]:
-    """Return (requests, seconds) for the whole-second window that meters a pace.
+def _requests_per_second(pace_per_minute: float) -> int:
+    """Return the whole requests per second that meter a pace.
 
-    A window holds whole requests, so a slow pace needs a longer window. This is
-    the shortest window that holds at least one request and whose capacity, rounded
-    down, is within 5% of the pace. The capacity never exceeds the pace.
+    A one-second window holds whole requests. The count rounds down, so it never
+    exceeds the pace. It is never below one, because a window must hold a request.
+    A pace of zero admits none.
     """
-    for seconds in range(1, MAX_WINDOW_SECONDS + 1):
-        exact = pace_per_minute * seconds / 60
-        if int(exact) >= 1 and int(exact) >= (1 - WINDOW_TOLERANCE) * exact:
-            return int(exact), seconds
-    return int(pace_per_minute), MAX_WINDOW_SECONDS
+    if pace_per_minute <= 0:
+        return 0
+    return max(int(pace_per_minute / 60), 1)
 
 
 def _wait_for_rate_limit(
@@ -272,7 +268,7 @@ class GithubRestApiClient:
         self._user_cap = rate_limit_per_minute
         self._rate_limit_state: _RateLimitState | None = None
         pace = _pace_per_minute(self._user_cap, None, 0)
-        self._rate_limit = RateLimitItemPerSecond(*_meter_window(pace))
+        self._rate_limit = RateLimitItemPerSecond(_requests_per_second(pace))
         logger.info("GitHub REST rate limit set to %s requests per minute", pace)
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self._session = httpx.AsyncClient()
@@ -354,7 +350,7 @@ class GithubRestApiClient:
                 url, wait_seconds=_bounded_wait(state.reset - now), from_server=True
             )
         pace = _pace_per_minute(self._user_cap, state, now)
-        self._rate_limit = RateLimitItemPerSecond(*_meter_window(pace))
+        self._rate_limit = RateLimitItemPerSecond(_requests_per_second(pace))
         can_try_hit: bool = await self.rate_limiter.test(self.rate_limit)
         if not can_try_hit:
             raise RateLimitedError(url)
