@@ -16,6 +16,7 @@ def teams_extractor() -> GithubTeamsExtractor:
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
     )
 

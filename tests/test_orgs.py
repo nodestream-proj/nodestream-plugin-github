@@ -94,6 +94,7 @@ def org_extractor() -> GithubOrganizationsExtractor:
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
     )
 
@@ -314,6 +315,7 @@ async def test_skip_members(
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
         include_members=False,
     )
@@ -347,6 +349,7 @@ async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
         include_repositories=False,  # putting the here to test kwargs interaction
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
     )
 
