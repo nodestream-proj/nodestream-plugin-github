@@ -35,6 +35,7 @@ async def test_pull_org_repos(gh_rest_mock: GithubHttpxMock):
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
         collecting={"org_all": True},
     )
@@ -87,6 +88,7 @@ async def test_pull_user_repos(gh_rest_mock: GithubHttpxMock):
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
         collecting={"user_all": True},
     )

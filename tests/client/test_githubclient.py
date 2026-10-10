@@ -1,3 +1,4 @@
+import inspect
 import logging
 import time
 from typing import Any
@@ -6,15 +7,16 @@ from unittest.mock import AsyncMock
 import httpx
 import pytest
 from freezegun import freeze_time
+from limits import RateLimitItemPerSecond
 from pytest_httpx import HTTPXMock
 
 from nodestream_github.client.githubclient import (
     DEFAULT_REQUEST_RATE_LIMIT_PER_MINUTE,
     GithubRestApiClient,
     RateLimitedError,
-    _meter_window,
     _pace_per_minute,
     _RateLimitState,
+    _requests_per_second,
 )
 from tests.mocks.githubrest import DEFAULT_BASE_URL, DEFAULT_HOSTNAME
 
@@ -425,33 +427,32 @@ def test_pace_per_minute_without_limit_numbers(
 @pytest.mark.parametrize(
     ("pace", "expected"),
     [
-        pytest.param(0, (0, 60), id="zero-blocks"),
-        pytest.param(1, (1, 60), id="one-per-minute"),
-        pytest.param(3, (1, 20), id="slow-pace-gets-a-longer-window"),
-        pytest.param(9, (1, 7), id="nine-per-minute"),
-        pytest.param(60, (1, 1), id="one-per-second"),
-        pytest.param(75, (5, 4), id="seventy-five-per-minute"),
-        pytest.param(120, (2, 1), id="two-per-second"),
-        pytest.param(216, (7, 2), id="default-pace"),
-        pytest.param(2250, (37, 1), id="high-pace-uses-one-second"),
+        pytest.param(0, 0, id="zero-blocks"),
+        pytest.param(1, 1, id="slow-pace-is-one-per-second"),
+        pytest.param(9, 1, id="nine-per-minute"),
+        pytest.param(60, 1, id="one-per-second"),
+        pytest.param(75, 1, id="seventy-five-per-minute"),
+        pytest.param(120, 2, id="two-per-second"),
+        pytest.param(216, 3, id="default-pace-rounds-down"),
+        pytest.param(2250, 37, id="high-pace"),
     ],
 )
-def test_meter_window(pace: float, expected: tuple[int, int]):
-    assert _meter_window(pace) == expected
+def test_requests_per_second(pace: float, expected: int):
+    assert _requests_per_second(pace) == expected
 
 
-@pytest.mark.parametrize("pace", [1, 1.5, 9, 33.3, 67.5, 100, 216, 777, 2250])
-def test_meter_window_never_exceeds_the_pace(pace: float):
-    requests, seconds = _meter_window(pace)
-    assert requests * 60 / seconds <= pace
+@pytest.mark.parametrize("pace", [60, 61, 75, 119.9, 216, 777, 2250])
+def test_requests_per_second_never_exceeds_the_pace(pace: float):
+    assert _requests_per_second(pace) * 60 <= pace
 
 
 # Each case seeds the limit numbers. The count is the window's capacity in one frozen
-# moment: the requests that pass before the client's own limiter blocks one.
+# second: the requests that pass before the client's own limiter blocks one.
 @pytest.mark.parametrize(
     ("kwargs", "limit", "remaining", "seconds_to_reset", "expected_passes"),
     [
-        pytest.param({}, 5000, 5000, 3600, 5, id="follows-advertised-limit"),
+        pytest.param({}, 30000, 30000, 3600, 7, id="follows-advertised-limit"),
+        pytest.param({}, 5000, 5000, 3600, 1, id="small-limit-is-one-per-second"),
         pytest.param({}, 5000, 300, 1800, 1, id="budget-falling-fast"),
         pytest.param({"rate_limit_per_minute": 10}, 5000, 5000, 3600, 1, id="user-cap"),
         pytest.param(
@@ -459,13 +460,13 @@ def test_meter_window_never_exceeds_the_pace(pace: float):
             150000,
             137804,
             2400,
-            7,
+            3,
             id="user-cap-below-server-ceiling",
         ),
         pytest.param({}, 150000, 137804, 2400, 37, id="server-ceiling-over-default"),
-        pytest.param({}, 5000, 4500, 3600, 9, id="pace-just-under-ceiling"),
+        pytest.param({}, 150000, 5000, 1800, 2, id="server-ceiling-scarce-budget"),
         pytest.param({}, 60, 60, 3600, 1, id="tiny-limit"),
-        pytest.param({}, 5000, 0, -10, 5, id="stale-reset-keeps-ceiling"),
+        pytest.param({}, 5000, 0, -10, 1, id="stale-reset-keeps-ceiling"),
     ],
 )
 @pytest.mark.asyncio
@@ -493,7 +494,7 @@ async def test_default_pace_is_used_without_limit_numbers(httpx_mock: HTTPXMock)
         client = _client_with_fake_sleep(max_retries=1)
         httpx_mock.add_response(url=EXAMPLE_URL, json=["a"], is_reusable=True)
 
-        assert await _count_passes(client) == 7  # 216 per minute is 7 per 2 seconds
+        assert await _count_passes(client) == 3  # 216 per minute rounds down to 3/s
 
 
 @pytest.mark.parametrize(
@@ -544,7 +545,7 @@ async def test_pacing_works_on_github_dot_com_and_ghes(
         )
         await _fetch_all(client)  # learn the limits
 
-        assert await _count_passes(client) == 5  # 75 per minute is 5 per 4 seconds
+        assert await _count_passes(client) == 1  # 75 per minute rounds down to 1/s
 
 
 @pytest.mark.asyncio
@@ -663,6 +664,26 @@ async def test_pagination_truncate_warning(
         "The returned data may be incomplete"
     )
     assert expected_warning in caplog.text
+
+
+def test_constructor_keeps_its_optional_parameters():
+    params = inspect.signature(GithubRestApiClient.__init__).parameters
+    assert {k: v.default for k, v in params.items() if k != "self"} == {
+        "auth_token": None,
+        "github_hostname": None,
+        "user_agent": None,
+        "per_page": None,
+        "max_retries": None,
+        "rate_limit_per_minute": None,
+        "max_retry_wait_seconds": None,
+        "_kwargs": inspect.Parameter.empty,
+    }
+
+
+def test_rate_limit_is_the_window_in_use():
+    item = _client_with_fake_sleep().rate_limit
+    # The default pace of 216 per minute rounds down to 3 requests per second.
+    assert (type(item), item.amount, item.multiples) == (RateLimitItemPerSecond, 3, 1)
 
 
 def test_all_null_args():

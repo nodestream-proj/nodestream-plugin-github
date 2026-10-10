@@ -15,6 +15,7 @@ async def test_transform_records(gh_rest_mock: GithubHttpxMock):
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
     )
 
@@ -49,6 +50,7 @@ async def test_transform_records_alt_key(gh_rest_mock: GithubHttpxMock):
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
     )
 
@@ -85,6 +87,7 @@ async def test_no_full_name_key():
         github_hostname=DEFAULT_HOSTNAME,
         user_agent="test-agent",
         max_retries=0,
+        rate_limit_per_minute=6000,
         per_page=DEFAULT_PER_PAGE,
     )
     modified_repo = HELLO_WORLD_REPO.copy()
