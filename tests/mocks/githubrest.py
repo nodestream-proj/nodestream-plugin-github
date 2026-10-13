@@ -1,16 +1,15 @@
-# noinspection PyProtectedMember
 from typing import Any
 
-from pytest_httpx import HTTPXMock
+from httpx2 import Headers
+from pytest_httpx2 import HTTPXMock
 
 from nodestream_github.types import HeaderTypes
 from nodestream_github.types.enums import (
     CollaboratorAffiliation,
-    OrgMemberRole,
     OrgRepoType,
-    TeamMemberRole,
     UserRepoType,
 )
+from nodestream_github.types.gh_model import OrgMembershipRole, TeamMemberRole
 
 DEFAULT_HOSTNAME = "test-example.github.intuit.com"
 DEFAULT_BASE_URL = f"https://{DEFAULT_HOSTNAME}/api/v3"
@@ -57,10 +56,11 @@ class GithubHttpxMock:
         json: Any = None,  # noqa ANN401
         **matchers: Any,
     ):
+        _headers = Headers() if headers is None else Headers(headers)
         self.httpx_mock.add_response(
             status_code=status_code,
             http_version=http_version,
-            headers=headers,
+            headers=_headers,
             content=content,
             text=text,
             html=html,
@@ -81,7 +81,7 @@ class GithubHttpxMock:
         self,
         *,
         org_name: str,
-        role: OrgMemberRole | None = None,
+        role: OrgMembershipRole | None = None,
         **kwargs: Any,
     ) -> None:
         actual_role = f"role={role}" if role else ""
@@ -145,7 +145,7 @@ class GithubHttpxMock:
         **kwargs: Any,
     ) -> None:
         self.add_response(
-            url=f"{self.base_url}/repos/{owner_login}/{repo_name}/languages?per_page={self.per_page}",
+            url=f"{self.base_url}/repos/{owner_login}/{repo_name}/languages",
             **kwargs,
         )
 
@@ -186,9 +186,9 @@ class GithubHttpxMock:
         type_param: UserRepoType | None,
         **kwargs: Any,
     ):
-        type_param = f"&type={type_param}" if type_param else ""
+        other_param = f"&type={type_param}" if type_param else ""
         self.add_response(
-            url=f"{self.base_url}/users/{user_login}/repos?per_page=100&{type_param}",
+            url=f"{self.base_url}/users/{user_login}/repos?per_page=100{other_param}",
             **kwargs,
         )
 

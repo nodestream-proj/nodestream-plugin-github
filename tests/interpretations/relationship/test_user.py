@@ -6,31 +6,42 @@ from nodestream_github.interpretations.relationship.user import (
     UserRelationshipInterpretation,
     simplify_user,
 )
+from nodestream_github.types.gh_model import NullableSimpleUser
 
-_TEST_EXPECTATION = {
-    "login": "test-login",
-    "id": "test-id",
-    "node_id": "test-node-id",
-}
+_TEST_DATA = NullableSimpleUser(
+    login="test-login",
+    id=888999,
+    node_id="test-node-id",
+    avatar_url="https://test_avatar_url.example.com",
+    gravatar_id="1234",
+    url="https://test_url.example.com",
+    html_url="https://test_html_url.example.com",
+    followers_url="https://test_followers_url.example.com",
+    following_url="https://test_following_url.example.com",
+    gists_url="https://test_gists_url.example.com",
+    starred_url="https://test_starred_url.example.com",
+    subscriptions_url="https://test_subscriptions_url.example.com",
+    organizations_url="https://test_organizations_url.example.com",
+    repos_url="https://test_organizations_url.example.com",
+    events_url="https://test_events_url.example.com",
+    received_events_url="https://test_received_events_url.example.com",
+    type="user",
+    site_admin=False,
+)
 
 
 @pytest.fixture
 def context() -> ProviderContext:
-    return ProviderContext(_TEST_EXPECTATION, DesiredIngestion())
+    return ProviderContext({**_TEST_DATA}, DesiredIngestion())
 
 
 def test_simplify_user():
-    additional_keys = _TEST_EXPECTATION | {
-        "do-not-include": "test-data",
-        "a": "b",
-        "c": [1, 2, 3],
-        "d": True,
+    additional_keys = _TEST_DATA
+    assert simplify_user(additional_keys) == {
+        "id": 888999,
+        "login": "test-login",
+        "node_id": "test-node-id",
     }
-    assert simplify_user(additional_keys) == _TEST_EXPECTATION
-
-
-def test_simplify_user_identity():
-    assert simplify_user(_TEST_EXPECTATION) == _TEST_EXPECTATION
 
 
 def test_user_relationship(context: ProviderContext):

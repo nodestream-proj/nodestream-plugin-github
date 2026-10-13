@@ -6,29 +6,25 @@ from nodestream_github.interpretations.relationship.repository import (
     RepositoryRelationshipInterpretation,
     simplify_repo,
 )
+from tests.data.repos import repo
 
-_TEST_EXPECTATION = {
-    "full_name": "test/fullName",
-    "id": "test-id",
-    "name": "test-name",
-    "node_id": "test-node-id",
-    "url": "test-url",
-}
+_test_repo = repo()
 
 
 @pytest.fixture
 def context() -> ProviderContext:
-    return ProviderContext(_TEST_EXPECTATION, DesiredIngestion())
+    return ProviderContext({**_test_repo}, DesiredIngestion())
 
 
 def test_simplify_repo():
-    additional_keys = _TEST_EXPECTATION | {
-        "do-not-include": "test-data",
-        "a": "b",
-        "c": [1, 2, 3],
-        "d": True,
+    assert simplify_repo(_test_repo) == {
+        "full_name": "octocat/Hello-World",
+        "html_url": "https://github.com/octocat/Hello-World",
+        "id": 1296269,
+        "name": "Hello-World",
+        "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
+        "url": "https://HOSTNAME/repos/octocat/Hello-World",
     }
-    assert simplify_repo(additional_keys) == _TEST_EXPECTATION
 
 
 def test_repo_relationship(context: ProviderContext):

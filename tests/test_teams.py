@@ -1,7 +1,7 @@
 import pytest
 
 from nodestream_github import GithubTeamsExtractor
-from nodestream_github.types.enums import TeamMemberRole
+from nodestream_github.types.gh_model import TeamMemberRole
 from tests.data.orgs import GITHUB_ORG_SUMMARY
 from tests.data.repos import HELLO_WORLD_REPO
 from tests.data.teams import JUSTICE_LEAGUE_TEAM, JUSTICE_LEAGUE_TEAM_SUMMARY
@@ -36,24 +36,22 @@ async def test_extract_records(
     )
     gh_rest_mock.get_members_for_team(
         team_id=1,
-        role=TeamMemberRole.MEMBER,
+        role=TeamMemberRole.member,
         json=[OCTOCAT_USER_SHORT],
     )
     gh_rest_mock.get_members_for_team(
         team_id=1,
-        role=TeamMemberRole.MAINTAINER,
+        role=TeamMemberRole.maintainer,
         json=[TURBO_USER_SHORT],
     )
     gh_rest_mock.get_repos_for_team(
         org_login="github",
         slug="justice-league",
-        json=[
-            HELLO_WORLD_REPO
-            | {
-                "role_name": "read",
-                "permissions": {"admin": False, "push": False, "pull": True},
-            }
-        ],
+        json=[{
+            **HELLO_WORLD_REPO,
+            "role_name": "read",
+            "permissions": {"admin": False, "push": False, "pull": True},
+        }],
     )
 
     assert [record async for record in teams_extractor.extract_records()] == [{

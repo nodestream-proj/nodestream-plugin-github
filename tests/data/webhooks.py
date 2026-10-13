@@ -1,4 +1,4 @@
-from nodestream_github.types import Webhook
+from nodestream_github.types.gh_model import Hook
 
 
 def webhook(
@@ -7,10 +7,10 @@ def webhook(
     owner_login: str = "octocat",
     repo_name: str = "Hello-World",
     webhook_id: int = 12345678,
-) -> Webhook:
+) -> Hook:
     return {
         "type": webhook_type,
-        "id": 12345678,
+        "id": webhook_id,
         "name": "web",
         "active": True,
         "events": ["push", "pull_request"],
