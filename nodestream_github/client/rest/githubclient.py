@@ -53,7 +53,9 @@ class RateLimitedError(httpx2.HTTPError):
     """A request was blocked by the client's own limiter or by the server.
 
     `from_server` marks a limit the server reported. `wait_seconds` is the wait
-    the server stated, when it stated one.
+    the server stated, when it stated one. `reason` says in a few words why the
+    request was blocked. `details` holds the numbers behind it. The log lines pass
+    `details` as `extra`, so a JSON log shows each key as a field.
     """
 
     def __init__(
@@ -62,10 +64,17 @@ class RateLimitedError(httpx2.HTTPError):
         *,
         wait_seconds: float | None = None,
         from_server: bool = False,
+        reason: str | None = None,
+        details: Mapping[str, Any] | None = None,
     ):
-        super().__init__(f"Rate limited when calling {url}")
+        message = f"Rate limited when calling {url}"
+        super().__init__(f"{message}: {reason}" if reason else message)
         self.wait_seconds = wait_seconds
         self.from_server = from_server
+        self.details: dict[str, Any] = {"url": str(url)}
+        if reason:
+            self.details["reason"] = reason
+        self.details.update(details or {})
 
 
 def _safe_get_json_error_message(response: httpx2.Response) -> str:
@@ -115,6 +124,24 @@ def _stated_wait_seconds(response: httpx2.Response) -> float | None:
         if reset is not None:
             wait = reset - int(time.time())
     return _bounded_wait(wait)
+
+
+def _server_limit_fields(response: httpx2.Response) -> dict[str, Any]:
+    """Collect the numbers in a server rate-limit response for the log.
+
+    GitHub states the limit as requests per hour.
+    """
+    reset = _header_int(response, "x-ratelimit-reset")
+    resets_in = None if reset is None else reset - int(time.time())
+    fields = {
+        "status_code": response.status_code,
+        "rate_limit_requests_per_hour": _header_int(response, "x-ratelimit-limit"),
+        "rate_limit_requests_remaining": _header_int(response, "x-ratelimit-remaining"),
+        "rate_limit_resets_in_seconds": resets_in,
+        "retry_after_seconds": _header_int(response, "retry-after"),
+        "rate_limit_resource": response.headers.get("x-ratelimit-resource"),
+    }
+    return {key: value for key, value in fields.items() if value is not None}
 
 
 class _RateLimitState(NamedTuple):
@@ -170,6 +197,20 @@ def _requests_per_second(pace_per_minute: float) -> int:
     return max(int(pace_per_minute / 60), 1)
 
 
+def _state_fields(state: _RateLimitState | None, now: float) -> dict[str, int]:
+    """Collect the server's limit numbers for the log.
+
+    GitHub states the limit as requests per hour.
+    """
+    if state is None:
+        return {}
+    return {
+        "rate_limit_requests_per_hour": state.limit,
+        "rate_limit_requests_remaining": state.remaining,
+        "rate_limit_resets_in_seconds": max(round(state.reset - now), 0),
+    }
+
+
 def _wait_for_rate_limit(
     max_retry_wait_seconds: float,
 ) -> Callable[[RetryCallState], float]:
@@ -196,7 +237,22 @@ def _retry_log_level(retry_state: RetryCallState) -> int:
 
 
 def _log_before_sleep(retry_state: RetryCallState) -> None:
-    before_sleep_log(logger, _retry_log_level(retry_state))(retry_state)
+    error = retry_state.outcome.exception() if retry_state.outcome else None
+    if not isinstance(error, RateLimitedError) or retry_state.next_action is None:
+        before_sleep_log(logger, _retry_log_level(retry_state))(retry_state)
+        return
+    wait = retry_state.next_action.sleep
+    logger.log(
+        _retry_log_level(retry_state),
+        "Retrying in %.0f seconds as it raised RateLimitedError: %s.",
+        wait,
+        error,
+        extra={
+            **error.details,
+            "attempt": retry_state.attempt_number,
+            "wait_seconds": round(wait),
+        },
+    )
 
 
 def _log_after_attempt(retry_state: RetryCallState) -> None:
@@ -216,7 +272,9 @@ def log_fetch_problem(title: str, e: httpx2.HTTPError):
                 stacklevel=2,
             )
         case RateLimitedError():
-            logger.warning("Gave up fetching %s: %s", title, e, stacklevel=2)
+            logger.warning(
+                "Gave up fetching %s: %s", title, e, stacklevel=2, extra=e.details
+            )
         case _:
             logger.warning("Problem fetching %s", title, exc_info=e, stacklevel=2)
 
@@ -310,7 +368,12 @@ class GithubRestApiClient:
         self._rate_limit_state: _RateLimitState | None = None
         pace = _pace_per_minute(self._user_cap, None, 0)
         self._rate_limit = RateLimitItemPerSecond(_requests_per_second(pace))
-        logger.info("GitHub REST rate limit set to %s requests per minute", pace)
+        logger.info(
+            "GitHub REST rate limit set to %s requests per second. "
+            "Pace is %.0f requests per minute.",
+            self._rate_limit.amount,
+            pace,
+        )
         self._rate_limiter = MovingWindowRateLimiter(self.limit_storage)
         self._session = httpx2.AsyncClient()
 
@@ -388,16 +451,40 @@ class GithubRestApiClient:
         state = self._rate_limit_state
         if state is not None and state.remaining == 0 and state.reset > now:
             raise RateLimitedError(
-                url, wait_seconds=_bounded_wait(state.reset - now), from_server=True
+                url,
+                wait_seconds=_bounded_wait(state.reset - now),
+                from_server=True,
+                reason="not sent, remaining budget is 0",
+                details=_state_fields(state, now),
             )
         pace = _pace_per_minute(self._user_cap, state, now)
-        self._rate_limit = RateLimitItemPerSecond(_requests_per_second(pace))
+        rate_limit = RateLimitItemPerSecond(_requests_per_second(pace))
+        if rate_limit.amount != self._rate_limit.amount:
+            logger.info(
+                "GitHub REST rate limit changed from %s to %s requests per second. "
+                "Pace is %.0f requests per minute.",
+                self._rate_limit.amount,
+                rate_limit.amount,
+                pace,
+                extra={
+                    "requests_per_second": rate_limit.amount,
+                    "previous_requests_per_second": self._rate_limit.amount,
+                    "pace_requests_per_minute": round(pace),
+                    **_state_fields(state, now),
+                },
+            )
+        self._rate_limit = rate_limit
+        pace_details = {"requests_per_second": self.rate_limit.amount}
         can_try_hit: bool = await self.rate_limiter.test(self.rate_limit)
         if not can_try_hit:
-            raise RateLimitedError(url)
+            raise RateLimitedError(
+                url, reason="client pace limit reached", details=pace_details
+            )
         can_hit: bool = await self.rate_limiter.hit(self.rate_limit)
         if not can_hit:
-            raise RateLimitedError(url)
+            raise RateLimitedError(
+                url, reason="client pace limit reached", details=pace_details
+            )
 
         merged_headers = Headers(self.default_headers)
         merged_headers.update(headers)
@@ -413,7 +500,11 @@ class GithubRestApiClient:
         except httpx2.HTTPStatusError as e:
             if _is_rate_limit(response):
                 raise RateLimitedError(
-                    url, wait_seconds=_stated_wait_seconds(response), from_server=True
+                    url,
+                    wait_seconds=_stated_wait_seconds(response),
+                    from_server=True,
+                    reason=f"server answered {response.status_code}",
+                    details=_server_limit_fields(response),
                 ) from e
             raise
         return response

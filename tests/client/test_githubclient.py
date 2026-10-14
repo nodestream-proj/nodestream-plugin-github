@@ -343,7 +343,8 @@ async def test_server_rate_limit_past_max_retries_is_logged_and_skipped(
     with caplog.at_level("WARNING"):
         assert await UserClient(client).fetch_user(username="octocat") is None
 
-    assert len(_gave_up(caplog)) == 1
+    (gave_up,) = _gave_up(caplog)
+    assert vars(gave_up)["status_code"] == 403
 
 
 @pytest.mark.asyncio
@@ -356,10 +357,14 @@ async def test_server_rate_limit_retry_is_logged_as_warning(
     with caplog.at_level("WARNING"):
         await _fetch_all(client)
 
-    assert any(
-        r.levelno == logging.WARNING and "Retrying" in r.getMessage()
+    (retry,) = [
+        r
         for r in caplog.records
-    )
+        if r.levelno == logging.WARNING and "Retrying" in r.getMessage()
+    ]
+    assert "server answered 403" in retry.getMessage()
+    assert vars(retry)["status_code"] == 403
+    assert vars(retry)["attempt"] == 1
 
 
 @pytest.mark.asyncio
@@ -615,6 +620,105 @@ async def test_no_budget_left_waits_for_reset_before_sending(httpx2_mock: HTTPXM
     (slept,) = _slept(client)
     assert 595 <= slept <= 632  # 10 minutes plus jitter of up to 30 seconds
     assert requests_sent_at_each_sleep == [1]  # nothing was sent while it waited
+
+
+@pytest.mark.asyncio
+async def test_server_rate_limit_error_says_what_the_server_sent(
+    httpx2_mock: HTTPXMock,
+):
+    with freeze_time(real_asyncio=True):
+        client = _client_with_fake_sleep(max_retries=1)
+        httpx2_mock.add_response(
+            url=EXAMPLE_URL,
+            status_code=403,
+            headers=_limit_headers(5000, 0, 600),
+            json=RATE_LIMIT_MESSAGE,
+        )
+
+        with pytest.raises(RateLimitedError) as exc_info:
+            await _fetch_all(client)
+
+    assert str(exc_info.value).endswith(": server answered 403")
+    assert exc_info.value.details == {
+        "url": f"{DEFAULT_BASE_URL}/example",
+        "reason": "server answered 403",
+        "status_code": 403,
+        "rate_limit_requests_per_hour": 5000,
+        "rate_limit_requests_remaining": 0,
+        "rate_limit_resets_in_seconds": 600,
+    }
+
+
+@pytest.mark.asyncio
+async def test_blocked_before_sending_error_says_nothing_was_sent(
+    httpx2_mock: HTTPXMock,
+):
+    # A whole-second clock keeps the reset time exact. The guard reads the clock
+    # unrounded, and the header helper rounds down.
+    with freeze_time("2026-10-13 12:00:00", real_asyncio=True):
+        client = _client_with_fake_sleep(max_retries=1)
+        httpx2_mock.add_response(
+            url=EXAMPLE_URL, json=["a"], headers=_limit_headers(5000, 0, 600)
+        )
+        await _fetch_all(client)  # learn that the budget is used up
+
+        with pytest.raises(RateLimitedError) as exc_info:
+            await _fetch_all(client)
+
+    assert str(exc_info.value).endswith(": not sent, remaining budget is 0")
+    assert exc_info.value.details == {
+        "url": f"{DEFAULT_BASE_URL}/example",
+        "reason": "not sent, remaining budget is 0",
+        "rate_limit_requests_per_hour": 5000,
+        "rate_limit_requests_remaining": 0,
+        "rate_limit_resets_in_seconds": 600,
+    }
+    assert len(httpx2_mock.get_requests()) == 1
+
+
+@pytest.mark.asyncio
+async def test_rate_limit_change_is_logged(
+    httpx2_mock: HTTPXMock, caplog: pytest.LogCaptureFixture
+):
+    client = _client_with_fake_sleep(max_retries=1)
+    httpx2_mock.add_response(
+        url=EXAMPLE_URL,
+        json=["a"],
+        headers=_limit_headers(30000, 30000, 3600),
+        is_reusable=True,
+    )
+
+    with caplog.at_level("INFO"):
+        await _fetch_all(client)  # still the default pace of 3 per second
+        await _fetch_all(client)  # now follows the advertised limit of 7 per second
+
+    (change,) = [r for r in caplog.records if "rate limit changed" in r.getMessage()]
+    assert "from 3 to 7 requests per second" in change.getMessage()
+    fields = vars(change)
+    assert fields["requests_per_second"] == 7
+    assert fields["previous_requests_per_second"] == 3
+    assert fields["pace_requests_per_minute"] == 450
+    assert fields["rate_limit_requests_per_hour"] == 30000
+    assert fields["rate_limit_requests_remaining"] == 30000
+    assert fields["rate_limit_resets_in_seconds"] == pytest.approx(3600, abs=2)
+
+
+@pytest.mark.asyncio
+async def test_own_limiter_error_says_the_client_blocked_it(httpx2_mock: HTTPXMock):
+    with freeze_time(real_asyncio=True):
+        client = _client_with_fake_sleep(max_retries=1, rate_limit_per_minute=1)
+        httpx2_mock.add_response(url=EXAMPLE_URL, json=["a"])
+        await _fetch_all(client)
+
+        with pytest.raises(RateLimitedError) as exc_info:
+            await _fetch_all(client)
+
+    assert str(exc_info.value).endswith(": client pace limit reached")
+    assert exc_info.value.details == {
+        "url": f"{DEFAULT_BASE_URL}/example",
+        "reason": "client pace limit reached",
+        "requests_per_second": 1,
+    }
 
 
 @pytest.mark.asyncio
