@@ -142,8 +142,7 @@ async def test_orgs_continue_through_org_member_status_fail(
     gh_rest_mock.get_repos_for_org(org_name="github", json=[HELLO_WORLD_REPO])
 
     assert [record async for record in org_extractor.extract_records()] == [
-        BASE_EXPECTED_GITHUB_ORG
-        | {
+        BASE_EXPECTED_GITHUB_ORG | {
             "members": [{
                 "id": 2,
                 "login": "turbo",
@@ -183,8 +182,7 @@ async def test_orgs_continue_through_org_member_status_fail_second(
     gh_rest_mock.get_repos_for_org(org_name="github", json=[])
 
     assert [record async for record in org_extractor.extract_records()] == [
-        BASE_EXPECTED_GITHUB_ORG
-        | {
+        BASE_EXPECTED_GITHUB_ORG | {
             "members": [{
                 "id": 1,
                 "login": "octocat",
@@ -220,8 +218,7 @@ async def test_orgs_continue_through_org_repo_status_fail(
     )
 
     assert [record async for record in org_extractor.extract_records()] == [
-        BASE_EXPECTED_GITHUB_ORG
-        | {
+        BASE_EXPECTED_GITHUB_ORG | {
             "members": [{
                 "id": 1,
                 "login": "octocat",
@@ -279,8 +276,7 @@ async def test_get_orgs(
 
     all_records = [record async for record in org_extractor.extract_records()]
     assert all_records == [
-        BASE_EXPECTED_GITHUB_ORG
-        | {
+        BASE_EXPECTED_GITHUB_ORG | {
             "members": [
                 {
                     "id": 1,
@@ -327,8 +323,7 @@ async def test_skip_members(
 
     all_records = [record async for record in org_extractor.extract_records()]
     assert all_records == [
-        BASE_EXPECTED_GITHUB_ORG
-        | {
+        BASE_EXPECTED_GITHUB_ORG | {
             "members": [],
             "repositories": [{
                 "full_name": "octocat/Hello-World",
@@ -369,8 +364,7 @@ async def test_skip_repositories(gh_rest_mock: GithubHttpxMock):
 
     all_records = [record async for record in org_extractor.extract_records()]
     assert all_records == [
-        BASE_EXPECTED_GITHUB_ORG
-        | {
+        BASE_EXPECTED_GITHUB_ORG | {
             "members": [
                 {
                     "id": 1,

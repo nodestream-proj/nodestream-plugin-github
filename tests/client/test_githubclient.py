@@ -576,15 +576,17 @@ async def test_pace_numbers_update_between_pages(httpx2_mock: HTTPXMock):
     httpx2_mock.add_response(
         url=page_one,
         json=["a", "b"],
-        headers=_limit_headers(30000, 30000, 3600)
-        | {"link": f'<{page_two}>; rel="next"'},
+        headers=_limit_headers(30000, 30000, 3600) | {
+            "link": f'<{page_two}>; rel="next"'
+        },
         is_reusable=False,
     )
     httpx2_mock.add_response(
         url=page_two,
         json=["c", "d"],
-        headers=_limit_headers(5000, 5000, 3600)
-        | {"link": f'<{page_three}>; rel="next"'},
+        headers=_limit_headers(5000, 5000, 3600) | {
+            "link": f'<{page_three}>; rel="next"'
+        },
         is_reusable=False,
     )
     httpx2_mock.add_response(url=page_three, json=["e", "f"], is_reusable=False)
