@@ -17,7 +17,6 @@ run:
 
 .PHONY: fmt
 fmt:
-	poetry run isort nodestream_github tests
 	poetry run black nodestream_github tests
 
 .PHONY: lint

@@ -1,6 +1,6 @@
 [project]
 name = "nodestream-plugin-github"
-version = "0.16.2"
+version = "0.16.3"
 description = ""
 readme = "README.md"
 authors = [
@@ -25,7 +25,6 @@ interpretations = "nodestream_github.interpretations"
 dev = [
     "black>=26.5.1,<27.0.0",
     "freezegun>=1.5.5,<2.0.0",
-    "isort (<9)",
     "pytest (>=9.2.0,<10.0.0)",
     "pytest-asyncio>=1.2.0,<2.0.0",
     "pytest-cov>=7.0.0,<8.0.0",
@@ -51,9 +50,6 @@ line-length = 88
 target-version = ['py313']
 preview = true
 enable-unstable-feature = ["hug_parens_with_braces_and_square_brackets", "wrap_comprehension_in", "wrap_long_dict_values_in_parens"]
-
-[tool.isort]
-profile = "black"
 
 [tool.pytest.ini_options]
 log_cli = true

@@ -929,6 +929,7 @@ description = "A Python utility / library to sort Python imports."
 optional = false
 python-versions = ">=3.10.0"
 groups = ["dev"]
+markers = "sys_platform != \"emscripten\""
 files = [
     {file = "isort-8.0.1-py3-none-any.whl", hash = "sha256:28b89bc70f751b559aeca209e6120393d43fbe2490de0559662be7a9787e3d75"},
     {file = "isort-8.0.1.tar.gz", hash = "sha256:171ac4ff559cdc060bcfff550bc8404a486fee0caab245679c2abe7cb253c78d"},
@@ -2621,4 +2622,4 @@ dev = ["pytest", "setuptools"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "653e007c068992eb90dfd641478c5d19cf410198f8d75651ced3619c7bdea685"
+content-hash = "f3796753676541c31dfdfce92344c947d1b4d7cfe76999624a744dfc3233dbbb"

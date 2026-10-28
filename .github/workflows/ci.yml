@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.13"
           cache: 'poetry'
@@ -28,8 +28,6 @@ jobs:
           poetry install
       - name: Run black
         run: poetry run black nodestream_github tests --check --diff
-      - name: Run isort
-        run: poetry run isort nodestream_github tests --check-only
       - name: Run Lint
         run: poetry run ruff check nodestream_github tests --output-format github
       - name: Run ty
@@ -37,7 +35,7 @@ jobs:
       - name: Run Tests
         run: |
           poetry run pytest --cov-report=html --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=nodestream_github tests/ | tee pytest-coverage.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: coverage-info
           path: htmlcov/
@@ -49,7 +47,7 @@ jobs:
           junitxml-path: ./pytest.xml
       - name: fail on test errors
         if: ${{ steps.coverageComment.outputs.errors > 0 || steps.coverageComment.outputs.failures > 0 }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v9
         with:
           script: |
               core.setFailed('Pytest Failures or Errors')
