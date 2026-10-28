@@ -18,29 +18,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: 'poetry'
       - name: Install Dependencies
         run: |
           pip install --upgrade pip
           pip install --upgrade setuptools
-          poetry env use "3.12"
+          poetry env use "3.13"
           poetry install
-      - name: Setup reviewdog
-        uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893
       - name: Run black
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          poetry run black nodestream_github tests --check --diff --quiet | reviewdog -f=diff -name="black-check" -level=error -reporter=github-pr-review
+        run: poetry run black nodestream_github tests --check --diff
       - name: Run isort
-        run: |
-          poetry run isort nodestream_github tests --check-only
+        run: poetry run isort nodestream_github tests --check-only
       - name: Run Lint
-        env: 
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          poetry run ruff check nodestream_github tests --output-format rdjson | reviewdog -f=rdjson -name="ruff-check" -level=warning -reporter=github-pr-review
+        run: poetry run ruff check nodestream_github tests --output-format github
+      - name: Run ty
+        run: poetry run ty check nodestream_github --output-format github
       - name: Run Tests
         run: |
           poetry run pytest --cov-report=html --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=nodestream_github tests/ | tee pytest-coverage.txt

@@ -8,9 +8,9 @@
 from __future__ import annotations
 
 from enum import Enum, StrEnum
-from typing import TYPE_CHECKING, Any, Literal, NotRequired, Required
+from typing import TYPE_CHECKING, Any, Literal, NotRequired, ReadOnly, Required
 
-from typing_extensions import ReadOnly, TypedDict
+from typing_extensions import TypedDict
 
 if TYPE_CHECKING:
     from uuid import UUID
